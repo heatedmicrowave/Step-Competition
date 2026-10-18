@@ -5,8 +5,8 @@ A free leaderboard for step competitions among friends. It's a web page you add 
 ## Setup (one time, about 15 minutes)
 
 1. **Supabase**: create a free project at supabase.com. Open SQL Editor, paste `supabase/schema.sql`, and run it. Then run the commented `insert into players …` at the bottom with your real names, followed by `select name, secret_key from players;`, and send each person their key privately.
-2. **Site config**: put the Project URL and anon key (Project Settings → API) into `site/config.js`.
-3. **Hosting**: repo Settings → Pages → deploy from the `main` branch. Your site is at `https://<you>.github.io/step-competition/site/`.
+2. **Site config**: Project URL and publishable key go in `site/config.js` (already filled in).
+3. **Hosting**: repo Settings → Pages → deploy from the `main` branch. Your site is at `https://heatedmicrowave.github.io/Step-Competition/site/`.
 4. **On each phone**: open the site in Safari → Share → **Add to Home Screen**. Open it, and at the bottom paste your secret key under "Who are you?".
 5. **Garmin users**: follow `docs/garmin-shortcut.md`.
 6. Start a competition from the site.

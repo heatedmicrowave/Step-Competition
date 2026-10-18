@@ -1,6 +1,6 @@
 # Garmin steps → leaderboard (iPhone Shortcut)
 
-Each Garmin person does this once on their own iPhone, which takes about 5 minutes. You need the site address details (Supabase URL and anon key) and your own **secret key**, both from Maclain.
+Each Garmin person does this once on their own iPhone, which takes about 5 minutes. You need your own **secret key** from Maclain.
 
 First check that Garmin is writing to Apple Health: Garmin Connect → More → Settings → Connected Apps → Apple Health → turn on Steps.
 
@@ -15,11 +15,10 @@ Shortcuts app → **+** → name it **Send Garmin steps**. Add these actions in 
 2. **Calculate Statistics**: **Sum** of *Health Samples*
 3. **Date** (Current Date) → **Format Date**: Custom, `yyyy-MM-dd`
 4. **Get Contents of URL**
-   - URL: `https://YOUR-PROJECT.supabase.co/rest/v1/rpc/submit_steps`
+   - URL: `https://rzkcrgihokfnyjazjtwh.supabase.co/rest/v1/rpc/submit_steps`
    - Method: **POST**
    - Headers:
-     - `apikey`: *anon key*
-     - `Authorization`: `Bearer ` + *anon key*
+     - `apikey`: `sb_publishable_kvp1jafJOXqE9_1aHFvS-A_hmd30Gbx`
      - `Content-Type`: `application/json`
    - Request Body: **JSON**
      - `p_key` (Text): *your secret key*
