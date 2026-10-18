@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Step Competition</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Steps">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<style>
+  :root { --bg:#f6f6f3; --card:#fff; --text:#1b1b1b; --muted:#6b6b6b; --line:#e4e4df; --accent:#1f7a4d; --gold:#c99a1a; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#121212; --card:#1d1d1d; --text:#f0f0f0; --muted:#9a9a9a; --line:#2e2e2e; --accent:#4cc38a; --gold:#e3b84a; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.4 -apple-system, system-ui, sans-serif;
+         padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 24px); }
+  main { max-width:560px; margin:0 auto; }
+  h1 { font-size:28px; margin:0 0 4px; }
+  .muted { color:var(--muted); font-size:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin:14px 0; }
+  select, input, button { font:inherit; padding:10px 12px; border-radius:10px; border:1px solid var(--line);
+                          background:var(--card); color:var(--text); width:100%; }
+  button { background:var(--accent); color:#fff; border:none; font-weight:600; }
+  .row { display:flex; align-items:center; gap:12px; padding:10px 0; border-top:1px solid var(--line); }
+  .row:first-child { border-top:none; }
+  .rank { width:28px; font-size:20px; font-weight:700; text-align:center; }
+  .rank.first { color:var(--gold); }
+  .who { flex:1; min-width:0; }
+  .total { font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .bar { height:6px; border-radius:3px; background:var(--accent); margin-top:6px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; font-variant-numeric:tabular-nums; }
+  th, td { padding:6px 4px; text-align:right; border-top:1px solid var(--line); }
+  th:first-child, td:first-child { text-align:left; }
+  .grid { display:grid; gap:8px; }
+  details summary { cursor:pointer; font-weight:600; }
+  .err { color:#c0392b; }
+</style>
+</head>
+<body>
+<main>
+  <h1>👟 Step Competition</h1>
+  <div class="muted" id="status">Loading…</div>
+
+  <div class="card"><select id="compPicker"></select><div class="muted" id="compDates" style="margin-top:6px"></div></div>
+  <div class="card" id="board"></div>
+  <div class="card"><details><summary>Day by day</summary><div id="daily" style="margin-top:10px;overflow-x:auto"></div></details></div>
+
+  <div class="card">
+    <details id="newComp"><summary>Start a new competition</summary>
+      <div class="grid" style="margin-top:10px">
+        <input id="cName" placeholder="Name, e.g. November showdown">
+        <label class="muted">Starts <input id="cStart" type="date"></label>
+        <label class="muted">Ends <input id="cEnd" type="date"></label>
+        <button id="cCreate">Create</button>
+        <div class="muted" id="cMsg"></div>
+      </div>
+    </details>
+  </div>
+
+  <div class="card">
+    <details><summary id="meSummary">Who are you?</summary>
+      <div class="grid" style="margin-top:10px">
+        <input id="key" placeholder="Your secret key" autocomplete="off">
+        <button id="saveKey">Save on this phone</button>
+        <div class="muted" id="keyMsg"></div>
+      </div>
+    </details>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+const db = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+const $ = id => document.getElementById(id);
+const fmt = n => n.toLocaleString();
+const isoLocal = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
+
+let players = [], comps = [], current = null;
+
+function ago(ts) {
+  const m = Math.round((Date.now() - new Date(ts)) / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m} min ago`;
+  if (m < 1440) return `${Math.round(m / 60)} h ago`;
+  return `${Math.round(m / 1440)} d ago`;
+}
+
+async function loadMeta() {
+  const [p, c] = await Promise.all([
+    db.from('public_players').select('*'),
+    db.from('competitions').select('*').order('start_day', { ascending: false }),
+  ]);
+  if (p.error || c.error) throw (p.error || c.error);
+  players = p.data; comps = c.data;
+  const today = isoLocal(new Date());
+  const picker = $('compPicker');
+  picker.innerHTML = comps.map(c => `<option value="${c.id}">${c.name}</option>`).join('')
+    || '<option>No competitions yet</option>';
+  const remembered = store.get('comp');
+  current = comps.find(c => c.id === remembered)
+         || comps.find(c => c.start_day <= today && c.end_day >= today)
+         || comps[0] || null;
+  if (current) picker.value = current.id;
+}
+
+async function loadBoard() {
+  if (!current) { $('board').innerHTML = '<div class="muted">Start a competition below.</div>'; return; }
+  const today = isoLocal(new Date());
+  $('compDates').textContent = `${current.start_day} → ${current.end_day}` +
+    (today > current.end_day ? ' · finished' : today < current.start_day ? ' · not started' : '');
+
+  const [m, s] = await Promise.all([
+    db.from('competition_players').select('player_id').eq('competition_id', current.id),
+    db.from('daily_steps').select('*').gte('day', current.start_day).lte('day', current.end_day),
+  ]);
+  if (m.error || s.error) throw (m.error || s.error);
+  const ids = new Set(m.data.map(r => r.player_id));
+  const rows = s.data.filter(r => ids.has(r.player_id));
+
+  const standings = players.filter(p => ids.has(p.id)).map(p => {
+    const mine = rows.filter(r => r.player_id === p.id);
+    return {
+      ...p,
+      total: mine.reduce((a, r) => a + r.steps, 0),
+      today: mine.find(r => r.day === today)?.steps ?? 0,
+      last: mine.reduce((a, r) => (a && a > r.updated_at ? a : r.updated_at), null),
+    };
+  }).sort((a, b) => b.total - a.total);
+
+  const top = Math.max(1, standings[0]?.total ?? 1);
+  $('board').innerHTML = standings.map((p, i) => `
+    <div class="row">
+      <div class="rank ${i === 0 && p.total ? 'first' : ''}">${i === 0 && p.total ? '👑' : i + 1}</div>
+      <div class="who">
+        <div><b>${p.name}</b></div>
+        <div class="muted">Today ${fmt(p.today)} · ${p.last ? 'updated ' + ago(p.last) : 'no data yet'}</div>
+        <div class="bar" style="width:${(p.total / top) * 100}%"></div>
+      </div>
+      <div class="total">${fmt(p.total)}</div>
+    </div>`).join('');
+
+  const days = [...new Set(rows.map(r => r.day))].sort().reverse();
+  $('daily').innerHTML = days.length ? `<table>
+    <tr><th>Day</th>${standings.map(p => `<th>${p.name}</th>`).join('')}</tr>
+    ${days.map(d => `<tr><td>${d.slice(5)}</td>${standings.map(p =>
+      `<td>${fmt(rows.find(r => r.day === d && r.player_id === p.id)?.steps ?? 0)}</td>`).join('')}</tr>`).join('')}
+  </table>` : '<div class="muted">No steps yet.</div>';
+}
+
+async function refresh() {
+  try {
+    await loadMeta();
+    await loadBoard();
+    $('status').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  } catch (e) {
+    $('status').innerHTML = `<span class="err">Couldn't load: ${e.message}</span>`;
+  }
+}
+
+$('compPicker').onchange = e => { current = comps.find(c => c.id === e.target.value); store.set('comp', current?.id); loadBoard(); };
+
+async function showMe() {
+  const key = store.get('key');
+  if (!key) return;
+  const { data } = await db.rpc('whoami', { p_key: key });
+  $('meSummary').textContent = data?.[0] ? `Signed in as ${data[0].name}` : 'Who are you? (saved key not recognised)';
+}
+$('key').value = store.get('key') || '';
+$('saveKey').onclick = async () => {
+  const key = $('key').value.trim();
+  const { data } = await db.rpc('whoami', { p_key: key });
+  if (!data?.[0]) { $('keyMsg').textContent = "That key doesn't match anyone."; return; }
+  store.set('key', key);
+  $('keyMsg').textContent = `Saved. Hi ${data[0].name}!`;
+  showMe();
+};
+
+$('cStart').value = isoLocal(new Date());
+$('cCreate').onclick = async () => {
+  const key = store.get('key');
+  if (!key) { $('cMsg').textContent = 'Save your secret key first (bottom of the page).'; return; }
+  const { error } = await db.rpc('create_competition', {
+    p_key: key, p_name: $('cName').value.trim() || 'Step competition',
+    p_start: $('cStart').value, p_end: $('cEnd').value,
+  });
+  if (error) { $('cMsg').textContent = error.message; return; }
+  $('cMsg').textContent = 'Created!'; store.set('comp', '');
+  $('newComp').open = false; refresh();
+};
+
+// Live: redraw whenever anyone's steps change, and when the app comes back to the foreground.
+db.channel('steps').on('postgres_changes', { event: '*', schema: 'public', table: 'daily_steps' }, () => loadBoard()).subscribe();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+
+refresh();
+showMe();
+</script>
+</body>
+</html>

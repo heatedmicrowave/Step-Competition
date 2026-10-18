@@ -1,0 +1,9 @@
+{
+  "name": "Step Competition",
+  "short_name": "Steps",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f6f6f3",
+  "theme_color": "#1f7a4d",
+  "icons": [{ "src": "icon.png", "sizes": "512x512", "type": "image/png" }]
+}
