@@ -69,6 +69,12 @@
       </div>
     </details>
   </div>
+
+  <div class="card" id="fitbitBox" hidden>
+    <b>Fitbit</b>
+    <div class="muted" id="fitbitMsg" style="margin:6px 0 10px"></div>
+    <a id="fitbitLink"><button>Connect Fitbit</button></a>
+  </div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
@@ -172,6 +178,23 @@ async function showMe() {
   if (!key) return;
   const { data } = await db.rpc('whoami', { p_key: key });
   $('meSummary').textContent = data?.[0] ? `Signed in as ${data[0].name}` : 'Who are you? (saved key not recognised)';
+  if (data?.[0]) showFitbit(data[0].id, key);
+}
+
+async function showFitbit(playerId, key) {
+  if (!players.length) await loadMeta().catch(() => {});
+  if (players.find(p => p.id === playerId)?.source !== 'fitbit_google') return;
+  const { data } = await db.from('fitbit_status').select('*').eq('player_id', playerId);
+  const s = data?.[0];
+  const result = new URLSearchParams(location.search).get('fitbit');
+  $('fitbitMsg').textContent =
+    result === 'error' ? 'Connected, but the first sync failed. It will retry automatically.' :
+    s && s.needs_reconnect ? 'Fitbit needs reconnecting. Tap the button and sign in again.' :
+    s ? `Connected${s.last_synced ? ' · last synced ' + ago(s.last_synced) : ''}. Steps update every 20 minutes.` :
+    'Connect once so your Fitbit steps count. You\'ll sign in with Google.';
+  $('fitbitLink').href = `${window.SUPABASE_URL}/functions/v1/fitbit/start?key=${encodeURIComponent(key)}`;
+  $('fitbitLink').querySelector('button').textContent = s && !s.needs_reconnect ? 'Reconnect Fitbit' : 'Connect Fitbit';
+  $('fitbitBox').hidden = false;
 }
 $('key').value = store.get('key') || '';
 $('saveKey').onclick = async () => {
