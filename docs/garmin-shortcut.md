@@ -1,39 +1,35 @@
 # Garmin steps → leaderboard (iPhone Shortcut)
 
-Each Garmin person does this once on their own iPhone, which takes about 5 minutes. You need your own **secret key** from Maclain.
+Each Garmin person does this once on their own iPhone. You need your own **secret key** from Maclain.
 
-First check that Garmin is writing to Apple Health: Garmin Connect → More → Settings → Connected Apps → Apple Health → turn on Steps.
+These steps match the redesigned Shortcuts app in iOS 27. Italian labels are in brackets, since that's what the first setup was done on.
 
-## 1. Build the Shortcut
+## 0. Garmin → Health
+Garmin Connect → More → Settings → Connected Apps → Apple Health: make sure **Steps** is on.
 
-Shortcuts app → **+** → name it **Send Garmin steps**. Add these actions in order:
+## 1. Build the shortcut
+Shortcuts (Comandi) → **+**. Ignore the "describe a shortcut" box and tap **Edit** (Modifica). Add these actions from the search bar at the bottom:
 
-1. **Find Health Samples**
-   - Type: **Steps**
-   - Add filter: **Start Date** *is today*
-   - Add filter: **Source** *is* **Garmin Connect** (this is what makes it Garmin's number)
-2. **Calculate Statistics**: **Sum** of *Health Samples*
-3. **Date** (Current Date) → **Format Date**: Custom, `yyyy-MM-dd`
-4. **Get Contents of URL**
-   - URL: `https://rzkcrgihokfnyjazjtwh.supabase.co/rest/v1/rpc/submit_steps`
+1. **Find Health Samples** (Trova campioni di dati sanitari)
+   - Type is **Steps** (Passi)
+   - Start Date **is today** (Data di inizio è oggi)
+   - Add filter: **Source** (Sorgente) **is Garmin Connect**
+   - Allow Health access: "last 30 days and future" is enough
+2. **Calculate Statistics** (Calcola statistiche): **Sum** (Somma) of Health Samples
+3. **Format Date** (Formatta data): Current Date (Data attuale), Date Format **Custom** (Personalizzato), format string `yyyy-MM-dd`
+4. **Get Contents of URL** (Ottieni contenuti dell'URL)
+   - URL: type this by hand. Pasting from chat apps can carry hidden formatting that Shortcuts rejects with "couldn't convert from RTF to URL".
+     `https://rzkcrgihokfnyjazjtwh.supabase.co/rest/v1/rpc/submit_steps`
    - Method: **POST**
-   - Headers:
-     - `apikey`: `sb_publishable_kvp1jafJOXqE9_1aHFvS-A_hmd30Gbx`
-     - `Content-Type`: `application/json`
-   - Request Body: **JSON**
-     - `p_key` (Text): *your secret key*
-     - `p_day` (Text): *Formatted Date*
-     - `p_steps` (Number): *Statistics Result*
+   - Header: `apikey` = `sb_publishable_kvp1jafJOXqE9_1aHFvS-A_hmd30Gbx`
+   - Request body: **JSON**, three fields:
+     - Text `p_key` = your secret key
+     - Text `p_day` = *Formatted Date* (pick it from the bar above the keyboard)
+     - Number `p_steps` = *Sum* (make sure no stray `0` sits in front of it)
 
-Then repeat actions 1 to 4 for **yesterday**: set the filter to *Start Date is yesterday*, and for the date use **Adjust Date** → subtract 1 day before formatting. That way steps synced after midnight still count toward the right day.
-
-Tap ▶︎ once to test, and allow Health access when asked. Your steps should appear on the site.
+Rename it **Send Garmin steps** and tap ▶︎ once. Choose **Always allow** when it asks to send data to supabase.co. A "Zero KB" result means it worked, and your steps should show on the site.
 
 ## 2. Make it run on its own
+In the same shortcut: search → **Automations** (Automazioni) → **App**. The trigger goes to the top. Set it to **Garmin Connect** **is Closed** (Chiuso), with **Automation** on and **Notify** (Avvisa) off.
 
-Shortcuts → **Automation** → **+**:
-
-- **App** → Garmin Connect → **Is Closed** → **Run Immediately** → Send Garmin steps. Each time you check Garmin, the board updates.
-- **Time of Day**, as many times as you like (e.g. 10am, 1pm, 4pm, 7pm, 9pm, 11:45pm) → **Run Immediately** → Send Garmin steps.
-
-Note: iOS locks Health data while the phone is locked, so a timed run with the phone locked can miss. The next run catches up, and the "yesterday" step fixes the end of each day.
+Now every time you close Garmin Connect, the leaderboard updates. Opening Garmin before bed makes sure late-evening steps count.
