@@ -1,7 +1,7 @@
-import { Stack, useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, RefreshControl, ScrollView, Share, View } from 'react-native';
-import { Button, Card, fmt, T, useColors } from '../../components/ui';
+import { Button, fmt, Heading, Label, Numeral, pad2, Section, T, useColors } from '../../components/ui';
 import { useAuth } from '../../lib/auth';
 import { Competition, errorText, isoDay, supabase } from '../../lib/supabase';
 
@@ -12,9 +12,9 @@ type Standing = Player & { total: number; today: number; last: string | null };
 function ago(ts: string) {
   const m = Math.round((Date.now() - new Date(ts).getTime()) / 60000);
   if (m < 1) return 'just now';
-  if (m < 60) return `${m} min ago`;
-  if (m < 1440) return `${Math.round(m / 60)} h ago`;
-  return `${Math.round(m / 1440)} d ago`;
+  if (m < 60) return `${m}m ago`;
+  if (m < 1440) return `${Math.round(m / 60)}h ago`;
+  return `${Math.round(m / 1440)}d ago`;
 }
 
 export default function Leaderboard() {
@@ -76,43 +76,56 @@ export default function Leaderboard() {
     ]);
   }
 
+  const days = comp ? Math.round((new Date(comp.end_day + 'T12:00:00').getTime() - new Date(comp.start_day + 'T12:00:00').getTime()) / 86400000) + 1 : 0;
+  const dayN = comp ? Math.min(days, Math.max(0, Math.round((new Date(now + 'T12:00:00').getTime() - new Date(comp.start_day + 'T12:00:00').getTime()) / 86400000) + 1)) : 0;
+  const phase = !comp ? '' : now > comp.end_day ? 'Final results' : now < comp.start_day ? `Starts ${comp.start_day}` : `Day ${dayN} of ${days}`;
+
   return (
     <ScrollView
       style={{ backgroundColor: c.bg }}
-      contentContainerStyle={{ padding: 16 }}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
+      contentContainerStyle={{ padding: 20, paddingTop: 4 }}
+      refreshControl={<RefreshControl tintColor={c.ink} refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
     >
-      <Stack.Screen options={{ title: comp?.name ?? '' }} />
-      {!!msg && <T color={c.danger}>{msg}</T>}
+      {!!msg && <T color={c.red}>{msg}</T>}
       {comp && (
-        <T muted style={{ marginBottom: 12 }}>
-          {comp.start_day} → {comp.end_day}{now > comp.end_day ? ' · finished' : now < comp.start_day ? ' · not started' : ''}
-        </T>
+        <View style={{ marginBottom: 24 }}>
+          <Label color={c.red}>{phase}</Label>
+          <Heading size={40}>{comp.name}</Heading>
+        </View>
       )}
-      <Card>
+
+      <View style={{ borderTopWidth: 2, borderColor: c.rule, marginBottom: 32 }}>
         {standings.map((p, i) => {
           const lead = i === 0 && p.total > 0;
+          const gap = i > 0 ? standings[0].total - p.total : 0;
           return (
-            <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 }}>
-              <T size={20} bold color={lead ? c.gold : undefined} style={{ width: 30, textAlign: 'center' }}>{lead ? '👑' : String(i + 1)}</T>
-              <View style={{ flex: 1 }}>
-                <T bold>{p.name}{p.id === me?.id ? ' (you)' : ''}</T>
-                <T muted size={13}>Today {fmt(p.today)} · {p.last ? `updated ${ago(p.last)}` : 'no data yet'}{p.device_label ? ` · ${p.device_label}` : ''}</T>
-                <View style={{ height: 6, borderRadius: 3, backgroundColor: c.accent, marginTop: 6, width: `${(p.total / top) * 100}%` }} />
+            <View key={p.id} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14, paddingVertical: 14, borderBottomWidth: 1, borderColor: c.hair }}>
+              <Numeral size={44} color={lead ? c.red : c.muted}>{pad2(i + 1)}</Numeral>
+              <View style={{ flex: 1, paddingTop: 4 }}>
+                <Heading size={22}>{p.name}{p.id === me?.id ? ' (you)' : ''}</Heading>
+                <T muted size={13}>
+                  {fmt(p.today)} today · {p.last ? ago(p.last) : 'no data yet'}{p.device_label ? ` · ${p.device_label}` : ''}
+                </T>
+                <View style={{ height: 3, backgroundColor: c.hair, marginTop: 8 }}>
+                  <View style={{ height: 3, backgroundColor: lead ? c.red : c.ink, width: `${(p.total / top) * 100}%` }} />
+                </View>
               </View>
-              <T size={20} bold>{fmt(p.total)}</T>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Numeral size={36}>{fmt(p.total)}</Numeral>
+                {gap > 0 && <T muted size={12}>-{fmt(gap)}</T>}
+              </View>
             </View>
           );
         })}
-      </Card>
+      </View>
+
       {comp && (
-        <Card>
-          <T muted>Invite code</T>
-          <T size={28} bold style={{ letterSpacing: 4 }}>{comp.join_code}</T>
-          <Button title="Share invite" onPress={() => Share.share({ message: `Join my step competition "${comp.name}" in the Step Competition app. Code: ${comp.join_code}` })} />
-        </Card>
+        <Section label="Invite code">
+          <Numeral size={56}>{comp.join_code}</Numeral>
+          <Button title="Send to a friend" onPress={() => Share.share({ message: `Join "${comp.name}" in Step Competition. Code: ${comp.join_code}` })} />
+        </Section>
       )}
-      <Button title="Leave competition" kind="plain" onPress={leave} />
+      <Button title="Leave" kind="plain" onPress={leave} />
     </ScrollView>
   );
 }

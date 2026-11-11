@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Button, Card, Input, T, useColors } from '../components/ui';
+import { Button, Input, Section, T, useColors } from '../components/ui';
 import { errorText, supabase } from '../lib/supabase';
 
 export default function Join() {
@@ -19,14 +19,13 @@ export default function Join() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.bg, padding: 16 }}>
-      <Card>
-        <T bold>Invite code</T>
+    <View style={{ flex: 1, backgroundColor: c.bg, padding: 20 }}>
+      <Section label="Invite code">
         <Input value={code} onChangeText={(t) => setCode(t.toUpperCase())} placeholder="ABC123" autoCapitalize="characters" autoCorrect={false} maxLength={6}
-          style={{ fontSize: 28, letterSpacing: 6, textAlign: 'center' }} />
+          style={{ fontSize: 34, letterSpacing: 10, textAlign: 'center' }} />
         <Button title="Join" onPress={join} busy={busy} />
-        {!!msg && <T color={c.danger}>{msg}</T>}
-      </Card>
+        {!!msg && <T color={c.red}>{msg}</T>}
+      </Section>
     </View>
   );
 }

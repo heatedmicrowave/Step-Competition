@@ -1,7 +1,7 @@
 import { Redirect } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { Button, Card, Input, T, useColors } from '../components/ui';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { Button, Input, Label, Numeral, Section, T, useColors } from '../components/ui';
 import { useAuth } from '../lib/auth';
 import { errorText, supabase } from '../lib/supabase';
 
@@ -26,33 +26,34 @@ export default function SignIn() {
     const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: 'email' });
     setBusy(false);
     if (error) setMsg(errorText(error));
-    // On success the auth listener sends us to the home screen.
   }
 
   if (session) return <Redirect href="/" />;
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: c.bg }}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingTop: 32 }} keyboardShouldPersistTaps="handled">
-        <T size={30} bold>👟 Step Competition</T>
-        <T muted style={{ marginTop: 6, marginBottom: 24 }}>Race your friends on steps, whatever watch they wear.</T>
-        <Card>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 96 }} keyboardShouldPersistTaps="handled">
+        <View style={{ borderWidth: 2, borderColor: c.ink, padding: 16, marginBottom: 40 }}>
+          <Label color={c.red}>Step Competition</Label>
+          <Numeral size={112}>10,000</Numeral>
+          <T muted>Steps against your friends, whatever watch they wear.</T>
+        </View>
+        <Section label={sent ? `Code sent to ${email.trim()}` : 'Sign in'}>
           {!sent ? (
             <>
-              <T bold>Your email</T>
-              <Input value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" autoComplete="email" />
-              <Button title="Send me a code" onPress={sendCode} busy={busy} />
+              <Input value={email} onChangeText={setEmail} placeholder="Email" keyboardType="email-address" autoCapitalize="none" autoComplete="email" />
+              <Button title="Send code" onPress={sendCode} busy={busy} />
             </>
           ) : (
             <>
-              <T bold>Enter the code we emailed to {email.trim()}</T>
-              <Input value={code} onChangeText={setCode} placeholder="123456" keyboardType="number-pad" autoComplete="one-time-code" maxLength={8} />
+              <Input value={code} onChangeText={setCode} placeholder="000000" keyboardType="number-pad" autoComplete="one-time-code" maxLength={8}
+                style={{ fontSize: 28, letterSpacing: 8, textAlign: 'center' }} />
               <Button title="Sign in" onPress={verify} busy={busy} />
-              <Button title="Use a different email" kind="plain" onPress={() => { setSent(false); setCode(''); }} />
+              <Button title="Different email" kind="plain" onPress={() => { setSent(false); setCode(''); }} />
             </>
           )}
-          {!!msg && <T color={c.danger}>{msg}</T>}
-        </Card>
+          {!!msg && <T color={c.red}>{msg}</T>}
+        </Section>
       </ScrollView>
     </KeyboardAvoidingView>
   );
