@@ -15,8 +15,8 @@ a 6-letter code.
 ## One-time backend setup
 
 1. Supabase → SQL Editor → run `../supabase/002_app.sql` (safe to re-run; the website keeps working).
-2. Supabase → Authentication → Emails → "Magic Link" template: add `{{ .Token }}` so the email
-   contains a 6-digit code the app asks for.
+2. Supabase → Authentication → URL Configuration → Redirect URLs: add `stepcompetition://**`
+   so the sign-in email's link opens the app.
 
 ## Running it on your iPhone
 
