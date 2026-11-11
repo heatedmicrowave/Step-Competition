@@ -70,7 +70,7 @@ export default function Settings() {
         <T bold>Where your steps come from</T>
         {healthAvailable() ? (
           <>
-            <T muted size={14}>Your watch app writes steps into Apple Health; pick it here so we count only its steps. Works for Garmin, Oura, WHOOP, Polar, Coros, Apple Watch and more.</T>
+            <T muted size={14}>Your watch app writes steps into Apple Health; pick it here so we count only its steps. Works for Garmin, Oura, WHOOP, Polar, Coros, Suunto, Xiaomi, Amazfit, Huawei, Apple Watch and more.</T>
             <Button title={sources ? 'Refresh list' : 'Connect Apple Health'} onPress={connect} busy={busy === 'health'} />
             {sources && (
               <>

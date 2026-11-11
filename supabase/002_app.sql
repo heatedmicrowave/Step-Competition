@@ -13,7 +13,8 @@ alter table players drop constraint if exists players_source_check;
 alter table players add constraint players_source_check check (source in (
   'garmin_shortcut', 'fitbit_google',            -- website era
   'apple_health', 'health_connect',              -- read on the phone by the app
-  'garmin', 'fitbit', 'oura', 'whoop', 'polar', 'coros', 'samsung', 'other'
+  'garmin', 'fitbit', 'oura', 'whoop', 'polar', 'coros', 'suunto', 'withings',
+  'xiaomi', 'amazfit', 'huawei', 'samsung', 'other'
 ));
 -- Which device the steps come from, as shown to other players (e.g. "Garmin Connect").
 alter table players add column if not exists device_label text;

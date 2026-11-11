@@ -1,6 +1,6 @@
 // Reads daily step totals from Apple Health (iOS).
-// Garmin Connect, Oura, Whoop, Polar, Coros, Samsung and the iPhone/Apple Watch all write steps
-// into Apple Health, so one integration covers most watches. Fitbit does not, and gets its own
+// Garmin Connect, Oura, WHOOP, Polar, Coros, Suunto, Withings, Xiaomi (Mi Fitness), Amazfit (Zepp),
+// Huawei Health and the iPhone/Apple Watch all write steps into Apple Health, so one integration covers most watches. Fitbit does not, and gets its own
 // server-side connection later.
 import { Platform } from 'react-native';
 import {
@@ -20,13 +20,19 @@ export type DayTotal = { day: string; steps: number };
 /** Picks a known brand from the app that wrote the steps. */
 export function brandOf(bundleId: string, name: string): string {
   const s = `${bundleId} ${name}`.toLowerCase();
-  if (s.includes('garmin')) return 'garmin';
-  if (s.includes('oura')) return 'oura';
-  if (s.includes('whoop')) return 'whoop';
-  if (s.includes('polar')) return 'polar';
-  if (s.includes('coros')) return 'coros';
-  if (s.includes('samsung')) return 'samsung';
-  if (s.includes('fitbit')) return 'fitbit';
+  const has = (...words: string[]) => words.some((w) => s.includes(w));
+  if (has('garmin')) return 'garmin';
+  if (has('oura')) return 'oura';
+  if (has('whoop')) return 'whoop';
+  if (has('polar')) return 'polar';
+  if (has('coros')) return 'coros';
+  if (has('suunto')) return 'suunto';
+  if (has('withings')) return 'withings';
+  if (has('xiaomi', 'mi fitness', 'mifit', 'zepp life')) return 'xiaomi'; // Mi Band
+  if (has('zepp', 'amazfit', 'huami')) return 'amazfit';
+  if (has('huawei')) return 'huawei';
+  if (has('samsung')) return 'samsung';
+  if (has('fitbit')) return 'fitbit';
   return 'apple_health';
 }
 
