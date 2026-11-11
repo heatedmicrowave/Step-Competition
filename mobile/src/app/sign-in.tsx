@@ -1,58 +1,49 @@
 import { Redirect } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { Button, Card, Input, T, useColors } from '../components/ui';
-import { useAuth } from '../lib/auth';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { Button, Input, Label, Numeral, Section, T, useColors } from '../components/ui';
+import { signInRedirect, useAuth } from '../lib/auth';
 import { errorText, supabase } from '../lib/supabase';
 
-// Email + 6-digit code. No passwords, no links to tap.
+// Email link sign-in: no passwords. Supabase's default email works as is.
 export default function SignIn() {
   const c = useColors();
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const { session } = useAuth();
 
-  async function sendCode() {
+  async function sendLink() {
     setBusy(true); setMsg('');
-    const { error } = await supabase.auth.signInWithOtp({ email: email.trim() });
+    const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: signInRedirect } });
     setBusy(false);
     if (error) setMsg(errorText(error)); else setSent(true);
   }
-  async function verify() {
-    setBusy(true); setMsg('');
-    const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: 'email' });
-    setBusy(false);
-    if (error) setMsg(errorText(error));
-    // On success the auth listener sends us to the home screen.
-  }
-
   if (session) return <Redirect href="/" />;
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: c.bg }}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingTop: 32 }} keyboardShouldPersistTaps="handled">
-        <T size={30} bold>👟 Step Competition</T>
-        <T muted style={{ marginTop: 6, marginBottom: 24 }}>Race your friends on steps, whatever watch they wear.</T>
-        <Card>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 96 }} keyboardShouldPersistTaps="handled">
+        <View style={{ borderWidth: 2, borderColor: c.ink, padding: 16, marginBottom: 40 }}>
+          <Label color={c.red}>Step Competition</Label>
+          <Numeral size={112}>10,000</Numeral>
+          <T muted>Steps against your friends, whatever watch they wear.</T>
+        </View>
+        <Section label={sent ? `Link sent to ${email.trim()}` : 'Sign in'}>
           {!sent ? (
             <>
-              <T bold>Your email</T>
-              <Input value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" autoComplete="email" />
-              <Button title="Send me a code" onPress={sendCode} busy={busy} />
+              <Input value={email} onChangeText={setEmail} placeholder="Email" keyboardType="email-address" autoCapitalize="none" autoComplete="email" />
+              <Button title="Email me a link" onPress={sendLink} busy={busy} />
             </>
           ) : (
             <>
-              <T bold>Enter the code we emailed to {email.trim()}</T>
-              <Input value={code} onChangeText={setCode} placeholder="123456" keyboardType="number-pad" autoComplete="one-time-code" maxLength={8} />
-              <Button title="Sign in" onPress={verify} busy={busy} />
-              <Button title="Use a different email" kind="plain" onPress={() => { setSent(false); setCode(''); }} />
+              <T>Open the email on this phone and tap Sign in. It brings you straight back here.</T>
+              <Button title="Different email" kind="plain" onPress={() => setSent(false)} />
             </>
           )}
-          {!!msg && <T color={c.danger}>{msg}</T>}
-        </Card>
+          {!!msg && <T color={c.red}>{msg}</T>}
+        </Section>
       </ScrollView>
     </KeyboardAvoidingView>
   );

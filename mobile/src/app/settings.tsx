@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { Button, Card, fmt, Input, T, useColors } from '../components/ui';
+import { Button, fmt, Heading, Input, Label, Section, T, useColors } from '../components/ui';
 import { useAuth } from '../lib/auth';
 import { askForStepAccess, brandOf, healthAvailable, listStepSources, StepSource } from '../lib/health';
 import { errorText, supabase } from '../lib/supabase';
@@ -59,22 +59,20 @@ export default function Settings() {
   }
 
   return (
-    <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ padding: 16 }} keyboardShouldPersistTaps="handled">
-      <Card>
-        <T bold>Your name on leaderboards</T>
+    <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
+      <Section label="Name on the leaderboard">
         <Input value={name} onChangeText={setName} placeholder="e.g. Heated microwave" />
         <Button title="Save" onPress={saveName} busy={busy === 'name'} />
-      </Card>
+      </Section>
 
-      <Card>
-        <T bold>Where your steps come from</T>
+      <Section label="Steps come from">
         {healthAvailable() ? (
           <>
-            <T muted size={14}>Your watch app writes steps into Apple Health; pick it here so we count only its steps. Works for Garmin, Oura, WHOOP, Polar, Coros, Suunto, Xiaomi, Amazfit, Huawei, Apple Watch and more.</T>
+            <T muted size={14}>Pick your watch's app so only its steps count. Garmin, Oura, WHOOP, Polar, Coros, Suunto, Xiaomi, Amazfit, Huawei and Apple Watch all show up here once they sync to Apple Health.</T>
             <Button title={sources ? 'Refresh list' : 'Connect Apple Health'} onPress={connect} busy={busy === 'health'} />
             {sources && (
               <>
-                <SourceRow label="All of Apple Health" detail="Apple's combined total" selected={chosen === null} onPress={() => pick(null)} />
+                <SourceRow label="All of Apple Health" detail="combined" selected={chosen === null} onPress={() => pick(null)} />
                 {sources.map((s) => (
                   <SourceRow key={s.bundleId} label={s.name} detail={`${fmt(s.todaySteps)} today`} selected={chosen === s.bundleId} onPress={() => pick(s)} />
                 ))}
@@ -82,16 +80,15 @@ export default function Settings() {
             )}
           </>
         ) : (
-          <T muted size={14}>Apple Health isn't available here. Android (Health Connect) and Fitbit are coming.</T>
+          <T muted size={14}>Apple Health isn't available here. Android and Fitbit come later.</T>
         )}
-      </Card>
+      </Section>
 
-      <Card>
-        <T bold>Coming from the website?</T>
-        <T muted size={14}>Paste your old secret key to bring your step history and competitions into this account.</T>
+      <Section label="Used the website before?">
+        <T muted size={14}>Paste your old secret key to bring over your history and competitions.</T>
         <Input value={key} onChangeText={setKey} placeholder="Secret key" autoCapitalize="none" autoCorrect={false} />
         <Button title="Link" kind="plain" onPress={link} busy={busy === 'link'} />
-      </Card>
+      </Section>
 
       {!!msg && <T style={{ marginBottom: 14 }}>{msg}</T>}
       <View style={{ gap: 10 }}>
@@ -105,9 +102,10 @@ export default function Settings() {
 function SourceRow({ label, detail, selected, onPress }: { label: string; detail: string; selected: boolean; onPress: () => void }) {
   const c = useColors();
   return (
-    <Pressable onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderTopWidth: 1, borderColor: c.line }}>
-      <View style={{ flex: 1 }}><T>{label}</T><T muted size={13}>{detail}</T></View>
-      <T size={20} color={c.accent}>{selected ? '●' : '○'}</T>
+    <Pressable onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderColor: c.hair }}>
+      <View style={{ width: 14, height: 14, borderWidth: 1.5, borderColor: selected ? c.red : c.ink, backgroundColor: selected ? c.red : 'transparent' }} />
+      <View style={{ flex: 1 }}><Heading size={20}>{label}</Heading></View>
+      <Label>{detail}</Label>
     </Pressable>
   );
 }
