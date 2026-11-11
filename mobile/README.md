@@ -1,0 +1,35 @@
+# Step Competition app (iPhone first, Android next)
+
+Expo / React Native app on the same Supabase project as the website. Anyone signs in with
+their email, picks which watch their steps come from, and starts or joins competitions with
+a 6-letter code.
+
+## How steps get in
+
+| Watch | Route | Status |
+|---|---|---|
+| Garmin, Oura, WHOOP, Polar, Coros, Apple Watch, iPhone | Read from Apple Health on the phone (HealthKit), filtered to that brand's app so the number matches the watch | built |
+| Android phones (any brand) | Health Connect | next |
+| Fitbit | Google Health API on the server (Fitbit doesn't write into Apple Health) | later |
+
+## One-time backend setup
+
+1. Supabase → SQL Editor → run `../supabase/002_app.sql` (safe to re-run; the website keeps working).
+2. Supabase → Authentication → Emails → "Magic Link" template: add `{{ .Token }}` so the email
+   contains a 6-digit code the app asks for.
+
+## Running it on your iPhone
+
+HealthKit doesn't work in Expo Go, so the app needs its own build.
+
+- **Free, Mac + cable:** `npm install`, then `npx expo run:ios --device` (Xcode signs it with your
+  free Apple ID; it has to be reinstalled every 7 days).
+- **Friends' phones / App Store:** needs the Apple Developer Program ($99/year), then
+  `npx eas-cli build -p ios` and TestFlight.
+
+## Layout
+
+- `src/app/`: screens (Expo Router). `index` home, `sign-in`, `settings` (name + watch),
+  `new`, `join`, `competition/[id]` leaderboard.
+- `src/lib/health.ts`: Apple Health reads. `src/lib/sync.ts`: uploads the last 7 days.
+- `src/lib/supabase.ts`: client; project URL and publishable key live in `app.json` → `extra`.

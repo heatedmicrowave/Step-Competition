@@ -11,7 +11,13 @@ A free leaderboard for step competitions among friends. It's a web page you add 
 5. **Garmin users**: follow `docs/garmin-shortcut.md`.
 6. Start a competition from the site.
 
+## The app
+
+`mobile/` is the downloadable app that's replacing this: any watch, sign in with email, join competitions by code. See `mobile/README.md`. It uses the same database (`supabase/002_app.sql`), so the website and Shortcut keep working meanwhile.
+
 ## Layout
 - `supabase/schema.sql`: tables, read-only access for the site, and key-checked functions for writes
 - `site/`: the leaderboard (plain HTML + supabase-js, no build step)
+- `supabase/002_app.sql`: app accounts, any step source, join codes
+- `mobile/`: the Expo app
 - `docs/garmin-shortcut.md`: iPhone Shortcut that sends Garmin Connect's step count
