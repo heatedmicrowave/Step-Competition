@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "Step Competition",
+    "slug": "step-competition",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.heatedmicrowave.stepcompetition"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.heatedmicrowave.stepcompetition"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          "NSHealthShareUsageDescription": "Step Competition reads your daily step count so it can put you on your competitions' leaderboards.",
+          "NSHealthUpdateUsageDescription": false,
+          "background": true
+        }
+      ]
+    ],
+    "scheme": "stepcompetition",
+    "extra": {
+      "supabaseUrl": "https://rzkcrgihokfnyjazjtwh.supabase.co",
+      "supabaseKey": "sb_publishable_kvp1jafJOXqE9_1aHFvS-A_hmd30Gbx"
+    }
+  }
+}
