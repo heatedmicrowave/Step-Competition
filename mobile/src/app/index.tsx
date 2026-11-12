@@ -5,12 +5,14 @@ import { Button, fmt, Heading, Label, Numeral, Section, T, useColors } from '../
 import { useAuth } from '../lib/auth';
 import { healthAvailable } from '../lib/health';
 import { Competition, errorText, isoDay, supabase } from '../lib/supabase';
-import { connectFitbit, fitbitStatus } from '../lib/fitbit';
+import { connectFitbit, fitbitError, fitbitStatus } from '../lib/fitbit';
+import { useT } from '../lib/i18n';
 import { syncSteps } from '../lib/sync';
 
 export default function Home() {
   const c = useColors();
   const { session, me, loading } = useAuth();
+  const { t, locale } = useT();
   const [comps, setComps] = useState<Competition[] | null>(null);
   const [today, setToday] = useState<number | null>(null);
   const [status, setStatus] = useState('');
@@ -30,9 +32,9 @@ export default function Home() {
         const st = await fitbitStatus();
         setReconnect(!!st?.needs_reconnect);
       }
-      setStatus(steps === null && !fitbit ? 'Not connected to Apple Health' : `Synced ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`);
+      setStatus(steps === null && !fitbit ? t.notConnectedHealth : t.synced(new Date().toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })));
     } catch (e) {
-      setStatus(`Sync failed: ${errorText(e)}`);
+      setStatus(t.syncFailed(errorText(e)));
     }
     const { data, error } = await supabase
       .from('competitions')
@@ -41,7 +43,7 @@ export default function Home() {
       .order('end_day', { ascending: false });
     if (error) setStatus(errorText(error));
     else setComps(data as unknown as Competition[]);
-  }, [me?.id]);
+  }, [me?.id, t, locale]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
   // Sync again every time the app comes back to the front.
@@ -52,7 +54,7 @@ export default function Home() {
 
   if (loading) return <View style={{ flex: 1, justifyContent: 'center', backgroundColor: c.bg }}><ActivityIndicator color={c.ink} /></View>;
   if (!session) return <Redirect href="/sign-in" />;
-  if (!me) return <View style={{ flex: 1, padding: 20, backgroundColor: c.bg }}><T>Couldn't load your profile. Pull down to retry.</T></View>;
+  if (!me) return <View style={{ flex: 1, padding: 20, backgroundColor: c.bg }}><T>{t.profileFailed}</T></View>;
   if (me.name === 'New player') return <Redirect href="/welcome" />;
 
   const now = isoDay(new Date());
@@ -70,46 +72,47 @@ export default function Home() {
           <Label>{me.name}{me.device_label ? ` · ${me.device_label}` : ''}</Label>
           <Numeral size={104}>{today === null ? '—' : fmt(today)}</Numeral>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <T muted size={14}>Steps today</T>
+            <T muted size={14}>{t.stepsToday}</T>
             <T muted size={14}>{status}</T>
           </View>
-          {!healthAvailable() && me.source !== 'fitbit' && <T muted size={14}>Apple Health isn't available on this device.</T>}
+          {!healthAvailable() && me.source !== 'fitbit' && <T muted size={14}>{t.noHealth}</T>}
         </Pressable>
       </Link>
 
       {reconnect && (
         <Section label="Fitbit">
-          <T>Google needs you to sign in again so your steps keep counting.</T>
-          <Button title="Reconnect Fitbit" onPress={async () => { const r = await connectFitbit(); if (r.ok) load(); else setStatus(r.message); }} />
+          <T>{t.fitbitReconnectBody}</T>
+          <Button title={t.reconnectFitbit} onPress={async () => { const r = await connectFitbit(); if (r.ok) load(); else setStatus(fitbitError(t, r.code)); }} />
         </Section>
       )}
 
       <View style={{ flexDirection: 'row', gap: 10, marginBottom: 32 }}>
-        <View style={{ flex: 1 }}><Button title="Start one" onPress={() => router.push('/new')} /></View>
-        <View style={{ flex: 1 }}><Button title="Join" kind="plain" onPress={() => router.push('/join')} /></View>
+        <View style={{ flex: 1 }}><Button title={t.startOne} onPress={() => router.push('/new')} /></View>
+        <View style={{ flex: 1 }}><Button title={t.join} kind="plain" onPress={() => router.push('/join')} /></View>
       </View>
 
       {comps === null ? <ActivityIndicator color={c.ink} /> : (
         <>
-          <Section label="Running">
-            {live.length === 0 ? <T muted>Nothing running. Start one and send your friends the code.</T> : live.map((x) => <CompRow key={x.id} comp={x} />)}
+          <Section label={t.running}>
+            {live.length === 0 ? <T muted>{t.nothingRunning}</T> : live.map((x) => <CompRow key={x.id} comp={x} />)}
           </Section>
-          {past.length > 0 && <Section label="Finished">{past.map((x) => <CompRow key={x.id} comp={x} />)}</Section>}
+          {past.length > 0 && <Section label={t.finished}>{past.map((x) => <CompRow key={x.id} comp={x} />)}</Section>}
         </>
       )}
     </ScrollView>
   );
 }
 
-function shortDate(iso: string) {
-  return new Date(iso + 'T12:00:00').toLocaleDateString([], { month: 'short', day: 'numeric' });
+function shortDate(iso: string, locale: string | undefined) {
+  return new Date(iso + 'T12:00:00').toLocaleDateString(locale, { month: 'short', day: 'numeric' });
 }
 
 function CompRow({ comp }: { comp: Competition }) {
   const c = useColors();
+  const { t, locale } = useT();
   const now = isoDay(new Date());
   const daysLeft = Math.round((new Date(comp.end_day + 'T12:00:00').getTime() - new Date(now + 'T12:00:00').getTime()) / 86400000) + 1;
-  const right = now < comp.start_day ? `Starts ${shortDate(comp.start_day)}` : now > comp.end_day ? shortDate(comp.end_day) : daysLeft === 1 ? 'Last day' : `${daysLeft} days left`;
+  const right = now < comp.start_day ? t.startsOn(shortDate(comp.start_day, locale)) : now > comp.end_day ? shortDate(comp.end_day, locale) : daysLeft === 1 ? t.lastDay : t.daysLeft(daysLeft);
   return (
     <Link href={{ pathname: '/competition/[id]', params: { id: comp.id } }} asChild>
       <Pressable style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderColor: c.hair, opacity: pressed ? 0.6 : 1 })}>

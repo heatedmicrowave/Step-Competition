@@ -45,11 +45,11 @@ export async function startBackgroundSync() {
   await watchSteps(() => { syncSteps().catch(() => {}); });
 }
 
-export type ConnectResult = { ok: true; label: string } | { ok: false; fix: string };
+export type ConnectResult = { ok: true; label: string } | { ok: false };
 
 /**
  * Connect a chosen device through Apple Health: Apple's Allow sheet, then we look for that
- * brand's app among the step sources. If it isn't there yet, return the one-line fix.
+ * brand's app among the step sources. If it isn't there yet, the screen shows the one-line fix.
  */
 export async function connectDevice(d: Device): Promise<ConnectResult> {
   await askForStepAccess();
@@ -58,12 +58,13 @@ export async function connectDevice(d: Device): Promise<ConnectResult> {
   const sources = await listStepSources();
   const found = sources.find((s) => matchesDevice(d, s.bundleId, s.name));
   if (!found && d.id !== 'apple_health' && d.id !== 'other') {
-    return { ok: false, fix: d.fix ?? `Make sure your ${d.name} app shares steps with Apple Health.` };
+    return { ok: false };
   }
   // Apple Watch / iPhone: use Apple's combined total, which already de-duplicates the two.
   const useSource = d.id === 'apple_health' || d.id === 'other' ? null : found!;
   await setChosenSource(useSource?.bundleId ?? null);
-  const label = useSource ? useSource.name : d.name;
+  // Shown to other players, so keep it language-free.
+  const label = useSource ? useSource.name : d.id === 'other' ? 'iPhone' : d.name;
   const { error } = await supabase.rpc('app_set_source', { p_source: d.id, p_device_label: label });
   if (error) throw error;
   await syncSteps();
