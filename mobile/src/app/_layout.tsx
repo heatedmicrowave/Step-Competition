@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useColorScheme, View } from 'react-native';
 import { font, useColors } from '../components/ui';
 import { AuthProvider } from '../lib/auth';
+import { LanguageProvider, useT } from '../lib/i18n';
 
 export default function RootLayout() {
   const dark = useColorScheme() === 'dark';
@@ -16,8 +17,20 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={theme}>
-      <AuthProvider>
-        <StatusBar style="auto" />
+      <LanguageProvider>
+        <AuthProvider>
+          <StatusBar style="auto" />
+          <Screens />
+        </AuthProvider>
+      </LanguageProvider>
+    </ThemeProvider>
+  );
+}
+
+function Screens() {
+  const c = useColors();
+  const { t } = useT();
+  return (
         <Stack
           screenOptions={{
             headerBackButtonDisplayMode: 'minimal',
@@ -31,11 +44,9 @@ export default function RootLayout() {
           <Stack.Screen name="sign-in" options={{ headerShown: false }} />
           <Stack.Screen name="welcome" options={{ headerShown: false }} />
           <Stack.Screen name="competition/[id]" options={{ title: '' }} />
-          <Stack.Screen name="new" options={{ title: 'NEW COMPETITION', presentation: 'modal' }} />
-          <Stack.Screen name="join" options={{ title: 'JOIN', presentation: 'modal' }} />
-          <Stack.Screen name="settings" options={{ title: 'YOU' }} />
+          <Stack.Screen name="new" options={{ title: t.titleNew, presentation: 'modal' }} />
+          <Stack.Screen name="join" options={{ title: t.titleJoin, presentation: 'modal' }} />
+          <Stack.Screen name="settings" options={{ title: t.titleYou }} />
         </Stack>
-      </AuthProvider>
-    </ThemeProvider>
   );
 }

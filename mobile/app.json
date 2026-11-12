@@ -10,7 +10,8 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.heatedmicrowave.stepcompetition",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleAllowMixedLocalizations": true
       }
     },
     "android": {
@@ -45,6 +46,11 @@
         "projectId": "37f446d3-68ab-4e01-8e97-3aab84e8db75"
       }
     },
-    "owner": "heatedmicrowave"
+    "owner": "heatedmicrowave",
+    "locales": {
+      "it": "./locales/it.json",
+      "es": "./locales/es.json",
+      "ja": "./locales/ja.json"
+    }
   }
 }

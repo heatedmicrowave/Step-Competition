@@ -3,16 +3,18 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { Button, font, Heading, Input, Label, T, useColors } from '../components/ui';
 import { useAuth } from '../lib/auth';
-import { Device, DEVICES } from '../lib/devices';
+import { Device, deviceName, DEVICES, fixFor } from '../lib/devices';
 import { healthAvailable } from '../lib/health';
 import { errorText } from '../lib/supabase';
-import { connectFitbit } from '../lib/fitbit';
+import { connectFitbit, fitbitError } from '../lib/fitbit';
+import { useT } from '../lib/i18n';
 import { connectDevice, setRoute } from '../lib/sync';
 
 // First run: your name, then "What do you wear?" Tap it, approve once, you're in.
 export default function Welcome() {
   const c = useColors();
   const { me, reloadMe } = useAuth();
+  const { t } = useT();
   const [step, setStep] = useState<'name' | 'device' | 'fix'>(me && me.name !== 'New player' ? 'device' : 'name');
   const [name, setName] = useState('');
   const [device, setDevice] = useState<Device | null>(null);
@@ -21,7 +23,7 @@ export default function Welcome() {
   const [msg, setMsg] = useState('');
 
   async function saveName() {
-    if (!name.trim()) { setMsg('Add a name first.'); return; }
+    if (!name.trim()) { setMsg(t.addName); return; }
     setBusy('name'); setMsg('');
     await reloadMe(name.trim());
     setBusy(null); setStep('device');
@@ -33,14 +35,14 @@ export default function Welcome() {
       if (d.route === 'fitbit') {
         const r = await connectFitbit();
         if (r.ok) { await setRoute('fitbit'); await reloadMe(); router.replace('/'); }
-        else { setFix(r.message); setStep('fix'); }
+        else { setFix(fitbitError(t, r.code)); setStep('fix'); }
       } else if (!healthAvailable()) {
-        setFix("This phone doesn't have Apple Health. The Android version is coming.");
+        setFix(t.noHealthPhone);
         setStep('fix');
       } else {
         const r = await connectDevice(d);
         if (r.ok) { await reloadMe(); router.replace('/'); }
-        else { setFix(r.fix); setStep('fix'); }
+        else { setFix(fixFor(t, d)); setStep('fix'); }
       }
     } catch (e) {
       setMsg(errorText(e));
@@ -53,20 +55,20 @@ export default function Welcome() {
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 88, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
         {step === 'name' && (
           <>
-            <Label color={c.red}>1 of 2</Label>
-            <Heading size={44}>What should we call you?</Heading>
+            <Label color={c.red}>{t.stepOf(1, 2)}</Label>
+            <Heading size={44}>{t.whatName}</Heading>
             <View style={{ gap: 10, marginTop: 24 }}>
-              <Input value={name} onChangeText={setName} placeholder="Name on the leaderboard" autoFocus returnKeyType="next" onSubmitEditing={saveName} />
-              <Button title="Next" onPress={saveName} busy={busy === 'name'} />
+              <Input value={name} onChangeText={setName} placeholder={t.nameOnBoard} autoFocus returnKeyType="next" onSubmitEditing={saveName} />
+              <Button title={t.next} onPress={saveName} busy={busy === 'name'} />
             </View>
           </>
         )}
 
         {step === 'device' && (
           <>
-            <Label color={c.red}>2 of 2</Label>
-            <Heading size={44}>What do you wear?</Heading>
-            <T muted style={{ marginTop: 6, marginBottom: 20 }}>Tap it, then Allow. That's it.</T>
+            <Label color={c.red}>{t.stepOf(2, 2)}</Label>
+            <Heading size={44}>{t.whatWear}</Heading>
+            <T muted style={{ marginTop: 6, marginBottom: 20 }}>{t.tapAllow}</T>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {DEVICES.map((d) => (
                 <Pressable
@@ -78,26 +80,26 @@ export default function Welcome() {
                   })}
                 >
                   <Text style={{ fontFamily: font.heading, fontSize: 24, textTransform: 'uppercase', color: busy === d.id ? c.bg : c.ink }}>
-                    {busy === d.id ? 'Connecting…' : d.name}
+                    {busy === d.id ? t.connecting : deviceName(t, d)}
                   </Text>
                 </Pressable>
               ))}
             </View>
-            {me?.device_label && <View style={{ marginTop: 20 }}><Button title="Keep my current device" kind="plain" onPress={() => router.replace('/')} /></View>}
+            {me?.device_label && <View style={{ marginTop: 20 }}><Button title={t.keepDevice} kind="plain" onPress={() => router.replace('/')} /></View>}
           </>
         )}
 
         {step === 'fix' && device && (
           <>
-            <Label color={c.red}>{device.name}</Label>
-            <Heading size={40}>One more thing</Heading>
+            <Label color={c.red}>{deviceName(t, device)}</Label>
+            <Heading size={40}>{t.oneMore}</Heading>
             <T style={{ marginTop: 12, marginBottom: 24 }}>{fix}</T>
             <View style={{ gap: 10 }}>
-              {device.route === 'apple_health' && healthAvailable() && device.id !== 'samsung' && (
-                <Button title="I did it, check again" onPress={() => pick(device)} busy={busy === device.id} />
+              {device.route === 'apple_health' && healthAvailable() && !device.androidOnly && (
+                <Button title={t.checkAgain} onPress={() => pick(device)} busy={busy === device.id} />
               )}
-              {device.route === 'fitbit' && <Button title="Try again" onPress={() => pick(device)} busy={busy === device.id} />}
-              <Button title="Pick a different device" kind="plain" onPress={() => setStep('device')} />
+              {device.route === 'fitbit' && <Button title={t.tryAgain} onPress={() => pick(device)} busy={busy === device.id} />}
+              <Button title={t.pickDifferent} kind="plain" onPress={() => setStep('device')} />
             </View>
           </>
         )}
