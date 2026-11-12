@@ -28,7 +28,7 @@ export default function SignIn() {
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: c.bg }}>
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 96 }} keyboardShouldPersistTaps="handled">
         <View style={{ borderWidth: 2, borderColor: c.ink, padding: 16, marginBottom: 40 }}>
-          <Label color={c.red}>Step Competition</Label>
+          <Label color={c.red}>Pass1</Label>
           <Numeral size={112}>10,000</Numeral>
           <T muted>{t.tagline}</T>
         </View>

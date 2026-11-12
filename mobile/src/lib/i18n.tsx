@@ -118,7 +118,7 @@ const en = {
   todaySteps: (n: string) => `${n} today`,
   noData: 'no data yet',
   sendFriend: 'Send to a friend',
-  shareMsg: (comp: string, code: string) => `Join "${comp}" in Step Competition. Code: ${code}`,
+  shareMsg: (comp: string, code: string) => `Join "${comp}" in Pass1. Code: ${code}`,
 
   // Messages from the server, by their exact English text
   server: {
@@ -229,7 +229,7 @@ const it: Strings = {
   todaySteps: (n) => `${n} oggi`,
   noData: 'ancora nessun dato',
   sendFriend: 'Invita un amico',
-  shareMsg: (comp, code) => `Unisciti alla sfida "${comp}" su Step Competition. Codice: ${code}`,
+  shareMsg: (comp, code) => `Unisciti alla sfida "${comp}" su Pass1. Codice: ${code}`,
 
   server: {
     'no competition with that code': 'Nessuna sfida con questo codice.',
@@ -338,7 +338,7 @@ const nap: Strings = {
   todaySteps: (n) => `${n} ogge`,
   noData: 'ancora niente',
   sendFriend: "Mannalo a n'amico",
-  shareMsg: (comp, code) => `Viene dint'â sfida "${comp}" ncopp' a Step Competition. Codice: ${code}`,
+  shareMsg: (comp, code) => `Viene dint'â sfida "${comp}" ncopp' a Pass1. Codice: ${code}`,
 
   server: {
     'no competition with that code': "Nun ce sta nisciuna sfida cu stu codice.",
@@ -446,7 +446,7 @@ const es: Strings = {
   todaySteps: (n) => `${n} hoy`,
   noData: 'sin datos aún',
   sendFriend: 'Invitar a un amigo',
-  shareMsg: (comp, code) => `Únete a "${comp}" en Step Competition. Código: ${code}`,
+  shareMsg: (comp, code) => `Únete a "${comp}" en Pass1. Código: ${code}`,
 
   server: {
     'no competition with that code': 'No hay ningún reto con ese código.',
@@ -554,7 +554,7 @@ const ja: Strings = {
   todaySteps: (n) => `今日 ${n}歩`,
   noData: 'データなし',
   sendFriend: '友だちを招待',
-  shareMsg: (comp, code) => `Step Competitionの「${comp}」に参加しよう！ 招待コード：${code}`,
+  shareMsg: (comp, code) => `Pass1の「${comp}」に参加しよう！ 招待コード：${code}`,
 
   server: {
     'no competition with that code': 'このコードのチャレンジは見つかりません。',
