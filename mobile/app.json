@@ -40,7 +40,11 @@
     "scheme": "stepcompetition",
     "extra": {
       "supabaseUrl": "https://rzkcrgihokfnyjazjtwh.supabase.co",
-      "supabaseKey": "sb_publishable_kvp1jafJOXqE9_1aHFvS-A_hmd30Gbx"
-    }
+      "supabaseKey": "sb_publishable_kvp1jafJOXqE9_1aHFvS-A_hmd30Gbx",
+      "eas": {
+        "projectId": "37f446d3-68ab-4e01-8e97-3aab84e8db75"
+      }
+    },
+    "owner": "heatedmicrowave"
   }
 }
