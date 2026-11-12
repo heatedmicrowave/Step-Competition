@@ -5,8 +5,9 @@ import { Button, font, Heading, Input, Label, T, useColors } from '../components
 import { useAuth } from '../lib/auth';
 import { Device, DEVICES } from '../lib/devices';
 import { healthAvailable } from '../lib/health';
-import { errorText, supabase } from '../lib/supabase';
-import { connectDevice } from '../lib/sync';
+import { errorText } from '../lib/supabase';
+import { connectFitbit } from '../lib/fitbit';
+import { connectDevice, setRoute } from '../lib/sync';
 
 // First run: your name, then "What do you wear?" Tap it, approve once, you're in.
 export default function Welcome() {
@@ -30,11 +31,9 @@ export default function Welcome() {
     setDevice(d); setMsg(''); setBusy(d.id);
     try {
       if (d.route === 'fitbit') {
-        // Fitbit sign-in (Google) is the next piece to build. Remember the choice so we can prompt later.
-        await supabase.rpc('app_set_source', { p_source: 'fitbit', p_device_label: 'Fitbit' });
-        await reloadMe();
-        setFix('Fitbit sign-in is coming in the next update. You can join and start competitions now, and your steps will show up once it lands.');
-        setStep('fix');
+        const r = await connectFitbit();
+        if (r.ok) { await setRoute('fitbit'); await reloadMe(); router.replace('/'); }
+        else { setFix(r.message); setStep('fix'); }
       } else if (!healthAvailable()) {
         setFix("This phone doesn't have Apple Health. The Android version is coming.");
         setStep('fix');
@@ -67,7 +66,7 @@ export default function Welcome() {
           <>
             <Label color={c.red}>2 of 2</Label>
             <Heading size={44}>What do you wear?</Heading>
-            <T muted style={{ marginTop: 6, marginBottom: 20 }}>Tap it. If Apple asks, tap Allow. That's it.</T>
+            <T muted style={{ marginTop: 6, marginBottom: 20 }}>Tap it, then Allow. That's it.</T>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {DEVICES.map((d) => (
                 <Pressable
@@ -97,7 +96,7 @@ export default function Welcome() {
               {device.route === 'apple_health' && healthAvailable() && device.id !== 'samsung' && (
                 <Button title="I did it, check again" onPress={() => pick(device)} busy={busy === device.id} />
               )}
-              {device.route === 'fitbit' && <Button title="Continue" onPress={() => router.replace('/')} />}
+              {device.route === 'fitbit' && <Button title="Try again" onPress={() => pick(device)} busy={busy === device.id} />}
               <Button title="Pick a different device" kind="plain" onPress={() => setStep('device')} />
             </View>
           </>
