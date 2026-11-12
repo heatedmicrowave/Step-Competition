@@ -9,6 +9,9 @@ import {
   queryStatisticsCollectionForQuantitySeparateBySource,
   querySources,
   requestAuthorization,
+  configureBackgroundTypes,
+  subscribeToChanges,
+  UpdateFrequency,
 } from '@kingstinct/react-native-healthkit';
 import { isoDay } from './supabase';
 
@@ -16,25 +19,6 @@ const STEPS = 'HKQuantityTypeIdentifierStepCount' as const;
 
 export type StepSource = { bundleId: string; name: string; todaySteps: number };
 export type DayTotal = { day: string; steps: number };
-
-/** Picks a known brand from the app that wrote the steps. */
-export function brandOf(bundleId: string, name: string): string {
-  const s = `${bundleId} ${name}`.toLowerCase();
-  const has = (...words: string[]) => words.some((w) => s.includes(w));
-  if (has('garmin')) return 'garmin';
-  if (has('oura')) return 'oura';
-  if (has('whoop')) return 'whoop';
-  if (has('polar')) return 'polar';
-  if (has('coros')) return 'coros';
-  if (has('suunto')) return 'suunto';
-  if (has('withings')) return 'withings';
-  if (has('xiaomi', 'mi fitness', 'mifit', 'zepp life')) return 'xiaomi'; // Mi Band
-  if (has('zepp', 'amazfit', 'huami')) return 'amazfit';
-  if (has('huawei')) return 'huawei';
-  if (has('samsung')) return 'samsung';
-  if (has('fitbit')) return 'fitbit';
-  return 'apple_health';
-}
 
 export function healthAvailable() {
   return Platform.OS === 'ios' && isHealthDataAvailable();
@@ -93,4 +77,14 @@ export async function readDailySteps(days: number, bundleId?: string | null): Pr
 
 function dayList(days: number) {
   return Array.from({ length: days }, (_, i) => isoDay(startOfDay(days - 1 - i)));
+}
+
+/**
+ * Calls onChange whenever new steps land in Apple Health, including when the app is closed:
+ * iOS wakes the app in the background (for steps, at most about once an hour) so it can upload.
+ * Only call after askForStepAccess(), or HealthKit crashes the app.
+ */
+export async function watchSteps(onChange: () => void) {
+  await configureBackgroundTypes([STEPS], UpdateFrequency.immediate);
+  return subscribeToChanges(STEPS, () => onChange());
 }

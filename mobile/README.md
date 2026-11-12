@@ -4,6 +4,12 @@ Expo / React Native app on the same Supabase project as the website. Anyone sign
 their email, picks which watch their steps come from, and starts or joins competitions with
 a 6-letter code.
 
+## Design goals
+
+- Fresh steps without opening the app (HealthKit background delivery).
+- One tap to connect: the app detects your watch itself.
+- Simple enough for anyone's dad. No emoji, no generic AI look.
+
 ## How steps get in
 
 | Watch | Route | Status |
