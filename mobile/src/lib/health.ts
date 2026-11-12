@@ -20,25 +20,6 @@ const STEPS = 'HKQuantityTypeIdentifierStepCount' as const;
 export type StepSource = { bundleId: string; name: string; todaySteps: number };
 export type DayTotal = { day: string; steps: number };
 
-/** Picks a known brand from the app that wrote the steps. */
-export function brandOf(bundleId: string, name: string): string {
-  const s = `${bundleId} ${name}`.toLowerCase();
-  const has = (...words: string[]) => words.some((w) => s.includes(w));
-  if (has('garmin')) return 'garmin';
-  if (has('oura')) return 'oura';
-  if (has('whoop')) return 'whoop';
-  if (has('polar')) return 'polar';
-  if (has('coros')) return 'coros';
-  if (has('suunto')) return 'suunto';
-  if (has('withings')) return 'withings';
-  if (has('xiaomi', 'mi fitness', 'mifit', 'zepp life')) return 'xiaomi'; // Mi Band
-  if (has('zepp', 'amazfit', 'huami')) return 'amazfit';
-  if (has('huawei')) return 'huawei';
-  if (has('samsung')) return 'samsung';
-  if (has('fitbit')) return 'fitbit';
-  return 'apple_health';
-}
-
 export function healthAvailable() {
   return Platform.OS === 'ios' && isHealthDataAvailable();
 }
@@ -106,11 +87,4 @@ function dayList(days: number) {
 export async function watchSteps(onChange: () => void) {
   await configureBackgroundTypes([STEPS], UpdateFrequency.immediate);
   return subscribeToChanges(STEPS, () => onChange());
-}
-
-/** The watch app to count: the busiest source that isn't the iPhone itself, else null (Apple's combined total). */
-export function pickWatch(sources: StepSource[]): StepSource | null {
-  const phoneOrWatch = (s: StepSource) => s.bundleId.startsWith('com.apple');
-  const watches = sources.filter((s) => !phoneOrWatch(s));
-  return watches[0] ?? null;
 }

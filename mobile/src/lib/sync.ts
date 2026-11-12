@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { askForStepAccess, brandOf, healthAvailable, listStepSources, pickWatch, readDailySteps, watchSteps } from './health';
+import { askForStepAccess, healthAvailable, listStepSources, readDailySteps, watchSteps } from './health';
+import { Device, matchesDevice } from './devices';
 import { supabase } from './supabase';
 
 const SOURCE_KEY = 'stepSourceBundleId';
@@ -22,28 +23,35 @@ export async function syncSteps(): Promise<number | null> {
   return days[days.length - 1]?.steps ?? 0;
 }
 
-/**
- * The whole "connect your watch" flow in one call: Apple's permission sheet, then we work out
- * which watch app you use (Garmin Connect, Oura, WHOOP...) and start syncing. No picker needed.
- * Returns the label shown to others, e.g. "Garmin Connect".
- */
-export async function connectHealth(): Promise<string> {
-  await askForStepAccess();
-  await AsyncStorage.setItem(ASKED_KEY, '1');
-  const watch = pickWatch(await listStepSources());
-  await setChosenSource(watch?.bundleId ?? null);
-  const label = watch ? watch.name : 'Apple Health';
-  const { error } = await supabase.rpc('app_set_source', { p_source: watch ? brandOf(watch.bundleId, watch.name) : 'apple_health', p_device_label: label });
-  if (error) throw error;
-  await syncSteps();
-  await startBackgroundSync();
-  return label;
-}
-
 let watching = false;
 /** Keeps steps uploading whenever Apple Health gets new ones. Safe to call on every launch. */
 export async function startBackgroundSync() {
   if (watching || !healthAvailable() || !(await AsyncStorage.getItem(ASKED_KEY))) return;
   watching = true;
   await watchSteps(() => { syncSteps().catch(() => {}); });
+}
+
+export type ConnectResult = { ok: true; label: string } | { ok: false; fix: string };
+
+/**
+ * Connect a chosen device through Apple Health: Apple's Allow sheet, then we look for that
+ * brand's app among the step sources. If it isn't there yet, return the one-line fix.
+ */
+export async function connectDevice(d: Device): Promise<ConnectResult> {
+  await askForStepAccess();
+  await AsyncStorage.setItem(ASKED_KEY, '1');
+  const sources = await listStepSources();
+  const found = sources.find((s) => matchesDevice(d, s.bundleId, s.name));
+  if (!found && d.id !== 'apple_health' && d.id !== 'other') {
+    return { ok: false, fix: d.fix ?? `Make sure your ${d.name} app shares steps with Apple Health.` };
+  }
+  // Apple Watch / iPhone: use Apple's combined total, which already de-duplicates the two.
+  const useSource = d.id === 'apple_health' || d.id === 'other' ? null : found!;
+  await setChosenSource(useSource?.bundleId ?? null);
+  const label = useSource ? useSource.name : d.name;
+  const { error } = await supabase.rpc('app_set_source', { p_source: d.id, p_device_label: label });
+  if (error) throw error;
+  await syncSteps();
+  await startBackgroundSync();
+  return { ok: true, label };
 }
