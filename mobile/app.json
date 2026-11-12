@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Step Competition",
+    "name": "Pass1",
     "slug": "step-competition",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -32,7 +32,7 @@
       [
         "@kingstinct/react-native-healthkit",
         {
-          "NSHealthShareUsageDescription": "Step Competition reads your daily step count so it can put you on your competitions' leaderboards.",
+          "NSHealthShareUsageDescription": "Pass1 reads your daily step count so it can put you on your competitions' leaderboards.",
           "NSHealthUpdateUsageDescription": false,
           "background": true
         }
