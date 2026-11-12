@@ -16,7 +16,7 @@ a 6-letter code.
 |---|---|---|
 | Garmin, Oura, WHOOP, Polar, Coros, Suunto, Withings, Xiaomi Mi Band (Mi Fitness / Zepp Life), Amazfit (Zepp), Huawei (Huawei Health), Apple Watch, iPhone | Read from Apple Health on the phone (HealthKit), filtered to that brand's app so the number matches the watch | built |
 | Android phones (any brand, incl. Samsung Galaxy Watch) | Health Connect | next |
-| Fitbit | Google Health API on the server (Fitbit doesn't write into Apple Health) | later |
+| Fitbit | One Google sign-in; the `fitbit` edge function reads the Google Health API every 15 min (Fitbit doesn't write into Apple Health). Setup: `docs/fitbit-setup.md` | built |
 
 ## One-time backend setup
 

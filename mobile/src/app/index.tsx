@@ -5,6 +5,7 @@ import { Button, fmt, Heading, Label, Numeral, Section, T, useColors } from '../
 import { useAuth } from '../lib/auth';
 import { healthAvailable } from '../lib/health';
 import { Competition, errorText, isoDay, supabase } from '../lib/supabase';
+import { connectFitbit, fitbitStatus } from '../lib/fitbit';
 import { syncSteps } from '../lib/sync';
 
 export default function Home() {
@@ -14,13 +15,22 @@ export default function Home() {
   const [today, setToday] = useState<number | null>(null);
   const [status, setStatus] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [reconnect, setReconnect] = useState(false);
 
   const load = useCallback(async () => {
     if (!me) return;
+    const fitbit = me.source === 'fitbit';
     try {
       const steps = await syncSteps();
       if (steps !== null) setToday(steps);
-      setStatus(steps === null ? 'Not connected to Apple Health' : `Synced ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`);
+      if (fitbit) {
+        // Fitbit steps arrive on the server; read today's back.
+        const { data: row } = await supabase.from('daily_steps').select('steps').eq('player_id', me.id).eq('day', isoDay(new Date())).maybeSingle();
+        setToday(row?.steps ?? 0);
+        const st = await fitbitStatus();
+        setReconnect(!!st?.needs_reconnect);
+      }
+      setStatus(steps === null && !fitbit ? 'Not connected to Apple Health' : `Synced ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`);
     } catch (e) {
       setStatus(`Sync failed: ${errorText(e)}`);
     }
@@ -63,9 +73,16 @@ export default function Home() {
             <T muted size={14}>Steps today</T>
             <T muted size={14}>{status}</T>
           </View>
-          {!healthAvailable() && <T muted size={14}>Apple Health isn't available on this device.</T>}
+          {!healthAvailable() && me.source !== 'fitbit' && <T muted size={14}>Apple Health isn't available on this device.</T>}
         </Pressable>
       </Link>
+
+      {reconnect && (
+        <Section label="Fitbit">
+          <T>Google needs you to sign in again so your steps keep counting.</T>
+          <Button title="Reconnect Fitbit" onPress={async () => { const r = await connectFitbit(); if (r.ok) load(); else setStatus(r.message); }} />
+        </Section>
+      )}
 
       <View style={{ flexDirection: 'row', gap: 10, marginBottom: 32 }}>
         <View style={{ flex: 1 }}><Button title="Start one" onPress={() => router.push('/new')} /></View>
