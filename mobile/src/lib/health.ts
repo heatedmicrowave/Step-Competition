@@ -16,6 +16,9 @@ import {
 import { isoDay } from './supabase';
 
 const STEPS = 'HKQuantityTypeIdentifierStepCount' as const;
+// Steps typed in by hand in the Health app ("Add Data") are saved under the Health app itself.
+// They never count: only steps a watch or phone actually measured.
+const TYPED_IN = 'com.apple.Health';
 
 export type StepSource = { bundleId: string; name: string; todaySteps: number };
 export type DayTotal = { day: string; steps: number };
@@ -44,12 +47,14 @@ export async function listStepSources(): Promise<StepSource[]> {
   const today = new Map<string, StepSource>();
   for (const r of rows) {
     const id = r.source.bundleIdentifier;
+    if (id === TYPED_IN) continue;
     const prev = today.get(id);
     today.set(id, { bundleId: id, name: r.source.name, todaySteps: (prev?.todaySteps ?? 0) + Math.round(r.sumQuantity?.quantity ?? 0) });
   }
   // Include sources that wrote nothing yet today.
   const week = await querySources(STEPS, { date: { startDate: startOfDay(7) } });
   for (const s of week) {
+    if (s.bundleIdentifier === TYPED_IN) continue;
     if (!today.has(s.bundleIdentifier)) today.set(s.bundleIdentifier, { bundleId: s.bundleIdentifier, name: s.name, todaySteps: 0 });
   }
   return [...today.values()].sort((a, b) => b.todaySteps - a.todaySteps);
@@ -58,17 +63,17 @@ export async function listStepSources(): Promise<StepSource[]> {
 /**
  * Daily totals for the last `days` days (today included).
  * With a bundleId, counts only that app's steps (e.g. only Garmin Connect), so the number
- * matches the watch. Without one, uses Apple Health's own de-duplicated total.
+ * matches the watch. Without one, uses Apple Health's de-duplicated total of every measuring
+ * source. Steps typed in by hand are always left out.
  */
 export async function readDailySteps(days: number, bundleId?: string | null): Promise<DayTotal[]> {
   const from = startOfDay(days - 1);
   const filter: any = { date: { startDate: from } };
-  if (bundleId) {
-    const sources = await querySources(STEPS, filter);
-    const match = sources.filter((s) => s.bundleIdentifier === bundleId);
-    if (match.length === 0) return dayList(days).map((day) => ({ day, steps: 0 }));
-    filter.sources = match;
-  }
+  const sources = await querySources(STEPS, filter);
+  const match = sources.filter((s) =>
+    bundleId ? s.bundleIdentifier === bundleId : s.bundleIdentifier !== TYPED_IN);
+  if (match.length === 0) return dayList(days).map((day) => ({ day, steps: 0 }));
+  filter.sources = match;
   const rows = await queryStatisticsCollectionForQuantity(STEPS, ['cumulativeSum'], from, { day: 1 }, { unit: 'count', filter });
   const byDay = new Map<string, number>();
   for (const r of rows) if (r.startDate) byDay.set(isoDay(new Date(r.startDate)), Math.round(r.sumQuantity?.quantity ?? 0));
