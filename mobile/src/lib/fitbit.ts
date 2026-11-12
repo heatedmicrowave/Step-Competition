@@ -20,7 +20,7 @@ async function call(path: string) {
 
 const ERRORS: Record<string, string> = {
   access_denied: 'Google sign-in was cancelled.',
-  not_linked: "That Google account doesn't have Fitbit data. Sign in with the Google account your Fitbit uses (in the Fitbit app, your account needs to be moved to Google).",
+  not_linked: "Your Fitbit isn't on a Google account yet. Open the Fitbit app, follow its prompt to move your account to Google, then come back and tap Try again.",
   expired: 'That took too long. Try again.',
   no_refresh_token: 'Google didn\'t give us lasting access. Try again.',
 };
