@@ -22,8 +22,7 @@ export default function Settings() {
   async function saveName() {
     if (!name.trim()) return;
     setBusy('name'); await reloadMe(name.trim()); setBusy('');
-    if (!sources && healthAvailable()) connect();
-    else router.replace('/');
+    setMsg('Saved.');
   }
 
   async function connect() {
@@ -68,8 +67,9 @@ export default function Settings() {
       <Section label="Steps come from">
         {healthAvailable() ? (
           <>
-            <T muted size={14}>Pick your watch's app so only its steps count. Garmin, Oura, WHOOP, Polar, Coros, Suunto, Xiaomi, Amazfit, Huawei and Apple Watch all show up here once they sync to Apple Health.</T>
-            <Button title={sources ? 'Refresh list' : 'Connect Apple Health'} onPress={connect} busy={busy === 'health'} />
+            <T muted size={14}>We picked your watch automatically. If it's wrong, change it here. Garmin, Oura, WHOOP, Polar, Coros, Suunto, Xiaomi, Amazfit, Huawei and Apple Watch all show up once they sync to Apple Health.</T>
+            <T>{me?.device_label ?? 'Not connected yet'}</T>
+            <Button title={sources ? 'Refresh list' : 'Change'} kind="plain" onPress={connect} busy={busy === 'health'} />
             {sources && (
               <>
                 <SourceRow label="All of Apple Health" detail="combined" selected={chosen === null} onPress={() => pick(null)} />

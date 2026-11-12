@@ -29,6 +29,7 @@ export default function RootLayout() {
         >
           <Stack.Screen name="index" options={{ title: '' }} />
           <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+          <Stack.Screen name="welcome" options={{ headerShown: false }} />
           <Stack.Screen name="competition/[id]" options={{ title: '' }} />
           <Stack.Screen name="new" options={{ title: 'NEW COMPETITION', presentation: 'modal' }} />
           <Stack.Screen name="join" options={{ title: 'JOIN', presentation: 'modal' }} />

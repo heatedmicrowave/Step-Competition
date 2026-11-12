@@ -2,6 +2,7 @@ import type { Session } from '@supabase/supabase-js';
 import * as Linking from 'expo-linking';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { Me, supabase } from './supabase';
+import { startBackgroundSync } from './sync';
 
 type AuthState = { session: Session | null; me: Me | null; loading: boolean; reloadMe: (name?: string) => Promise<void> };
 const Ctx = createContext<AuthState>({ session: null, me: null, loading: true, reloadMe: async () => {} });
@@ -28,6 +29,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => data.subscription.unsubscribe();
   }, []);
+
+  // Upload new steps whenever Apple Health gets them (also when iOS wakes the app in the background).
+  useEffect(() => {
+    if (me) startBackgroundSync().catch(() => {});
+  }, [me?.id]);
 
   useEffect(() => {
     if (!checked) return;

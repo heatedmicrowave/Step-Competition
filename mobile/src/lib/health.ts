@@ -9,6 +9,9 @@ import {
   queryStatisticsCollectionForQuantitySeparateBySource,
   querySources,
   requestAuthorization,
+  configureBackgroundTypes,
+  subscribeToChanges,
+  UpdateFrequency,
 } from '@kingstinct/react-native-healthkit';
 import { isoDay } from './supabase';
 
@@ -93,4 +96,21 @@ export async function readDailySteps(days: number, bundleId?: string | null): Pr
 
 function dayList(days: number) {
   return Array.from({ length: days }, (_, i) => isoDay(startOfDay(days - 1 - i)));
+}
+
+/**
+ * Calls onChange whenever new steps land in Apple Health, including when the app is closed:
+ * iOS wakes the app in the background (for steps, at most about once an hour) so it can upload.
+ * Only call after askForStepAccess(), or HealthKit crashes the app.
+ */
+export async function watchSteps(onChange: () => void) {
+  await configureBackgroundTypes([STEPS], UpdateFrequency.immediate);
+  return subscribeToChanges(STEPS, () => onChange());
+}
+
+/** The watch app to count: the busiest source that isn't the iPhone itself, else null (Apple's combined total). */
+export function pickWatch(sources: StepSource[]): StepSource | null {
+  const phoneOrWatch = (s: StepSource) => s.bundleId.startsWith('com.apple');
+  const watches = sources.filter((s) => !phoneOrWatch(s));
+  return watches[0] ?? null;
 }

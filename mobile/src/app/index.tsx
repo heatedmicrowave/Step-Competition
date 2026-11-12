@@ -1,6 +1,6 @@
 import { Link, Redirect, router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, AppState, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { Button, fmt, Heading, Label, Numeral, Section, T, useColors } from '../components/ui';
 import { useAuth } from '../lib/auth';
 import { healthAvailable } from '../lib/health';
@@ -34,11 +34,16 @@ export default function Home() {
   }, [me?.id]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
+  // Sync again every time the app comes back to the front.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (st) => { if (st === 'active') load(); });
+    return () => sub.remove();
+  }, [load]);
 
   if (loading) return <View style={{ flex: 1, justifyContent: 'center', backgroundColor: c.bg }}><ActivityIndicator color={c.ink} /></View>;
   if (!session) return <Redirect href="/sign-in" />;
   if (!me) return <View style={{ flex: 1, padding: 20, backgroundColor: c.bg }}><T>Couldn't load your profile. Pull down to retry.</T></View>;
-  if (me.name === 'New player') return <Redirect href="/settings" />;
+  if (me.name === 'New player') return <Redirect href="/welcome" />;
 
   const now = isoDay(new Date());
   const live = (comps ?? []).filter((x) => x.end_day >= now);
