@@ -11,7 +11,8 @@
       "bundleIdentifier": "com.heatedmicrowave.stepcompetition",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "CFBundleAllowMixedLocalizations": true
+        "CFBundleAllowMixedLocalizations": true,
+        "NSLocationWhenInUseUsageDescription": "Pass1 doesn't use your location. The map inside a challenge only shows the mountain or route you're racing on."
       }
     },
     "android": {

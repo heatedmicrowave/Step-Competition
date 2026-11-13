@@ -1,4 +1,5 @@
 {
   "NSHealthShareUsageDescription": "Pass1 lee tus pasos diarios para ponerte en la clasificación de tus competiciones.",
-  "NSHealthUpdateUsageDescription": "Pass1 solo lee tus pasos. Nunca escribe nada en Salud."
+  "NSHealthUpdateUsageDescription": "Pass1 solo lee tus pasos. Nunca escribe nada en Salud.",
+  "NSLocationWhenInUseUsageDescription": "Pass1 no usa tu ubicación. El mapa de un reto solo muestra la montaña o la ruta de la carrera."
 }
