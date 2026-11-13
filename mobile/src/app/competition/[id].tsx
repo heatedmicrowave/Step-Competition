@@ -1,6 +1,7 @@
 import { useLocalSearchParams, router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, RefreshControl, ScrollView, Share, Text, View } from 'react-native';
+import { ChallengeMap, hasMap } from '../../components/ChallengeMap';
 import { artFor, CLIMBER_COLORS, MountainArt, YOU_COLOR } from '../../components/Mountain';
 import { Bar, Button, Card, fmt, Label, Numeral, Section, T, Title, useColors } from '../../components/ui';
 import { course, position, progress, size } from '../../lib/courses';
@@ -86,9 +87,14 @@ export default function Leaderboard() {
 
       {comp && journey && (
         // The climb: everyone is a dot on the trail.
-        <View style={{ height: 360, borderRadius: 24, overflow: 'hidden', backgroundColor: '#1B1714', marginBottom: 20 }}>
+        <View style={{ height: hasMap(cs) ? 460 : 360, borderRadius: 24, overflow: 'hidden', backgroundColor: '#1B1714', marginBottom: 20 }}>
+          {hasMap(cs) ? (
+            <ChallengeMap course={cs} lang={lang} locale={locale} stepsWord={t.stepsWord}
+              climbers={standings.map((p, i) => ({ id: p.id, initial: (p.name.trim()[0] ?? '?').toUpperCase(), color: colors[i], steps: p.total, you: p.id === me?.id }))} />
+          ) : (
           <MountainArt art={artFor(cs.id)} showTrail viewBox={cs.kind === 'route' ? '0 0 390 520' : '0 10 390 500'} slice={false}
             climbers={standings.map((p, i) => ({ id: p.id, initial: (p.name.trim()[0] ?? '?').toUpperCase(), color: colors[i], frac: progress(cs, p.total) }))} />
+          )}
         </View>
       )}
 

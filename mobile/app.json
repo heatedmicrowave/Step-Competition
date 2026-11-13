@@ -36,7 +36,8 @@
           "NSHealthUpdateUsageDescription": "Pass1 only reads your steps. It never writes anything to Apple Health.",
           "background": true
         }
-      ]
+      ],
+      "@rnmapbox/maps"
     ],
     "scheme": "stepcompetition",
     "extra": {
