@@ -30,7 +30,7 @@ export default function NewCompetition() {
   }
 
   return (
-    <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
+    <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
       <Section label={t.name}>
         <Input value={name} onChangeText={setName} placeholder={t.compNamePlaceholder} />
       </Section>

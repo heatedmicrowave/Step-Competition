@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { ScrollView } from 'react-native';
 import { Button, Input, Section, T, useColors } from '../components/ui';
 import { errorIn, useT } from '../lib/i18n';
 import { supabase } from '../lib/supabase';
@@ -21,13 +21,13 @@ export default function Join() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.bg, padding: 20 }}>
+    <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
       <Section label={t.inviteCode}>
         <Input value={code} onChangeText={(t) => setCode(t.toUpperCase())} placeholder="ABC123" autoCapitalize="characters" autoCorrect={false} maxLength={6}
           style={{ fontSize: 34, letterSpacing: 10, textAlign: 'center' }} />
         <Button title={t.join} onPress={join} busy={busy} />
         {!!msg && <T color={c.red}>{msg}</T>}
       </Section>
-    </View>
+    </ScrollView>
   );
 }
