@@ -63,6 +63,7 @@ export default function Home() {
 
   return (
     <ScrollView
+      contentInsetAdjustmentBehavior="automatic"
       style={{ backgroundColor: c.bg }}
       contentContainerStyle={{ padding: 20, paddingTop: 4 }}
       refreshControl={<RefreshControl tintColor={c.ink} refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}

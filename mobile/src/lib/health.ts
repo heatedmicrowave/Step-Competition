@@ -55,7 +55,8 @@ export async function listStepSources(): Promise<StepSource[]> {
   const week = await querySources(STEPS, { date: { startDate: startOfDay(7) } });
   for (const s of week) {
     if (s.bundleIdentifier === TYPED_IN) continue;
-    if (!today.has(s.bundleIdentifier)) today.set(s.bundleIdentifier, { bundleId: s.bundleIdentifier, name: s.name, todaySteps: 0 });
+    // A source from querySources is a native object whose own `name` is "SourceProxy"; toJSON() has the app's real name.
+    if (!today.has(s.bundleIdentifier)) today.set(s.bundleIdentifier, { bundleId: s.bundleIdentifier, name: s.toJSON().name, todaySteps: 0 });
   }
   return [...today.values()].sort((a, b) => b.todaySteps - a.todaySteps);
 }

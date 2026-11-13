@@ -31,7 +31,7 @@ export default function Settings() {
   }
 
   return (
-    <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
+    <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
       <Section label={t.nameOnBoard}>
         <Input value={name} onChangeText={setName} placeholder={t.namePlaceholder} />
         <Button title={t.save} onPress={saveName} busy={busy === 'name'} />
