@@ -11,7 +11,8 @@ type WebViewHandle = { injectJavaScript: (js: string) => void; reload: () => voi
 const WebView = RNWebView as unknown as React.ComponentType<WebViewProps & { ref?: React.Ref<WebViewHandle> }>;
 
 export type WorldHiker = { id: string; n: string; name: string; c: string; st: number; today: number; watch: string; me?: boolean };
-export type WorldSign = { id: string; title: string; sub: string; kicker: string; detail: string; dots: [number, string][] };
+export type WorldSign = { id: string; title: string; sub: string; kicker: string; detail: string; dots: [number, string][]; rows: { rank: number; name: string; val: string; me?: boolean }[]; world?: boolean };
+export type WorldCourse = { id: string; name: string; sub: string; soon?: boolean };
 export type WorldBoard = { key: string; label: string; rows: { rank: number; name: string; sub: string; steps: number; me?: boolean }[] };
 export type WorldData = {
   lang: string;
@@ -31,8 +32,10 @@ export type WorldData = {
   signs: WorldSign[];
   climb: { id: string; name: string; goal: number; hikers: WorldHiker[] } | null;
   boards: WorldBoard[];
+  courses: WorldCourse[];
+  focus?: string | null;
 };
-export type WorldEvent = { type: string; id?: string | null; player?: string | null };
+export type WorldEvent = { type: string; id?: string | null; player?: string | null; days?: number; tomorrow?: boolean };
 
 /** Any drawn world page: the home mountain by default, or a challenge's own world (e.g. Vesuvius). */
 export function MountainWorld({ data, onEvent, html = WORLD_HTML }: { data: WorldData | Record<string, unknown>; onEvent: (e: WorldEvent) => void; html?: string }) {

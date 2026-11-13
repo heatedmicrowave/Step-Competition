@@ -4,6 +4,7 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { HomeBack } from '../../components/HomeBack';
 import { Button, Card, fmt, Input, Label, T, Title, useColors } from '../../components/ui';
 import { useAuth } from '../../lib/auth';
 import { errorIn, useT } from '../../lib/i18n';
@@ -115,6 +116,7 @@ export default function Board() {
       refreshControl={<RefreshControl tintColor={c.ink} refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
     >
       <View>
+        <HomeBack />
         <Title size={34}>{t.tabBoard}</Title>
         {pub?.public_board && !!pub.nickname && <T muted size={14}>{t.boardAs(pub.nickname)}</T>}
       </View>

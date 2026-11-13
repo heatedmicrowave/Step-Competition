@@ -7,14 +7,15 @@ import { Redirect, router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, AppState, Linking, Share, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MountainWorld, WorldBoard, WorldData, WorldEvent, WorldHiker, WorldSign } from '../../components/MountainWorld';
+import { MountainWorld, WorldBoard, WorldCourse, WorldData, WorldEvent, WorldHiker, WorldSign } from '../../components/MountainWorld';
 import { T, useColors } from '../../components/ui';
-import { course, position, progress } from '../../lib/courses';
+import { course, COURSES, position, progress, size } from '../../lib/courses';
 import { useAuth } from '../../lib/auth';
 import { Lang, LANGS, errorIn, useT } from '../../lib/i18n';
 import { countryName, loadBoard, loadPublicMe, phoneCountry } from '../../lib/publicBoard';
 import { register } from '../../lib/push';
 import { COMP_FIELDS, daysLeftOf, inviteMessage, loadStandings, Standing } from '../../lib/standings';
+import { hasWorld } from '../../lib/worlds';
 import { Competition, errorText, isoDay, supabase } from '../../lib/supabase';
 import { fitbitStatus } from '../../lib/fitbit';
 import { syncSteps } from '../../lib/sync';
@@ -49,6 +50,8 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const [d, setD] = useState<Loaded | null>(null);
   const hikers = useRef<{ comp: Competition; list: Standing[] } | null>(null);
+  const [focus, setFocus] = useState<string | null>(null);
+  const busy = useRef(false);
 
   const load = useCallback(async () => {
     if (!me) return;
@@ -157,6 +160,10 @@ export default function Home() {
       kicker: upcoming ? t.startsOn(short(comp.start_day)) : t.dayOf(total - left + 1, total),
       detail: `${t.courseNames[cs.id].join(' · ')}. ${upcoming ? '' : left === 1 ? t.lastDay : t.daysLeft(left)}`,
       dots: board.map((p) => [Math.round((journey ? progress(cs, p.total) : lead ? p.total / lead : 0) * 1000) / 10, p.id === me.id ? ME : OTHERS[k++ % OTHERS.length]] as [number, string]),
+      // The noticeboard: top five, and you if you're further down.
+      rows: board.map((p, i) => ({ rank: i + 1, name: p.name, val: `${fmt(p.total)} ${t.stepsWord}`, me: p.id === me.id || undefined }))
+        .filter((r, i) => i < 5 || r.me).slice(0, 6),
+      world: hasWorld(cs.id) || undefined,
     };
   });
 
@@ -197,10 +204,17 @@ export default function Home() {
     alerts: d?.alerts ?? false,
     gain: climb ? d?.gain ?? 0 : 0,
     publicOn: d?.publicOn ?? false,
-    t: { ...t.world, stepsToday: t.stepsToday },
+    t: { ...t.world, stepsToday: t.stepsToday, leave: t.leave, length: t.length, starts: t.starts, today: t.today, tomorrow: t.tomorrow, startBtn: t.startBtn, lengths: t.lengths, comingSoon: t.comingSoon },
     signs,
     climb,
     boards: d?.boards ?? [],
+    courses: COURSES.map((x): WorldCourse => ({
+      id: x.id,
+      name: t.courseNames[x.id][0],
+      sub: x.kind === 'climb' ? `${t.courseNames[x.id][1]} · ${size(x, lang, locale)}` : x.kind === 'route' ? size(x, lang, locale) : t.courseNames[x.id][1],
+      soon: x.soon || undefined,
+    })),
+    focus,
   };
 
   async function taunt(compId: string, playerId: string) {
@@ -231,6 +245,46 @@ export default function Home() {
     } catch {}
   }
 
+  // Start a challenge from the hut's noticeboard. A climb with its own world opens it; anything else
+  // shows up on the noticeboard right away.
+  async function create(id: string, days: number, tomorrow: boolean) {
+    if (busy.current) return;
+    busy.current = true;
+    const cs = course(id);
+    const start = new Date(); if (tomorrow) start.setDate(start.getDate() + 1);
+    const end = new Date(start); end.setDate(end.getDate() + Math.max(1, days) - 1);
+    const { data: made, error } = await supabase.rpc('app_create_competition', { p_name: t.courseNames[cs.id][0], p_start: isoDay(start), p_end: isoDay(end), p_course: cs.id });
+    busy.current = false;
+    if (error) { Alert.alert(errorIn(t, error)); return; }
+    const newId = (made as { id: string }[])[0].id;
+    await load();
+    if (hasWorld(cs.id)) router.push({ pathname: '/competition/[id]', params: { id: newId } });
+    else setFocus(newId);
+  }
+
+  function joinWithCode() {
+    Alert.prompt(t.joinCode, t.inviteCode, async (raw) => {
+      const code = String(raw ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+      if (!code) return;
+      const { data: joined, error } = await supabase.rpc('app_join_competition', { p_code: code });
+      if (error) { Alert.alert(errorIn(t, error)); return; }
+      await load();
+      const x = await supabase.from('competitions').select('course').eq('id', joined as string).single();
+      if (hasWorld(course(x.data?.course).id)) router.push({ pathname: '/competition/[id]', params: { id: joined as string } });
+      else setFocus(joined as string);
+    }, 'plain-text', '', 'default');
+  }
+
+  function leave(id: string) {
+    Alert.alert(t.leaveQ, undefined, [
+      { text: t.cancel, style: 'cancel' },
+      { text: t.leave, style: 'destructive', onPress: async () => {
+        const { error } = await supabase.rpc('app_leave_competition', { p_competition: id });
+        if (error) Alert.alert(errorIn(t, error)); else load();
+      } },
+    ]);
+  }
+
   function onEvent(e: WorldEvent) {
     switch (e.type) {
       case 'open': if (e.id) router.push({ pathname: '/competition/[id]', params: { id: e.id } }); break;
@@ -239,8 +293,9 @@ export default function Home() {
         if (x) Share.share({ message: inviteMessage(t.shareMsg(x.comp.name, x.comp.join_code), x.comp.join_code) });
         break;
       }
-      case 'new': router.navigate('/challenges'); break;
-      case 'join': router.push('/join'); break;
+      case 'create': if (e.id) create(e.id, e.days ?? 7, !!e.tomorrow); break;
+      case 'leave': if (e.id) leave(e.id); break;
+      case 'join': joinWithCode(); break;
       case 'alerts': alertsTapped(); break;
       case 'lang': if (LANGS.includes(e.id as Lang)) setChoice(e.id as Lang); break;
       case 'account': router.navigate('/account'); break;
