@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import * as Linking from 'expo-linking';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { DEVICES } from './devices';
 import { Me, supabase } from './supabase';
 import { startBackgroundSync } from './sync';
 
@@ -15,7 +16,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const reloadMe = useCallback(async (name?: string) => {
     const { data, error } = await supabase.rpc('app_me', name ? { p_name: name } : {});
-    if (!error) setMe((data as Me[])[0] ?? null);
+    if (error) return;
+    let m = (data as Me[])[0] ?? null;
+    // Builds before 5 could save the label "SourceProxy" (a bug). Swap in the brand name once.
+    if (m && m.device_label === 'SourceProxy') {
+      const label = DEVICES.find((d) => d.id === m!.source)?.name ?? null;
+      const { error: e2 } = await supabase.rpc('app_set_source', { p_source: m.source, p_device_label: label });
+      if (!e2) m = { ...m, device_label: label };
+    }
+    setMe(m);
   }, []);
 
   // Sign-in links from the email open the app as stepcompetition://sign-in#access_token=...

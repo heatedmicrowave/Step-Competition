@@ -63,8 +63,8 @@ export async function connectDevice(d: Device): Promise<ConnectResult> {
   // Apple Watch / iPhone: use Apple's combined total, which already de-duplicates the two.
   const useSource = d.id === 'apple_health' || d.id === 'other' ? null : found!;
   await setChosenSource(useSource?.bundleId ?? null);
-  // Shown to other players, so keep it language-free.
-  const label = useSource ? useSource.name : d.id === 'other' ? 'iPhone' : d.name;
+  // Shown to other players, so keep it language-free: the brand ("Garmin"), not its app's name.
+  const label = d.id === 'other' ? 'iPhone' : d.name;
   const { error } = await supabase.rpc('app_set_source', { p_source: d.id, p_device_label: label });
   if (error) throw error;
   await syncSteps();
