@@ -2,7 +2,7 @@
 import { Competition, isoDay, supabase } from './supabase';
 
 export type Player = { id: string; name: string; device_label: string | null; source: string };
-export type Standing = Player & { total: number; today: number; last: string | null };
+export type Standing = Player & { total: number; today: number; last: string | null; byDay: Record<string, number> };
 
 export async function loadStandings(comp: Competition): Promise<Standing[]> {
   const { data: members, error: e1 } = await supabase.from('competition_players').select('player_id').eq('competition_id', comp.id);
@@ -23,6 +23,7 @@ export async function loadStandings(comp: Competition): Promise<Standing[]> {
       total: mine.reduce((a, r) => a + r.steps, 0),
       today: mine.find((r) => r.day === today)?.steps ?? 0,
       last: mine.reduce<string | null>((a, r) => (a && a > r.updated_at ? a : r.updated_at), null),
+      byDay: Object.fromEntries(mine.map((r) => [r.day, r.steps])),
     };
   }).sort((a, b) => b.total - a.total);
 }

@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Pass1 Vesuvius</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --st: max(env(safe-area-inset-top), var(--top, 0px)); color-scheme: light; --ink:#171412; --muted:#6F665F; --rule:#E2DCD3; --accent:#C14A1F; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:#E9E4DC; overflow:hidden; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; color:var(--ink); -webkit-tap-highlight-color: transparent; }
+  .phone { position:relative; width:100%; max-width:430px; height:100dvh; max-height:900px; margin:0 auto; overflow:hidden; background:#F3E3CC; }
+  @media (min-width:600px) { .phone { margin-top:20px; height:calc(100dvh - 40px); border-radius:36px; box-shadow:0 20px 60px rgba(23,20,18,.25); } }
+  svg.full { position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; user-select:none; -webkit-user-select:none; }
+  svg.scene { opacity:0; pointer-events:none; transition: opacity .2s; }
+  [data-scene="napoli"] #scene-napoli, [data-scene="oss"] #scene-oss, [data-scene="crater"] #scene-crater { opacity:1; pointer-events:auto; transition: opacity .35s .3s; }
+  .stoplabel { transition: opacity .25s; }
+  [data-scene]:not([data-scene="overview"]) .stoplabel { opacity:0; }
+  .stop, .hiker, .tap { cursor:pointer; }
+
+  .hero { position:absolute; top:0; left:0; right:0; padding:max(14px, var(--st)) 62px 30px; text-align:center; pointer-events:none;
+    background:linear-gradient(rgba(246,236,221,.94) 0%, rgba(246,236,221,.7) 60%, rgba(246,236,221,0) 100%); transition: opacity .25s, transform .25s; }
+  .hero .k { font-size:11px; font-weight:700; letter-spacing:.16em; color:var(--accent); text-transform:uppercase; }
+  .hero b { display:block; font-size:52px; line-height:56px; font-weight:800; letter-spacing:-2px; font-variant-numeric: tabular-nums; }
+  .hero span { display:block; font-size:13px; font-weight:600; color:var(--muted); }
+  [data-scene]:not([data-scene="overview"]) .hero { opacity:0; transform: translateY(-20px); }
+
+  .chev { position:absolute; top:max(12px, var(--st)); left:8px; width:44px; height:44px; border:0; background:transparent; color:#fff; filter: drop-shadow(0 1px 2px rgba(23,20,18,.6)); cursor:pointer; z-index:5; display:flex; align-items:center; justify-content:center; }
+  [data-scene="overview"] .chev { color:var(--ink); filter:none; }
+  .pull { position:absolute; top:max(10px, var(--st)); left:50%; transform:translateX(-50%); pointer-events:none; z-index:4; transition:opacity .3s; }
+  .pull i { display:block; width:44px; height:5px; border-radius:3px; background:rgba(23,20,18,.35); }
+  [data-scene="overview"] .pull { opacity:0; }
+  .hint { position:absolute; left:50%; bottom:calc(100px + env(safe-area-inset-bottom)); transform:translateX(-50%); padding:8px 14px; border-radius:16px; background:rgba(23,20,18,.6); color:#fff; font-size:13px; font-weight:600; pointer-events:none; transition: opacity .4s; white-space:nowrap; }
+  .hint.gone, [data-scene]:not([data-scene="overview"]) .hint { opacity:0; }
+
+  .note { position:absolute; left:16px; right:16px; bottom:calc(100px + env(safe-area-inset-bottom)); padding:16px 18px 18px; border-radius:6px; background:#FBF7EE; box-shadow:0 10px 30px rgba(23,20,18,.28); transform: rotate(-.6deg) translateY(16px); opacity:0; pointer-events:none; transition: opacity .2s, transform .2s; z-index:6; max-height:calc(100% - 180px); overflow-y:auto; }
+  .note.open { opacity:1; transform: rotate(-.6deg); pointer-events:auto; }
+  .note:before { content:""; position:absolute; top:-6px; left:50%; width:12px; height:12px; margin-left:-6px; border-radius:50%; background:#C14A1F; box-shadow:0 2px 3px rgba(0,0,0,.3); }
+  .note .x { position:absolute; top:6px; right:8px; border:0; background:transparent; font-size:22px; color:var(--muted); cursor:pointer; padding:4px 8px; }
+  .kicker { font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); }
+  h2 { margin:2px 0 12px; font-size:24px; letter-spacing:-.5px; }
+  .row { display:flex; align-items:center; gap:12px; padding:11px 0; border-top:1px solid var(--rule); }
+  .row:first-of-type { border-top:0; }
+  .row .grow { flex:1; min-width:0; }
+  .row small { display:block; color:var(--muted); font-size:13px; margin-top:2px; }
+  .num { font-variant-numeric: tabular-nums; font-weight:700; }
+  .btns { display:flex; gap:8px; margin-top:8px; }
+  .btn { flex:1; border:0; border-radius:14px; padding:13px; font:600 15px inherit; font-family:inherit; background:var(--ink); color:#fff; cursor:pointer; }
+  .btn.ghost { background:#fff; color:var(--ink); }
+  .note p { margin:0 0 6px; color:var(--muted); font-size:14px; line-height:1.4; }
+
+  .soundBtn { position:absolute; top:max(14px, var(--st)); right:14px; width:42px; height:42px; border-radius:21px; border:0; background:rgba(251,249,245,.95); box-shadow:0 3px 12px rgba(23,20,18,.18); cursor:pointer; z-index:5; display:flex; align-items:center; justify-content:center; color:var(--muted); }
+  .soundBtn.on { color:var(--accent); }
+  .soundBtn .waves { display:none; } .soundBtn.on .waves { display:inline; } .soundBtn.on .slash { display:none; }
+  body.app .phone { max-width:none; max-height:none; height:100vh; margin:0; border-radius:0; box-shadow:none; }
+  body.app .note { bottom:calc(16px + env(safe-area-inset-bottom)); }
+  body.app .hint { bottom:calc(28px + env(safe-area-inset-bottom)); }
+  .wave { animation: wave 6s ease-in-out infinite alternate; }
+  @keyframes wave { from { transform: translateX(-6px); } to { transform: translateX(6px); } }
+  .steam { animation: steam 5s ease-out infinite; transform-box: fill-box; transform-origin: center bottom; }
+  .steam.b { animation-delay: -1.7s; } .steam.c { animation-delay: -3.3s; }
+  @keyframes steam { 0% { opacity:0; transform: translate(0,6px) scale(.6); } 30% { opacity:.7; } 100% { opacity:0; transform: translate(10px,-26px) scale(1.5); } }
+  .sway { animation: sway 3s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: top center; }
+  .sway.b { animation-delay: -1s; } .sway.c { animation-delay: -2s; }
+  @keyframes sway { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+  .gull { animation: gull 16s linear infinite; }
+  @keyframes gull { 0% { transform: translate(-80px, 40px); } 100% { transform: translate(480px, -10px); } }
+  .ferry { animation: ferry 60s linear infinite; }
+  @keyframes ferry { from { transform: translateX(-40px); } to { transform: translateX(160px); } }
+  .pen { animation: pen 1.2s steps(6) infinite; }
+  @keyframes pen { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+  .glow { animation: glow 1.6s ease-in-out infinite alternate; }
+  @keyframes glow { from { opacity:.75; } to { opacity:1; } }
+  @media (prefers-reduced-motion: reduce) { .wave, .steam, .sway, .gull, .ferry, .pen, .glow { animation:none; } }
+</style></head>
+<body>
+<div class="phone" id="app" data-scene="overview">
+
+<!-- ============ THE WHOLE CLIMB ============ -->
+<svg id="world" class="full" viewBox="160 82 400 718" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7FB2DA"/><stop offset=".6" stop-color="#B9D4E6"/><stop offset="1" stop-color="#DCE7EC"/></linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3E7FA7"/><stop offset="1" stop-color="#2B6A90"/></linearGradient>
+    <linearGradient id="vesLit" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6E7AA0"/><stop offset="1" stop-color="#55607F"/></linearGradient>
+    <linearGradient id="haze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#DCE7EC" stop-opacity="0"/><stop offset="1" stop-color="#DCE7EC" stop-opacity=".75"/></linearGradient>
+  </defs>
+  <rect x="-200" y="0" width="1200" height="800" fill="url(#sky)"/>
+  <!-- long Neapolitan clouds -->
+  <g fill="#FFFFFF" class="wave">
+    <path d="M440 150 Q 520 120 640 132 Q 700 112 770 130 Q 820 128 840 146 Q 700 156 560 154 Q 480 160 440 150Z" opacity=".9"/>
+    <path d="M60 236 Q 130 216 220 226 Q 300 210 380 230 Q 300 244 180 242 Q 100 248 60 236Z" opacity=".8"/>
+    <path d="M520 262 Q 600 246 700 254 Q 780 242 860 262 Q 760 274 640 272 Q 560 276 520 262Z" opacity=".75"/>
+  </g>
+  <!-- far hills: Sorrento peninsula, hazy -->
+  <path d="M640 470 Q 700 440 760 446 Q 820 430 900 444 L 900 476 L 640 476Z" fill="#9FB1C6"/>
+  <path d="M-200 470 Q -100 452 0 458 Q 60 450 120 462 L 120 476 L -200 476Z" fill="#A9BACB"/>
+  <!-- Vesuvius: Monte Somma (left) and the Gran Cono (right) -->
+  <path d="M110 474 Q 230 444 316 376 Q 356 336 382 318 Q 400 306 418 312 Q 436 320 450 340 Q 462 350 474 334 Q 490 304 504 298 L 520 299 Q 536 304 552 324 Q 640 398 760 448 Q 800 462 830 474Z" fill="url(#vesLit)"/>
+  <path d="M474 334 Q 490 304 504 298 L 520 299 Q 536 304 552 324 Q 640 398 760 448 Q 800 462 830 474 L 520 474 Q 516 400 474 334Z" fill="#4C5674" opacity=".55"/>
+  <path d="M382 318 Q 366 340 350 384 Q 336 424 326 474 L 296 474 Q 320 384 382 318Z" fill="#8790B0" opacity=".45"/><path d="M418 312 Q 436 320 450 340 Q 440 372 434 410 Q 428 380 418 312Z" fill="#4C5674" opacity=".35"/>
+  <g stroke="#48526E" stroke-width="1" fill="none" opacity=".45"><path d="M496 304 L476 380 M516 304 L534 380 M400 314 L386 370 M424 318 L414 360"/></g>
+  <g fill="#fff" opacity=".85"><circle class="steam" cx="510" cy="294" r="4"/><circle class="steam b" cx="516" cy="292" r="3"/></g>
+  <rect x="100" y="420" width="760" height="56" fill="url(#haze)"/>
+  <!-- towns along the foot -->
+  <g fill="#F4EFE6" opacity=".8"><rect x="140" y="466" width="4" height="2"/><rect x="149" y="469" width="4" height="2"/><rect x="158" y="467" width="4" height="2"/><rect x="167" y="470" width="4" height="2"/><rect x="176" y="468" width="4" height="2"/><rect x="185" y="466" width="4" height="2"/><rect x="194" y="469" width="4" height="2"/><rect x="203" y="467" width="4" height="2"/><rect x="212" y="470" width="4" height="2"/><rect x="221" y="468" width="4" height="2"/><rect x="230" y="466" width="4" height="2"/><rect x="239" y="469" width="4" height="2"/><rect x="248" y="467" width="4" height="2"/><rect x="257" y="470" width="4" height="2"/><rect x="266" y="468" width="4" height="2"/><rect x="275" y="466" width="4" height="2"/><rect x="284" y="469" width="4" height="2"/><rect x="293" y="467" width="4" height="2"/><rect x="302" y="470" width="4" height="2"/><rect x="311" y="468" width="4" height="2"/><rect x="320" y="466" width="4" height="2"/><rect x="329" y="469" width="4" height="2"/><rect x="338" y="467" width="4" height="2"/><rect x="347" y="470" width="4" height="2"/><rect x="356" y="468" width="4" height="2"/><rect x="365" y="466" width="4" height="2"/><rect x="374" y="469" width="4" height="2"/><rect x="383" y="467" width="4" height="2"/><rect x="392" y="470" width="4" height="2"/><rect x="401" y="468" width="4" height="2"/><rect x="410" y="466" width="4" height="2"/><rect x="419" y="469" width="4" height="2"/><rect x="428" y="467" width="4" height="2"/><rect x="437" y="470" width="4" height="2"/><rect x="446" y="468" width="4" height="2"/><rect x="455" y="466" width="4" height="2"/><rect x="464" y="469" width="4" height="2"/><rect x="473" y="467" width="4" height="2"/><rect x="482" y="470" width="4" height="2"/><rect x="491" y="468" width="4" height="2"/><rect x="500" y="466" width="4" height="2"/><rect x="509" y="469" width="4" height="2"/><rect x="518" y="467" width="4" height="2"/><rect x="527" y="470" width="4" height="2"/><rect x="536" y="468" width="4" height="2"/><rect x="545" y="466" width="4" height="2"/><rect x="554" y="469" width="4" height="2"/><rect x="563" y="467" width="4" height="2"/><rect x="572" y="470" width="4" height="2"/><rect x="581" y="468" width="4" height="2"/><rect x="590" y="466" width="4" height="2"/><rect x="599" y="469" width="4" height="2"/><rect x="608" y="467" width="4" height="2"/><rect x="617" y="470" width="4" height="2"/><rect x="626" y="468" width="4" height="2"/><rect x="635" y="466" width="4" height="2"/><rect x="644" y="469" width="4" height="2"/><rect x="653" y="467" width="4" height="2"/><rect x="662" y="470" width="4" height="2"/><rect x="671" y="468" width="4" height="2"/><rect x="680" y="466" width="4" height="2"/><rect x="689" y="469" width="4" height="2"/><rect x="698" y="467" width="4" height="2"/><rect x="707" y="470" width="4" height="2"/><rect x="716" y="468" width="4" height="2"/><rect x="725" y="466" width="4" height="2"/><rect x="734" y="469" width="4" height="2"/><rect x="743" y="467" width="4" height="2"/><rect x="752" y="470" width="4" height="2"/><rect x="761" y="468" width="4" height="2"/><rect x="770" y="466" width="4" height="2"/><rect x="779" y="469" width="4" height="2"/><rect x="788" y="467" width="4" height="2"/><rect x="797" y="470" width="4" height="2"/><rect x="806" y="468" width="4" height="2"/><rect x="815" y="466" width="4" height="2"/></g>
+
+  <!-- the bay -->
+  <path d="M120 476 L 900 476 L 900 660 L 120 660Z" fill="url(#sea)"/>
+  <g stroke="#CFE4EE" stroke-width="1" opacity=".5" class="wave"><path d="M420 520 h22 M520 560 h30 M660 520 h20 M720 600 h34 M600 630 h24 M460 610 h20"/></g>
+  <!-- Castel dell'Ovo on its little causeway -->
+  <g>
+    <path d="M520 512 L 600 512 L 606 520 L 514 520Z" fill="#8E7B5E"/>
+    <path d="M530 512 L 534 494 L 556 494 L 558 486 L 584 486 L 588 500 L 596 512Z" fill="#C9B184"/>
+    <path d="M534 494 L 556 494 L 556 512 L 530 512Z" fill="#B49A6E"/>
+    <g fill="#7E6A4E" opacity=".7"><rect x="562" y="492" width="3" height="3"/><rect x="570" y="492" width="3" height="3"/><rect x="578" y="492" width="3" height="3"/></g>
+    <path d="M470 524 L 516 516" stroke="#B9A68A" stroke-width="2.4"/>
+  </g>
+  <g class="ferry"><path d="M640 572 L 668 572 L 664 579 L 644 579Z" fill="#FBF6EE"/><rect x="648" y="566" width="11" height="6" fill="#FBF6EE"/><rect x="655" y="562" width="2" height="5" fill="#C14A1F"/></g>
+
+  <!-- Naples: the city fills the left shore and the foreground -->
+  <g id="city"></g>
+  <path id="beach" d="M330 474 Q 300 500 250 540 Q 200 580 150 610 Q 110 636 60 660" fill="none" stroke="#F3E9D6" stroke-width="4" stroke-linecap="round"/>
+  <!-- trees in the foreground, like the view from Posillipo -->
+  <g fill="#3F5E3A">
+    <path d="M560 800 Q 556 740 600 730 Q 620 700 660 712 Q 700 690 730 720 Q 780 716 790 760 L 800 800Z"/>
+    <path d="M-40 800 Q -30 760 0 756 Q 20 736 50 750 Q 70 760 70 800Z" opacity=".9"/>
+  </g>
+  <g fill="#557A4C"><circle cx="620" cy="728" r="16"/><circle cx="690" cy="716" r="18"/><circle cx="740" cy="736" r="16"/></g>
+
+  <!-- the trail, step marks, stops and hikers are drawn from the data -->
+  <path id="trail" d="" fill="none" stroke="#FBF4EA" stroke-width="1.8" stroke-dasharray="2 3.4" stroke-linecap="round"/>
+  <path id="done" d="" fill="none" stroke="#C14A1F" stroke-width="2" stroke-linecap="round"/>
+  <g id="marks"></g>
+  <g id="stops"></g>
+  <g id="hikers"></g>
+</svg>
+
+<!-- ============ NAPOLI: you ============ -->
+<svg id="scene-napoli" class="full scene" viewBox="0 0 400 800" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="nsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9CC3DA"/><stop offset="1" stop-color="#F3DDBE"/></linearGradient>
+    <pattern id="cobble" width="24" height="12" patternUnits="userSpaceOnUse"><rect width="24" height="12" fill="#5C5753"/><path d="M0 0 H24 M0 6 H24 M6 0 V6 M18 6 V12" stroke="#4A4542" stroke-width="1"/></pattern>
+    <g id="win"><rect x="-7" y="-12" width="14" height="22" fill="#3E3431"/><rect x="-12" y="-12" width="5" height="22" fill="#4E7A5A"/><rect x="7" y="-12" width="5" height="22" fill="#4E7A5A"/><rect x="-9" y="-15" width="18" height="3" fill="#F7EEDD"/></g>
+    <g id="balc"><rect x="-13" y="8" width="26" height="2" fill="#2E2826"/><path d="M-12 10 V18 M-8 10 V18 M-4 10 V18 M0 10 V18 M4 10 V18 M8 10 V18 M12 10 V18 M-13 18 H13" stroke="#2E2826" stroke-width="1"/></g>
+  </defs>
+  <rect width="400" height="800" fill="url(#nsky)"/>
+  <rect y="640" width="400" height="160" fill="url(#cobble)"/>
+  <g transform="translate(0 -60)">
+  <!-- Vesuvius at the end of the street -->
+  <path d="M30 330 Q 70 250 112 200 Q 134 180 152 184 L160 178 L168 190 Q 178 204 186 222 L200 160 L212 166 L228 166 L242 156 Q 300 250 370 330Z" fill="#9188A3" opacity=".75"/>
+  <path d="M200 160 L212 166 L228 166 L242 156 L238 162 L226 170 L210 170Z" fill="#6F6683" opacity=".7"/>
+  <g fill="#fff" opacity=".7"><circle class="steam" cx="216" cy="148" r="4"/><circle class="steam b" cx="222" cy="146" r="3"/></g>
+
+  <!-- left palazzo (ochre) -->
+  <rect x="-10" y="250" width="150" height="400" fill="#E2A35E"/>
+  <rect x="-10" y="244" width="150" height="8" fill="#C98B4C"/>
+  <use href="#win" x="30" y="300"/><use href="#win" x="90" y="300"/>
+  <use href="#win" x="30" y="380"/><use href="#balc" x="30" y="380"/>
+  <use href="#win" x="90" y="460"/><use href="#balc" x="90" y="460"/>
+  <!-- nonna on her balcony, with the tip of the day -->
+  <g transform="translate(30 452)">
+    <use href="#win" x="0" y="8"/>
+    <rect x="-13" y="16" width="26" height="2" fill="#2E2826"/>
+    <circle cx="0" cy="-2" r="5.5" fill="#E9C3A4"/><path d="M-6 -4 Q -6 -11 0 -11 Q 6 -11 6 -4 Q 3 -8 0 -8 Q -3 -8 -6 -4Z" fill="#D9D3CC"/>
+    <path d="M-7 16 Q -8 4 0 3 Q 8 4 7 16Z" fill="#3E3A55"/>
+    <path d="M5 8 Q 12 4 14 -2" stroke="#E9C3A4" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+    <path d="M-2 22 V34 M2 22 V34 M-6 22 V34 M6 22 V34 M-10 22 V34 M10 22 V34 M-13 34 H13" stroke="#2E2826" stroke-width="1"/>
+  </g>
+  <!-- your door, your name on the brass bell plate -->
+  <g class="tap" data-act="you">
+    <path d="M76 560 V516 Q 76 498 96 498 Q 116 498 116 516 V560Z" fill="#4E7A5A"/>
+    <path d="M96 500 V560" stroke="#3B5E45" stroke-width="1"/>
+    <circle cx="90" cy="532" r="1.4" fill="#D8B45A"/><circle cx="102" cy="532" r="1.4" fill="#D8B45A"/>
+    <rect x="122" y="516" width="16" height="22" rx="2" fill="#D8B45A"/>
+    <rect x="124" y="520" width="12" height="3" fill="#8C6D2A"/><rect x="124" y="526" width="12" height="3" fill="#2A2620"/><rect x="124" y="532" width="12" height="3" fill="#8C6D2A"/>
+  </g>
+
+  <!-- right palazzo (yellow) with the pizzeria -->
+  <rect x="250" y="236" width="160" height="414" fill="#EDC77A"/>
+  <rect x="250" y="230" width="160" height="8" fill="#D6AE5E"/>
+  <use href="#win" x="290" y="290"/><use href="#win" x="350" y="290"/>
+  <use href="#win" x="290" y="370"/><use href="#balc" x="290" y="370"/><use href="#win" x="350" y="370"/><use href="#balc" x="350" y="370"/>
+  <!-- basil and geraniums on the balconies -->
+  <g><rect x="282" y="390" width="10" height="6" fill="#B8603E"/><circle cx="285" cy="387" r="3" fill="#5E8A4A"/><circle cx="290" cy="386" r="3" fill="#5E8A4A"/><circle cx="352" cy="386" r="2.6" fill="#D2463A"/><circle cx="357" cy="388" r="2.6" fill="#D2463A"/><rect x="348" y="390" width="12" height="6" fill="#B8603E"/></g>
+  <!-- the pizzeria: dark sign, gold letters, the oven glowing inside -->
+  <rect x="262" y="448" width="132" height="22" rx="2" fill="#2E2622"/>
+  <text x="328" y="463.5" text-anchor="middle" font-size="11" font-weight="800" letter-spacing="2.4" fill="#F2C46B">PIZZERIA</text>
+  <path d="M276 560 V506 Q 276 480 306 480 Q 336 480 336 506 V560Z" fill="#3A2A22"/>
+  <path d="M290 560 Q 290 528 306 526 Q 322 528 322 560Z" fill="#E0683A" class="glow"/>
+  <path d="M296 560 Q 296 538 306 536 Q 316 538 316 560Z" fill="#F7B356" class="glow"/>
+  <rect x="348" y="492" width="34" height="40" fill="#3E3431"/><path d="M365 492 V532 M348 512 H382" stroke="#EDC77A" stroke-width="2"/>
+  <!-- striped awning -->
+  <g><path d="M344 480 H388 L392 490 H340Z" fill="#FBF6EE"/><path d="M348 480 L346 490 M356 480 L355 490 M364 480 L364 490 M372 480 L373 490 M380 480 L382 490" stroke="#C14A1F" stroke-width="3"/></g>
+
+  <!-- middle: the vicolo between, with the washing line of the climbers -->
+  <rect x="140" y="300" width="110" height="350" fill="#D98A6C"/>
+  <rect x="140" y="294" width="110" height="8" fill="#C0735A"/>
+  <use href="#win" x="172" y="350"/><use href="#win" x="220" y="350"/><use href="#win" x="196" y="430"/><use href="#balc" x="196" y="430"/>
+  <path d="M140 520 H250 V560 H140Z" fill="#C97A60"/>
+  <path d="M176 560 V530 Q 176 518 195 518 Q 214 518 214 530 V560Z" fill="#5A3E33"/>
+  <!-- shrine with flowers above the arch -->
+  <rect x="188" y="482" width="14" height="18" rx="2" fill="#F7EEDD"/><rect x="191" y="485" width="8" height="10" fill="#5C7FA8"/><circle cx="187" cy="502" r="2" fill="#D2463A"/><circle cx="203" cy="502" r="2" fill="#F2C46B"/>
+
+  <path id="line1" d="M138 410 Q 196 440 252 404" stroke="#3A3533" stroke-width=".8" fill="none"/>
+  <g id="laundry"></g>
+  <g transform="translate(40 356)">
+    <path d="M0 0 H184 Q 192 0 192 8 V40 Q 192 48 184 48 H22 L4 60 L10 48 H8 Q 0 48 0 40Z" fill="#FBF7EE" stroke="#2A2620" stroke-width="1"/>
+    <text x="10" y="16" font-size="11" font-weight="800" fill="#C14A1F">Uè!</text>
+    <text x="10" y="29" font-size="9.6" fill="#2A2620" class="tipA">Pizza tonight? Earn it first:</text>
+    <text x="10" y="41" font-size="9.6" fill="#2A2620" class="tipB">one lap of the block.</text>
+  </g>
+
+  <!-- the street -->
+  <rect x="-10" y="560" width="420" height="250" fill="url(#cobble)"/>
+  <rect x="-10" y="560" width="420" height="5" fill="#8A817B"/>
+  <!-- a Vespa -->
+  <g transform="translate(70 680)">
+    <circle cx="-26" cy="0" r="9" fill="#2A2626"/><circle cx="-26" cy="0" r="4" fill="#8E8A86"/>
+    <circle cx="26" cy="0" r="9" fill="#2A2626"/><circle cx="26" cy="0" r="4" fill="#8E8A86"/>
+    <path d="M-34 -6 Q -34 -26 -14 -26 L 4 -26 Q 10 -26 12 -18 L 16 -6 Q 26 -14 34 -6 Q 30 -2 26 -2 Q 14 -2 10 -8 L -16 -8 Q -20 -2 -26 -2 Q -32 -2 -34 -6Z" fill="#9CC7B4"/>
+    <path d="M-18 -30 H4 Q 8 -30 8 -26 H-22 Q -22 -30 -18 -30Z" fill="#5A3E33"/>
+    <path d="M20 -8 L28 -44" stroke="#9CC7B4" stroke-width="5" stroke-linecap="round"/>
+    <path d="M22 -46 H36" stroke="#2A2626" stroke-width="3" stroke-linecap="round"/><circle cx="31" cy="-40" r="3" fill="#FBF4D8"/>
+  </g>
+  <!-- the chalkboard: your numbers in this climb -->
+  <g class="tap" data-act="you" transform="translate(262 600)">
+    <path d="M10 140 L26 0 M120 140 L104 0" stroke="#7A5A3E" stroke-width="5" stroke-linecap="round"/>
+    <rect x="6" y="6" width="118" height="104" rx="4" fill="#7A5A3E"/>
+    <rect x="12" y="12" width="106" height="92" fill="#2F3330"/>
+    <text x="65" y="30" text-anchor="middle" font-family="Caveat, cursive" font-size="16" font-weight="700" fill="#F2EBDD">Menu del giorno</text>
+    <text x="20" y="50" font-family="Caveat, cursive" font-size="13" font-weight="700" fill="#C9C2B4" data-t="today">Today</text>
+    <text x="110" y="50" text-anchor="end" font-family="Caveat, cursive" font-size="15" font-weight="700" fill="#F2EBDD" id="cbToday">9,120</text>
+    <text x="20" y="70" font-family="Caveat, cursive" font-size="13" font-weight="700" fill="#C9C2B4" data-t="thisClimb">This climb</text>
+    <text x="110" y="70" text-anchor="end" font-family="Caveat, cursive" font-size="15" font-weight="700" fill="#F2EBDD" id="cbClimb">27,400</text>
+    <text x="20" y="90" font-family="Caveat, cursive" font-size="13" font-weight="700" fill="#C9C2B4" data-t="place">Place</text>
+    <text x="110" y="90" text-anchor="end" font-family="Caveat, cursive" font-size="16" font-weight="700" fill="#F2C46B" id="cbPlace">2nd</text>
+  </g>
+</g>
+</svg>
+
+<!-- ============ OSSERVATORIO: the challenge ============ -->
+<svg id="scene-oss" class="full scene" viewBox="0 0 400 800" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="osky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A6C9DC"/><stop offset="1" stop-color="#EEDCC2"/></linearGradient>
+    <g id="broom"><path d="M0 0 Q -2 -10 -6 -16 M0 0 Q 1 -12 2 -18 M0 0 Q 3 -9 8 -14" stroke="#5E7A44" stroke-width="1.2" fill="none"/><g fill="#F2C230"><circle cx="-6" cy="-16" r="2.2"/><circle cx="-4" cy="-12" r="2"/><circle cx="2" cy="-18" r="2.2"/><circle cx="1" cy="-13" r="2"/><circle cx="8" cy="-14" r="2.2"/><circle cx="5" cy="-10" r="2"/></g></g>
+  </defs>
+  <rect width="400" height="800" fill="url(#osky)"/>
+  <rect y="640" width="400" height="160" fill="#8D9A63"/>
+  <g transform="translate(0 -90)">
+  <!-- the cone above -->
+  <path d="M-20 420 Q 80 300 150 170 L170 130 L200 138 L230 132 L250 126 Q 330 260 420 380 L420 420Z" fill="#7C6863"/>
+  <path d="M170 130 L200 138 L230 132 L250 126 L246 134 L228 140 L200 144 L176 138Z" fill="#4A3B3B"/>
+  <g fill="#fff" opacity=".8"><circle class="steam" cx="206" cy="132" r="5"/><circle class="steam b" cx="216" cy="130" r="4"/><circle class="steam c" cx="196" cy="134" r="4"/></g>
+  <path d="M-20 400 Q 100 380 200 392 Q 300 404 420 388 L420 800 L-20 800Z" fill="#8D9A63"/>
+  <!-- pines -->
+  <g transform="translate(40 470) scale(2.4)"><use href="#pine"/></g>
+  <g transform="translate(360 480) scale(2.8)"><use href="#pine"/></g>
+  <defs><g id="pine"><path d="M0 0 L0 -15" stroke="#5A463A" stroke-width="1.4"/><path d="M-11 -14 Q -7 -21 0 -21 Q 8 -22 12 -15 Q 6 -12 0 -13 Q -6 -12 -11 -14Z" fill="#4F6B43"/></g></defs>
+
+  <!-- Osservatorio Vesuviano, 1841: Pompeian red, cream trim -->
+  <g>
+    <rect x="96" y="380" width="208" height="120" fill="#B4483A"/>
+    <rect x="160" y="340" width="80" height="44" fill="#B4483A"/>
+    <path d="M152 342 L200 312 L248 342Z" fill="#E9DCC4"/><path d="M162 338 L200 318 L238 338Z" fill="#B4483A"/>
+    <rect x="92" y="372" width="216" height="10" fill="#E9DCC4"/><rect x="156" y="336" width="88" height="6" fill="#E9DCC4"/>
+    <g fill="#E9DCC4"><rect x="100" y="382" width="8" height="118"/><rect x="292" y="382" width="8" height="118"/><rect x="164" y="342" width="6" height="42"/><rect x="230" y="342" width="6" height="42"/></g>
+    <g fill="#3E3431"><path d="M124 470 V420 Q 124 410 134 410 Q 144 410 144 420 V470Z"/><path d="M256 470 V420 Q 256 410 266 410 Q 276 410 276 420 V470Z"/><rect x="186" y="350" width="28" height="24"/></g>
+    <path d="M180 500 V444 Q 180 426 200 426 Q 220 426 220 444 V500Z" fill="#3A2A22"/>
+    <text x="200" y="400" text-anchor="middle" font-size="8.4" font-weight="800" letter-spacing="1.8" fill="#F3E7D0">OSSERVATORIO VESUVIANO</text>
+    <text x="200" y="414" text-anchor="middle" font-size="7" font-weight="700" letter-spacing="2" fill="#F3E7D0">MDCCCXLI</text>
+    <rect x="80" y="500" width="240" height="8" fill="#CDBFA8"/>
+  </g>
+  <!-- ginestra, Vesuvius' yellow broom -->
+  <g><use href="#broom" x="70" y="520"/><use href="#broom" x="90" y="528"/><use href="#broom" x="320" y="524"/><use href="#broom" x="340" y="516"/><use href="#broom" x="30" y="560"/><use href="#broom" x="372" y="566"/></g>
+
+  <!-- the noticeboard: the challenge -->
+  <g class="tap" data-act="challenge" transform="translate(40 560)">
+    <rect x="0" y="0" width="186" height="100" rx="3" fill="#2E2622"/>
+    <rect x="4" y="4" width="178" height="92" rx="2" fill="none" stroke="#8C6D2A" stroke-width="1"/>
+    <text x="14" y="22" font-size="8" font-weight="800" letter-spacing="1.6" fill="#D8B45A" id="obKicker">DAY 4 OF 14</text>
+    <text x="14" y="42" font-size="15" font-weight="800" fill="#F2C46B" id="obTitle">Vesuvius climb</text>
+    <text x="14" y="58" font-size="9" font-weight="600" fill="#D8C9A6" id="obSub">Naples to the crater · 1,281 m</text>
+    <text x="14" y="76" font-size="9" font-weight="600" fill="#D8C9A6" id="obEnds">Ends Sunday · 3 climbers</text>
+    <text x="14" y="90" font-size="8" font-weight="800" letter-spacing="1" fill="#F2C46B" data-tu="open" data-arrow="1">OPEN →</text>
+  </g>
+  <!-- the seismograph: every day the group walks shows up as a tremor -->
+  <g class="tap" data-act="seismo" transform="translate(236 560)">
+    <rect x="0" y="0" width="128" height="100" rx="4" fill="#5A4A3E"/>
+    <rect x="6" y="6" width="116" height="66" rx="2" fill="#F5EEDC"/>
+    <path d="M6 39 H122" stroke="#E2D6BC" stroke-width=".6"/>
+    <path id="seismo" d="" stroke="#2A2620" stroke-width="1" fill="none"/>
+    <g class="pen"><path d="M112 20 L118 6" stroke="#8C6D2A" stroke-width="1.4"/><circle cx="112" cy="39" r="1.6" fill="#C14A1F"/></g>
+    <text x="64" y="86" text-anchor="middle" font-size="7.4" font-weight="800" letter-spacing="1.2" fill="#F2C46B">SEISMOGRAFO</text>
+    <text x="64" y="95" text-anchor="middle" font-size="6.4" font-weight="600" fill="#D8C9A6" data-t="seismo">your group, day by day</text>
+  </g>
+  <!-- the postcard: invite a friend -->
+  <g class="tap" data-act="invite" transform="translate(120 690) rotate(-4)">
+    <rect x="0" y="0" width="150" height="84" rx="2" fill="#FBF6EA" stroke="#D8CBB2"/>
+    <rect x="6" y="6" width="68" height="72" fill="#7FB0C9"/>
+    <path d="M6 58 L22 38 L30 34 L38 40 L46 30 L56 42 L74 58Z" fill="#7C6863"/><rect x="6" y="58" width="68" height="20" fill="#3F7EA0"/>
+    <path d="M80 8 V76" stroke="#D8CBB2"/>
+    <rect x="124" y="8" width="18" height="20" fill="#C14A1F"/><rect x="127" y="11" width="12" height="14" fill="none" stroke="#FBF6EA" stroke-dasharray="1 1"/>
+    <text x="86" y="40" font-family="Caveat, cursive" font-size="13" font-weight="700" fill="#2A2620">Saluti dal</text>
+    <text x="86" y="54" font-family="Caveat, cursive" font-size="15" font-weight="700" fill="#C14A1F">Vesuvio!</text>
+    <text x="86" y="70" font-size="7" font-weight="800" letter-spacing="1" fill="#6F665F" data-tu="invite" data-arrow="1">INVITE →</text>
+  </g>
+</g>
+</svg>
+
+<!-- ============ IL CRATERE: the standings ============ -->
+<svg id="scene-crater" class="full scene" viewBox="0 0 400 800" preserveAspectRatio="xMidYMax slice">
+  <defs>
+    <linearGradient id="csky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8DB8D2"/><stop offset="1" stop-color="#F0DFC6"/></linearGradient>
+    <pattern id="tile" width="20" height="20" patternUnits="userSpaceOnUse"><rect width="20" height="20" fill="#FBF8F0"/><rect width="20" height="20" fill="none" stroke="#D9D2C2" stroke-width=".6"/></pattern>
+    <g id="lemon"><ellipse rx="5" ry="3.6" fill="#F2C230"/><path d="M4 -2 Q 9 -6 11 -2 Q 7 0 4 -2Z" fill="#4E8A4A"/></g>
+  </defs>
+  <rect width="400" height="800" fill="url(#csky)"/>
+  <rect y="640" width="400" height="160" fill="#9A8880"/>
+  <g transform="translate(0 -90)">
+  <!-- the bay far below -->
+  <path d="M-20 330 Q 100 318 200 324 Q 300 330 420 316 L420 470 L-20 470Z" fill="#5E9DBA"/>
+  <path d="M-20 330 Q 30 318 70 324 L60 336 Q 20 334 -20 342Z" fill="#B9A58A" opacity=".8"/>
+  <path d="M300 352 Q 322 330 344 338 Q 364 322 386 342 Q 398 348 410 356Z" fill="#4E7F9C"/>
+  <path d="M330 318 Q 370 300 420 306 L420 320Z" fill="#8E9A7A" opacity=".7"/>
+  <g class="gull"><path d="M0 0 Q 6 -6 12 0 Q 18 -6 24 0" stroke="#2A2620" stroke-width="1.4" fill="none"/></g>
+  <!-- the crater: a grey bowl with fumaroles -->
+  <path d="M-20 420 Q 60 380 200 386 Q 340 380 420 420 L420 560 L-20 560Z" fill="#7A6A66"/>
+  <path d="M20 440 Q 200 400 380 440 Q 300 520 200 524 Q 100 520 20 440Z" fill="#5A4B49"/>
+  <path d="M60 456 Q 200 430 340 456 Q 280 506 200 508 Q 120 506 60 456Z" fill="#4A3D3C"/>
+  <g fill="#FFFFFF"><circle class="steam" cx="150" cy="470" r="9"/><circle class="steam b" cx="166" cy="466" r="7"/><circle class="steam c" cx="250" cy="476" r="8"/><circle class="steam" cx="264" cy="470" r="6" style="animation-delay:-2.4s"/></g>
+  <path d="M120 480 Q 140 474 156 482 M240 488 Q 258 480 274 488" stroke="#D8C46A" stroke-width="2" fill="none" opacity=".6"/>
+  <!-- the rim path, with its rope fence -->
+  <path d="M-20 540 Q 200 520 420 540 L420 800 L-20 800Z" fill="#9A8880"/>
+  <path d="M-20 556 Q 200 538 420 556" stroke="#B9A89E" stroke-width="12" fill="none"/>
+  <g stroke="#5A463A" stroke-width="2.4"><path d="M20 552 V528 M110 546 V522 M200 542 V518 M290 546 V522 M380 552 V528"/></g>
+  <path d="M20 532 Q 65 540 110 526 Q 155 534 200 522 Q 245 534 290 526 Q 335 540 380 532" stroke="#C9B48A" stroke-width="1.4" fill="none"/>
+  <!-- summit flag, 1,281 m -->
+  <g transform="translate(330 470)">
+    <path d="M0 0 V64" stroke="#3A3533" stroke-width="2"/>
+    <path class="sway" d="M1 2 Q 18 0 34 6 Q 22 12 34 18 Q 18 14 1 18Z" fill="#C14A1F"/>
+    <text x="14" y="13.4" font-size="6" font-weight="900" letter-spacing=".6" fill="#fff">PASS1</text>
+    <text x="0" y="78" text-anchor="middle" font-size="8" font-weight="800" letter-spacing="1" fill="#3A3533">1,281 M</text>
+  </g>
+  <!-- the standings, painted on maiolica tiles like the cloister of Santa Chiara -->
+  <g transform="translate(40 586)">
+    <rect x="-8" y="-8" width="336" height="186" rx="4" fill="#3B6EA5"/>
+    <rect x="0" y="0" width="320" height="170" fill="url(#tile)"/>
+    <g id="lemons"></g>
+    <rect x="96" y="6" width="128" height="22" fill="#FBF8F0" stroke="#3B6EA5" stroke-width="1.2"/>
+    <text x="160" y="22" text-anchor="middle" font-size="11" font-weight="800" letter-spacing="2.6" fill="#3B6EA5">CLASSIFICA</text>
+    <g id="tiles"></g>
+  </g>
+</g>
+</svg>
+
+<div class="hero">
+  <div class="k" id="heroK">Vesuvius climb · Day 4 of 14</div>
+  <b id="heroNum">27,400</b>
+  <span id="heroSub">2nd · 3,800 behind Seniorwidebody</span>
+</div>
+<button class="chev" id="back" aria-label="Back"><svg width="14" height="24" viewBox="0 0 14 24"><path d="M12 2 L3 12 L12 22" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+<button class="soundBtn" id="soundBtn" aria-label="Sound"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8 v4 h3 l4 3.5 v-11 L6 8z" fill="currentColor"/><path class="waves" d="M13 7.5 q2 2.5 0 5 M15.5 5.5 q3.6 4.5 0 9"/><path class="slash" d="M13 7 l5 6 M18 7 l-5 6"/></svg></button>
+<div class="pull"><i></i></div>
+<div class="hint" id="hint" data-t="hint">Drag sideways · tap a place</div>
+<div class="note" id="note"></div>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const NS = 'http://www.w3.org/2000/svg';
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const inApp = !!window.ReactNativeWebView;
+  if (inApp) document.body.classList.add('app');
+  const post = (m) => { if (inApp) window.ReactNativeWebView.postMessage(JSON.stringify(m)); else preview(m); };
+  const tpl = (str, o) => String(str).replace(/\{(\w+)\}/g, (m, k) => o[k]);
+  const kfmt = (st) => (st / 1000).toFixed(st % 1000 < 50 ? 0 : 1) + 'K';
+
+  // Sample challenge, shown when the page is opened on its own. In the app, the real one arrives
+  // in window.__INIT (before load) or window.__pass1(data).
+  const SAMPLE = {
+    lang: 'en', locale: 'en-US', name: 'Vesuvius climb', goal: 60000, code: 'VES7K2',
+    heroK: 'Vesuvius climb · Day 4 of 14', heroSub: '#2 · 3,800 behind Seniorwidebody', kicker: 'Day 4 of 14', ends: '11 days left · 3 climbers', sub: 'Naples to the crater · 1,281 m', place: '#2',
+    hikers: [
+      { id: 's', n: 'S', name: 'Seniorwidebody', c: '#3E6C8A', st: 31200, today: 11904, watch: 'Garmin' },
+      { id: 'm', n: 'H', name: 'Heated microwave', c: '#C14A1F', st: 27400, today: 9120, watch: 'Garmin', me: true },
+      { id: 'b', n: 'B', name: 'Beatincheeks', c: '#4E7A4A', st: 19800, today: 6120, watch: 'Fitbit' },
+    ],
+    days: [20400, 21100, 9760, 27144],
+    t: {
+      napoliSub: 'You', ossSub: 'The challenge · 608 m', craterSub: 'Standings · 1,281 m', hint: 'Drag sideways · tap a place',
+      tips: [['Pizza tonight? Earn it first:', 'one lap of the block.'], ['Walk to the bakery, not the car.', 'The bread tastes better.'], ['Chi va piano va sano e va lontano.', 'Slow and steady, all the way up.'], ['Jamme, jamme, ’ncoppa jamme jà!', 'Up we go, like the funicular song.'], ['Take the stairs, like in the old town.', 'Every step is a step up Vesuvius.']],
+      today: 'Today', thisClimb: 'This climb', place: 'Place', open: 'Open', invite: 'Invite', details: 'All the details',
+      seismo: 'your group, day by day', seismoTitle: 'Your group, day by day', seismoBody: 'Every day you all walk shows up as a tremor. Big day, big quake.', dayN: 'Day {n}',
+      challengeBody: 'From the shore in Naples, past the Osservatorio, to the crater rim at 1,281 m. {goal} steps to the top.',
+      inviteTitle: 'Invite a friend', inviteBody: 'Send the postcard: your friend taps the link and lands right in this climb.',
+      inClimb: 'In this climb', kOf: '{a} of {b}', thatsYou: 'that’s you', onTrail: 'on the trail', taunt: 'Taunt',
+    },
+  };
+  let D = window.__INIT || SAMPLE, T = D.t || SAMPLE.t;
+  const fmt = (n) => Number(n || 0).toLocaleString(D.locale || 'en-US');
+  function preview(m) {
+    if (m.type === 'back') openNote('<div class="kicker">Mockup</div><h2>Back to your challenges</h2><p>In the app this arrow takes you back.</p>');
+    else if (m.type === 'invite') openNote('<div class="kicker">Saluti dal Vesuvio</div><h2>' + esc(T.inviteTitle) + '</h2><p>' + esc(T.inviteBody) + ' <b>' + esc(D.code) + '</b></p>');
+  }
+  // Real places on the way up, at their share of the climb (by height: 0 to 1,281 m).
+  const STOPS = [
+    { id: 'napoli', f: 0, name: 'Napoli', sub: 'napoliSub', side: 1 },
+    { id: 'oss', f: .2 + .8 * 608 / 1281, name: 'Osservatorio', sub: 'ossSub', side: -1 },
+    { id: 'crater', f: 1, name: 'Il cratere', sub: 'craterSub', side: -1 },
+  ];
+  const TIPS = () => (T.tips && T.tips.length ? T.tips : SAMPLE.t.tips);
+  let tipN = Math.floor(Math.random() * 5);
+
+  // ---- The trail, from the shore up the green slopes and the cone to the rim.
+  // Walking out of the city along the seafront (first fifth of the steps), then the climb.
+  const FLAT = [[222, 662], [214, 640], [200, 620], [236, 566], [282, 524], [322, 486], [360, 474], [400, 470]];
+  const CLIMB = [[400, 470], [430, 452], [470, 430], [446, 408], [482, 386], [504, 362], [488, 344], [500, 320], [510, 300]];
+  function smooth(p) {
+    let d = 'M' + p[0][0] + ' ' + p[0][1];
+    for (let i = 0; i < p.length - 1; i++) {
+      const a = p[i - 1] || p[i], b = p[i], c = p[i + 1], e = p[i + 2] || c;
+      d += ' C' + (b[0] + (c[0] - a[0]) / 6).toFixed(1) + ' ' + (b[1] + (c[1] - a[1]) / 6).toFixed(1) + ' ' + (c[0] - (e[0] - b[0]) / 6).toFixed(1) + ' ' + (c[1] - (e[1] - b[1]) / 6).toFixed(1) + ' ' + c[0] + ' ' + c[1];
+    }
+    return d;
+  }
+  const trail = $('trail'); trail.setAttribute('d', smooth(FLAT) + ' ' + smooth(CLIMB).replace(/^M[^C]*/, ''));
+  const flatP = document.createElementNS(NS, 'path'); flatP.setAttribute('d', smooth(FLAT)); $('world').appendChild(flatP);
+  const L1 = flatP.getTotalLength(), LEN = trail.getTotalLength(); flatP.remove();
+  const SPLIT = .2;
+  const at = (f) => { f = Math.max(0, Math.min(1, f)); return trail.getPointAtLength(f < SPLIT ? f / SPLIT * L1 : L1 + (f - SPLIT) / (1 - SPLIT) * (LEN - L1)); };
+  // Naples, drawn row by row: small and hazy far away, bigger up close.
+  { let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const COLS = ['#E9D8B8', '#D9A77A', '#C9806A', '#EFE4CF', '#D7B98E', '#B8735E', '#F2E9D8', '#CF9C83', '#E2C9A2'];
+    const shore = (y) => y >= 650 ? 900 : 330 - (y - 474) * (270 / 176);
+    let out = '';
+    for (let y = 478; y < 820; y += 4 + (y - 470) / 14) {
+      const k = (y - 470) / 330, hgt = 6 + k * 46, edge = shore(y);
+      for (let x = -60; x < edge; ) {
+        const w = (8 + rnd() * 14) * (0.5 + k * 2.2), c = COLS[Math.floor(rnd() * COLS.length)], top = y - hgt * (0.6 + rnd() * 0.5);
+        const ww = Math.min(w, edge - x); if (ww < 3) break;
+        out += '<rect x="' + x.toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + ww.toFixed(1) + '" height="' + (y - top + 2).toFixed(1) + '" fill="' + c + '"' + (k < .25 ? ' opacity=".85"' : '') + '/>';
+        if (rnd() < .45) out += '<rect x="' + x.toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + ww.toFixed(1) + '" height="' + Math.max(1, hgt * .08).toFixed(1) + '" fill="#A9573F" opacity=".8"/>';
+        if (k > .3) { const r = Math.max(1, 1.2 * k * 2), gap = r * 3.2; for (let wy = top + gap; wy < y - gap * .6; wy += gap) for (let wx = x + gap * .7; wx < x + ww - r; wx += gap) out += '<rect x="' + wx.toFixed(1) + '" y="' + wy.toFixed(1) + '" width="' + r.toFixed(1) + '" height="' + (r * 1.5).toFixed(1) + '" fill="#4A3C36" opacity=".45"/>'; }
+        x += ww + (rnd() < .1 ? 2 : 0);
+      }
+    }
+    $('city').innerHTML = out; }
+
+  // ---- Draw everything that comes from the data.
+  let me = null;
+  function applyText() {
+    document.querySelectorAll('[data-t]').forEach((e) => { const v = T[e.dataset.t]; if (typeof v === 'string') e.textContent = v; });
+    document.querySelectorAll('[data-tu]').forEach((e) => { const v = T[e.dataset.tu]; if (typeof v === 'string') e.textContent = v.toUpperCase() + (e.dataset.arrow ? ' →' : ''); });
+  }
+  function render() {
+    T = D.t || SAMPLE.t;
+    document.documentElement.lang = D.lang || 'en';
+    if (D.insetTop != null) document.documentElement.style.setProperty('--top', D.insetTop + 'px');
+    D.hikers = D.hikers || [];
+    me = D.hikers.find((h) => h.me) || null;
+    applyText();
+  { const n = me ? Math.round(Math.min(1, me.st / D.goal) * 60) : 0, pts = []; for (let i = 0; i <= n; i++) { const q = at(i / 60); pts.push([q.x, q.y]); } $('done').setAttribute('d', ''); if (pts.length > 1) $('done').setAttribute('d', 'M' + pts.map((q) => q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join(' L')); }
+
+  // Step marks every quarter.
+  $('marks').innerHTML = [.25, .5, .75].map((f) => { const q = at(f), x = q.x + 4, y = q.y;
+    return '<line x1="' + x + '" y1="' + y + '" x2="' + x + '" y2="' + (y - 10) + '" stroke="#fff" stroke-width=".8"/><path d="M' + x + ' ' + (y - 10) + ' l6 2 l-6 2z" fill="#C14A1F"/>' +
+      '<text x="' + (x + 8) + '" y="' + (y - 5) + '" font-size="7" font-weight="800" fill="#171412" stroke="#FBF4EA" stroke-width="2.2" paint-order="stroke">' + kfmt(D.goal * f) + '</text>'; }).join('');
+
+  // The three places, as dark pills like the Matterhorn's.
+  $('stops').innerHTML = STOPS.map((s) => {
+    const sub = T[s.sub] || '', q = at(s.f), w = Math.max(s.name.length, sub.length * .82) * 5.6 + 20, x = s.side > 0 ? q.x + 10 : q.x - 10 - w, y = q.y - 30;
+    const icon = s.id === 'oss' ? '<g transform="translate(' + q.x + ' ' + q.y + ')"><rect x="-7" y="-9" width="14" height="9" fill="#B4483A"/><path d="M-8 -9 L0 -14 L8 -9Z" fill="#E9DCC4"/><rect x="-1.5" y="-6" width="3" height="6" fill="#3A2A22"/></g>'
+      : s.id === 'crater' ? '<g transform="translate(' + q.x + ' ' + q.y + ')"><path d="M0 0 V-16" stroke="#3A3533" stroke-width="1"/><path d="M0 -16 l9 2.5 l-9 2.5z" fill="#C14A1F"/></g>'
+      : '<circle cx="' + q.x + '" cy="' + q.y + '" r="3" fill="#C14A1F" stroke="#fff" stroke-width="1.2"/>';
+    return '<g class="stop" data-go="' + s.id + '">' + icon +
+      '<g class="stoplabel"><rect x="' + x + '" y="' + y + '" width="' + w + '" height="28" rx="7" fill="#2A2522" fill-opacity=".86"/>' +
+      '<text x="' + (x + 10) + '" y="' + (y + 12.5) + '" font-size="10" font-weight="700" fill="#fff">' + esc(s.name) + '</text>' +
+      '<text x="' + (x + 10) + '" y="' + (y + 23) + '" font-size="7.6" font-weight="500" fill="#E2D8CC">' + esc(sub) + '</text></g>' +
+      '<circle cx="' + q.x + '" cy="' + q.y + '" r="22" fill="transparent"/></g>';
+  }).join('');
+
+  // Hikers: everyone in this climb, you on top.
+  const hk = $('hikers'); hk.innerHTML = '';
+  D.hikers.slice().sort((a, b) => (a.me ? 1 : 0) - (b.me ? 1 : 0)).forEach((h) => {
+    const q = at(h.st / D.goal), i = D.hikers.indexOf(h);
+    const g = document.createElementNS(NS, 'g'); g.setAttribute('class', 'hiker'); g.dataset.who = i;
+    g.setAttribute('transform', 'translate(' + q.x.toFixed(1) + ' ' + q.y.toFixed(1) + ')');
+    g.innerHTML = '<circle cx="0" cy="-8" r="13" fill="transparent"/>' +
+      '<path d="M-1 0 L-1.6 4 M1 0 L1.6 4" stroke="#2E3440" stroke-width="1.1" stroke-linecap="round"/><rect x="-1.8" y="-5" width="3.6" height="5.4" rx="1.2" fill="' + h.c + '"/><circle cx="0" cy="-6.6" r="1.6" fill="#E8C3A4"/>' +
+      '<g transform="translate(0 -13)"><circle r="4.6" fill="' + h.c + '" stroke="#fff" stroke-width=".8"/><text y="1.8" text-anchor="middle" font-size="5" font-weight="800" fill="#fff">' + esc(h.n) + '</text>' +
+      '<text x="' + (i % 2 ? -6.5 : 6.5) + '" y="1.6" text-anchor="' + (i % 2 ? 'end' : 'start') + '" font-size="4.6" font-weight="800" fill="#171412" stroke="#FBF4EA" stroke-width="1.4" paint-order="stroke">' + kfmt(h.st) + '</text></g>';
+    hk.appendChild(g);
+  });
+
+  // Hero: where you stand.
+  const ranked = D.hikers.slice().sort((a, b) => b.st - a.st);
+  $('heroK').textContent = D.heroK || D.name;
+  $('heroNum').textContent = me ? fmt(me.st) : '—';
+  $('heroSub').textContent = D.heroSub || '';
+
+  // Napoli: the washing line carries everyone's shirt.
+  { const line = $('line1'), L = line.getTotalLength();
+    $('laundry').innerHTML = D.hikers.map((h, i) => { const q = line.getPointAtLength(L * (.2 + i * .25));
+      return '<g class="tap" data-who="' + i + '" transform="translate(' + q.x.toFixed(1) + ' ' + q.y.toFixed(1) + ') scale(1.5)"><g class="sway ' + ['', 'b', 'c'][i % 3] + '"><path d="M-9 0 L-3 0 Q 0 3 3 0 L9 0 L13 7 L8 9 L8 24 L-8 24 L-8 9 L-13 7Z" fill="' + h.c + '"/>' +
+        '<text y="18" text-anchor="middle" font-size="9" font-weight="800" fill="#fff">' + esc(h.n) + '</text><rect x="-1" y="-2" width="2" height="4" fill="#C9B48A"/></g></g>'; }).join('') +
+      (() => { const q = line.getPointAtLength(L * .9); return '<g transform="translate(' + q.x.toFixed(1) + ' ' + q.y.toFixed(1) + ')"><g class="sway c"><path d="M-3 0 H3 V10 L7 14 L3 16 L-3 10Z" fill="#FBF6EE"/></g></g>'; })();
+  }
+  $('cbToday').textContent = me ? fmt(me.today) : '—'; $('cbClimb').textContent = me ? fmt(me.st) : '—'; $('cbPlace').textContent = D.place || '—';
+
+  // Osservatorio: noticeboard + seismograph of the group's days.
+  $('obKicker').textContent = String(D.kicker || '').toUpperCase();
+  $('obTitle').textContent = D.name;
+  $('obSub').textContent = D.sub || '';
+  $('obEnds').textContent = D.ends || '';
+  { const days = (D.days || []).slice(-14), max = Math.max(...days, 1);
+    let d = 'M6 39', x = 6; const step = 104 / Math.max(days.length, 1);
+    days.forEach((v, i) => { const amp = 4 + 26 * v / max; for (let k = 0; k < 6; k++) { x += step / 6; const s = (k % 2 ? 1 : -1) * amp * Math.sin(Math.PI * (k + .5) / 6); d += ' L' + x.toFixed(1) + ' ' + (39 + s).toFixed(1); } });
+    $('seismo').setAttribute('d', d); }
+
+  // Il cratere: names painted on tiles, lemons in the corners.
+  $('lemons').innerHTML = [[14, 14], [306, 14], [14, 156], [306, 156], [40, 14], [280, 14]].map(([x, y], i) => '<use href="#lemon" x="' + x + '" y="' + y + '" transform="rotate(' + (i * 40) + ' ' + x + ' ' + y + ')"/>').join('');
+  $('tiles').innerHTML = ranked.slice(0, 5).map((h, i) => { const y = 52 + i * 26, ink = h.me ? '#C14A1F' : '#2D5C92';
+    return '<text x="22" y="' + y + '" font-family="Caveat, cursive" font-size="20" font-weight="700" fill="' + ink + '">' + (i + 1) + '. ' + esc(h.name) + '</text>' +
+      '<text x="298" y="' + y + '" text-anchor="end" font-family="Caveat, cursive" font-size="18" font-weight="700" fill="' + ink + '">' + kfmt(h.st) + (h.st >= D.goal ? ' ✓' : '') + '</text>'; }).join('');
+
+  }
+  // ---- Moving around: tap a place, fly in, the scene fades up. ‹ or swipe down to leave.
+  const app = $('app'), world = $('world'), note = $('note');
+  let scene = 'overview', anim = 0;
+  const VW = 400, vh = () => Math.min(800, VW * world.clientHeight / Math.max(1, world.clientWidth));
+  let panX = 200;
+  const home = () => [panX, 800 - vh(), VW, vh()];
+  let vb = home(); world.setAttribute('viewBox', vb.join(' '));
+  function fly(to, ms, done) {
+    const from = vb.slice(), t0 = performance.now(); cancelAnimationFrame(anim);
+    const step = (now) => { const e = Math.min(1, (now - t0) / ms), k = e < .5 ? 2 * e * e : 1 - Math.pow(-2 * e + 2, 2) / 2;
+      vb = from.map((v, i) => v + (to[i] - v) * k); world.setAttribute('viewBox', vb.map((v) => v.toFixed(2)).join(' '));
+      if (e < 1) anim = requestAnimationFrame(step); else if (done) done(); };
+    anim = requestAnimationFrame(step);
+  }
+  function go(id) {
+    closeNote();
+    if (id === scene) return;
+    if (id === 'overview') { scene = 'overview'; app.dataset.scene = 'overview'; fly(home(), 450); ambience(); return; }
+    const s = STOPS.find((x) => x.id === id), q = at(s.f), w = 90, h = w * vh() / VW;
+    $('hint').classList.add('gone');
+    fly([q.x - w / 2, q.y - h / 2, w, h], 420);
+    scene = id; app.dataset.scene = id; ambience();
+    if (id === 'napoli') { const t = TIPS()[tipN++ % TIPS().length]; document.querySelector('.tipA').textContent = t[0]; document.querySelector('.tipB').textContent = t[1]; }
+  }
+  $('back').addEventListener('click', () => { if (scene !== 'overview') go('overview'); else post({ type: 'back' }); });
+
+  function openNote(html) { note.innerHTML = '<button class="x" aria-label="Close">×</button>' + html; note.classList.add('open'); }
+  function closeNote() { note.classList.remove('open'); }
+  function hikerNote(i) {
+    const h = D.hikers[i];
+    if (!h) return;
+    openNote('<div class="kicker">' + esc(D.name) + ' · ' + esc(h.me ? T.thatsYou : T.onTrail) + '</div>' +
+      '<h2 style="display:flex;align-items:center;gap:10px"><span style="flex:none;width:34px;height:34px;border-radius:17px;background:' + h.c + ';color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:16px">' + esc(h.n) + '</span>' + esc(h.name) + '</h2>' +
+      '<div class="row"><div class="grow">' + esc(T.inClimb) + '<small>' + esc(tpl(T.kOf, { a: kfmt(h.st), b: kfmt(D.goal) })) + '</small></div><span class="num">' + fmt(h.st) + '</span></div>' +
+      '<div class="row"><div class="grow">' + esc(T.today) + '<small>' + esc(h.watch) + '</small></div><span class="num">' + fmt(h.today) + '</span></div>' +
+      (h.me ? '' : '<div class="btns"><button class="btn" data-act="taunt" data-player="' + esc(h.id) + '">🔥 ' + esc(T.taunt) + '</button></div>'));
+  }
+
+  app.addEventListener('click', (e) => {
+    if (e.target.closest('#soundBtn')) { sound(!soundOn); return; }
+    if (e.target.closest('.x')) { closeNote(); return; }
+    if (e.target.closest('.note') && !e.target.closest('[data-act]')) return;
+    if (suppress) return;
+    const stop = e.target.closest('[data-go]'); if (stop && scene === 'overview') { go(stop.dataset.go); return; }
+    const who = e.target.closest('[data-who]'); if (who) { hikerNote(+who.dataset.who); return; }
+    const act = e.target.closest('[data-act]');
+    if (act) {
+      const a = act.dataset.act;
+      if (a === 'you') { if (me) hikerNote(D.hikers.indexOf(me)); }
+      else if (a === 'challenge') openNote('<div class="kicker">' + esc(D.kicker) + '</div><h2>' + esc(D.name) + '</h2><p>' + esc(tpl(T.challengeBody, { goal: fmt(D.goal) })) + '</p><div class="btns"><button class="btn" data-act="details">' + esc(T.details) + '</button><button class="btn ghost" data-act="invite">' + esc(T.invite) + '</button></div>');
+      else if (a === 'seismo') openNote('<div class="kicker">Seismografo</div><h2>' + esc(T.seismoTitle) + '</h2><p>' + esc(T.seismoBody) + '</p>' + (D.days || []).map((v, i) => '<div class="row"><div class="grow">' + esc(tpl(T.dayN, { n: i + 1 })) + '</div><span class="num">' + fmt(v) + '</span></div>').join(''));
+      else if (a === 'invite') post({ type: 'invite' });
+      else if (a === 'details') post({ type: 'details' });
+      else if (a === 'taunt') post({ type: 'taunt', player: act.dataset.player });
+      return;
+    }
+    if (note.classList.contains('open')) closeNote();
+  });
+
+
+  // ---- Sound (off until you tap the speaker): the sea from the panorama, a tarantella in town,
+  // wind at the Osservatorio, the volcano rumbling at the crater.
+  let actx, master, soundOn = false, layers = {}, tune = 0;
+  function initAudio() {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    master = actx.createGain(); master.gain.value = .9; master.connect(actx.destination);
+    const len = actx.sampleRate * 4, wb = actx.createBuffer(1, len, actx.sampleRate), bb = actx.createBuffer(1, len, actx.sampleRate);
+    const w = wb.getChannelData(0), b = bb.getChannelData(0); let last = 0;
+    for (let i = 0; i < len; i++) { w[i] = Math.random() * 2 - 1; last = (last + .02 * w[i]) / 1.02; b[i] = last * 3.5; }
+    const src = (buf) => { const n = actx.createBufferSource(); n.buffer = buf; n.loop = true; n.start(0, Math.random() * 3); return n; };
+    const layer = (buf, type, f, q) => { const n = src(buf), fl = actx.createBiquadFilter(), g = actx.createGain(); fl.type = type; fl.frequency.value = f; fl.Q.value = q || .7; g.gain.value = 0; n.connect(fl).connect(g).connect(master); return { g, fl }; };
+    layers.sea = layer(wb, 'lowpass', 520);
+    layers.wind = layer(wb, 'bandpass', 700, .6);
+    layers.rumble = layer(bb, 'lowpass', 90);
+    // the sea breathes in and out; the volcano swells now and then
+    setInterval(() => { if (!soundOn) return; const t = actx.currentTime;
+      if (scene === 'overview') layers.sea.g.gain.setTargetAtTime(.05 + .07 * Math.random(), t, 1.2);
+      if (scene === 'crater') layers.rumble.g.gain.setTargetAtTime(.5 + .5 * Math.random(), t, 1.5);
+      if (scene === 'oss') layers.wind.g.gain.setTargetAtTime(.03 + .05 * Math.random(), t, 1); }, 2200);
+    setInterval(() => { if (soundOn && scene === 'crater' && Math.random() < .5) hiss(); }, 3000);
+  }
+  function hiss() { // a fumarole letting off steam
+    const n = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain(), t = actx.currentTime;
+    const b = actx.createBuffer(1, actx.sampleRate * 2, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    n.buffer = b; f.type = 'highpass'; f.frequency.value = 2500; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.025, t + .3); g.gain.exponentialRampToValueAtTime(.0001, t + 1.8);
+    n.connect(f).connect(g).connect(master); n.start(t); n.stop(t + 2);
+  }
+  // A short original tarantella in A minor, 6/8: mandolin, bass and tambourine.
+  const NOTE = (n) => 440 * Math.pow(2, n / 12); // semitones from A4
+  const MEL = [[0, 3, 7, 12, 10, 7], [8, 7, 5, 3, 2, 0], [-5, 0, 3, 7, 5, 3], [2, 3, 5, 7, 7, null], [0, 3, 7, 12, 10, 7], [8, 7, 5, 3, 5, 7], [8, 7, 5, 3, 2, -1], [0, null, 0, -5, 0, null]];
+  const BASS = [-24, -19, -24, -29, -24, -19, -29, -24];
+  function pluck(f, t, vol, dur) {
+    const o = actx.createOscillator(), o2 = actx.createOscillator(), g = actx.createGain(), fl = actx.createBiquadFilter();
+    o.type = 'triangle'; o2.type = 'square'; o.frequency.value = f; o2.frequency.value = f * 1.003; fl.type = 'lowpass'; fl.frequency.value = 2600;
+    const g2 = actx.createGain(); g2.gain.value = .25; o2.connect(g2).connect(fl); o.connect(fl); fl.connect(g).connect(master);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .006); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.start(t); o2.start(t); o.stop(t + dur + .02); o2.stop(t + dur + .02);
+  }
+  function tamb(t, vol) {
+    const n = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+    const b = actx.createBuffer(1, actx.sampleRate * .2, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+    n.buffer = b; f.type = 'highpass'; f.frequency.value = 6000; g.gain.value = vol; n.connect(f).connect(g).connect(master); n.start(t);
+  }
+  function tarantella() {
+    if (!soundOn || scene !== 'napoli') { tune = 0; return; }
+    const e = .15, start = actx.currentTime + .05;
+    MEL.forEach((bar, i) => {
+      bar.forEach((n, j) => { const t = start + (i * 6 + j) * e; if (n != null) { pluck(NOTE(n), t, .05, .22); if (j === 5 && bar[5] === bar[4]) pluck(NOTE(n), t + e / 2, .03, .15); } tamb(t, j % 3 === 0 ? .05 : .018); });
+      pluck(NOTE(BASS[i]), start + i * 6 * e, .07, .5); pluck(NOTE(BASS[i] + 7), start + (i * 6 + 3) * e, .05, .4);
+    });
+    tune = setTimeout(tarantella, MEL.length * 6 * e * 1000 - 40);
+  }
+  function ambience() {
+    if (!soundOn) return;
+    const t = actx.currentTime;
+    layers.sea.g.gain.setTargetAtTime(scene === 'overview' ? .08 : scene === 'napoli' ? .015 : 0, t, .6);
+    layers.wind.g.gain.setTargetAtTime(scene === 'oss' ? .05 : scene === 'crater' ? .03 : 0, t, .6);
+    layers.rumble.g.gain.setTargetAtTime(scene === 'crater' ? .7 : 0, t, .8);
+    clearTimeout(tune); tune = 0; if (scene === 'napoli') tarantella();
+  }
+  function sound(on) {
+    soundOn = on;
+    if (on) { try { if (!actx) initAudio(); actx.resume && actx.resume(); } catch (e) { soundOn = false; } }
+    else if (actx) { Object.values(layers).forEach((l) => l.g.gain.setTargetAtTime(0, actx.currentTime, .2)); clearTimeout(tune); tune = 0; }
+    $('soundBtn').classList.toggle('on', soundOn);
+    if (soundOn) ambience();
+  }
+  window.__pass1 = (d) => { D = d; render(); };
+  render();
+  post({ type: 'ready' });
+  setTimeout(() => $('hint').classList.add('gone'), 4500);
+  // Drag sideways along the panorama.
+  let drag = null;
+  world.addEventListener('pointerdown', (e) => { if (scene === 'overview') drag = { x: e.clientX, p: panX, moved: false }; });
+  window.addEventListener('pointermove', (e) => {
+    if (!drag) return; const dx = (e.clientX - drag.x) * VW / world.clientWidth;
+    if (Math.abs(dx) > 3) drag.moved = true;
+    panX = Math.max(-40, Math.min(440, drag.p - dx)); vb = home(); world.setAttribute('viewBox', vb.join(' '));
+  });
+  window.addEventListener('pointerup', () => { if (drag && drag.moved) { $('hint').classList.add('gone'); suppress = true; setTimeout(() => suppress = false, 50); } drag = null; });
+  let suppress = false;
+  window.addEventListener('resize', () => { if (scene === 'overview') { vb = home(); world.setAttribute('viewBox', vb.join(' ')); } });
+  // Swipe down anywhere in a place to go back to the whole climb.
+  let sy = null;
+  app.addEventListener('pointerdown', (e) => { sy = scene !== 'overview' && !e.target.closest('.note') ? e.clientY : null; });
+  app.addEventListener('pointerup', (e) => { if (sy != null && e.clientY - sy > 70) go('overview'); sy = null; });
+})();
+</script>
+</body></html>
