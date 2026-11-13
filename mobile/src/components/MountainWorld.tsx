@@ -34,7 +34,8 @@ export type WorldData = {
 };
 export type WorldEvent = { type: string; id?: string | null; player?: string | null };
 
-export function MountainWorld({ data, onEvent }: { data: WorldData; onEvent: (e: WorldEvent) => void }) {
+/** Any drawn world page: the home mountain by default, or a challenge's own world (e.g. Vesuvius). */
+export function MountainWorld({ data, onEvent, html = WORLD_HTML }: { data: WorldData | Record<string, unknown>; onEvent: (e: WorldEvent) => void; html?: string }) {
   const web = useRef<WebViewHandle>(null);
   const ready = useRef(false);
   const json = JSON.stringify(data);
@@ -60,7 +61,7 @@ export function MountainWorld({ data, onEvent }: { data: WorldData; onEvent: (e:
     <View style={{ flex: 1, backgroundColor: '#F4F1EC' }}>
       <WebView
         ref={web}
-        source={{ html: WORLD_HTML, baseUrl: 'https://pass1.local/' }}
+        source={{ html, baseUrl: 'https://pass1.local/' }}
         originWhitelist={['*']}
         injectedJavaScriptBeforeContentLoaded={first}
         onMessage={onMessage}

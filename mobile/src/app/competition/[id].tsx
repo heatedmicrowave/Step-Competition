@@ -1,14 +1,17 @@
-import { useLocalSearchParams, router } from 'expo-router';
+import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, RefreshControl, ScrollView, Share, Text, View } from 'react-native';
 import { ChallengeMap, hasMap } from '../../components/ChallengeMap';
 import { Fade } from '../../components/Fade';
+import { MountainWorld, WorldEvent } from '../../components/MountainWorld';
+import { VESUVIUS_HTML } from '../../world/vesuviusHtml';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { artFor, CLIMBER_COLORS, MountainArt, YOU_COLOR } from '../../components/Mountain';
 import { Bar, Button, Card, fmt, Label, Numeral, Section, T, Title, useColors } from '../../components/ui';
 import { course, position, progress, size } from '../../lib/courses';
 import { useAuth } from '../../lib/auth';
 import { errorIn, Strings, useT } from '../../lib/i18n';
-import { COMP_FIELDS, inviteMessage, loadStandings, Standing } from '../../lib/standings';
+import { COMP_FIELDS, daysLeftOf, inviteMessage, loadStandings, Standing } from '../../lib/standings';
 import { Competition, isoDay, supabase } from '../../lib/supabase';
 
 function ago(t: Strings, ts: string) {
@@ -23,7 +26,9 @@ export default function Leaderboard() {
   const c = useColors();
   const { me } = useAuth();
   const { t, locale, lang } = useT();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // list=1 shows the plain details page even for a challenge that has its own drawn world.
+  const { id, list } = useLocalSearchParams<{ id: string; list?: string }>();
+  const insets = useSafeAreaInsets();
   const [comp, setComp] = useState<Competition | null>(null);
   const [standings, setStandings] = useState<Standing[]>([]);
   const [msg, setMsg] = useState('');
@@ -76,7 +81,7 @@ export default function Leaderboard() {
     Alert.alert(t.tauntTo(p.name), undefined, [
       ...t.taunts.map((line, i) => ({ text: line, onPress: async () => {
         const { data, error } = await supabase.rpc('app_send_taunt', { p_competition: id, p_target: p.id, p_line: i });
-        if (error) { setMsg(errorIn(t, error)); return; }
+        if (error) { setMsg(errorIn(t, error)); Alert.alert(errorIn(t, error)); return; }
         setTaunts(Number(data));
         Alert.alert(t.tauntSent(p.name));
       } })),
@@ -87,6 +92,45 @@ export default function Leaderboard() {
   const days = comp ? Math.round((new Date(comp.end_day + 'T12:00:00').getTime() - new Date(comp.start_day + 'T12:00:00').getTime()) / 86400000) + 1 : 0;
   const dayN = comp ? Math.min(days, Math.max(0, Math.round((new Date(now + 'T12:00:00').getTime() - new Date(comp.start_day + 'T12:00:00').getTime()) / 86400000) + 1)) : 0;
   const phase = !comp ? '' : now > comp.end_day ? t.finalResults : now < comp.start_day ? t.startsOn(new Date(comp.start_day + 'T12:00:00').toLocaleDateString(locale, { month: 'short', day: 'numeric' })) : t.dayOf(dayN, days);
+
+  // Vesuvius has its own drawn world: Naples, the Osservatorio and the crater.
+  if (comp && cs.id === 'vesuvius' && !list) {
+    const V = t.vesuvius as Record<string, any>;
+    const tp = (k: string, o: Record<string, string | number>) => String(V[k]).replace(/\{(\w+)\}/g, (_, x) => String(o[x] ?? ''));
+    const r = standings.findIndex((p) => p.id === me?.id);
+    const mine = r >= 0 ? standings[r] : null;
+    const heroSub = !mine ? '' : r === 0 ? (standings.length > 1 ? tp('leadBy', { n: fmt(mine.total - standings[1].total) }) : '')
+      : `#${r + 1} · ${tp('behind', { n: fmt(standings[r - 1].total - mine.total), name: standings[r - 1].name })}`;
+    const { left, over } = daysLeftOf(comp);
+    const when = over ? t.finalResults : left === 1 ? t.lastDay : t.daysLeft(left);
+    const days: number[] = [];
+    for (let d = new Date(comp.start_day + 'T12:00:00'); isoDay(d) <= now && isoDay(d) <= comp.end_day; d.setDate(d.getDate() + 1)) {
+      const k = isoDay(d); days.push(standings.reduce((a, p) => a + (p.byDay?.[k] ?? 0), 0));
+    }
+    const data = {
+      lang, locale, insetTop: insets.top, name: comp.name, goal: cs.goal, code: comp.join_code,
+      heroK: `${comp.name} · ${phase}`, heroSub, kicker: phase, ends: `${when} · ${tp('climbers', { n: standings.length })}`, sub: V.sub, place: mine ? `#${r + 1}` : '—',
+      hikers: standings.map((p, i) => ({ id: p.id, n: (p.name.trim()[0] ?? '?').toUpperCase(), name: p.name, c: colors[i], st: p.total, today: p.today, watch: p.device_label ?? p.source, me: p.id === me?.id || undefined })),
+      days, t: V,
+    };
+    const onEvent = (e: WorldEvent) => {
+      if (e.type === 'back') router.back();
+      else if (e.type === 'details') router.push({ pathname: '/competition/[id]', params: { id: comp.id, list: '1' } });
+      else if (e.type === 'invite') Share.share({ message: inviteMessage(t.shareMsg(comp.name, comp.join_code), comp.join_code) });
+      else if (e.type === 'taunt') {
+        const p = standings.find((x) => x.id === e.player);
+        if (!p || p.id === me?.id) return;
+        if (!taunts) Alert.alert(t.server['no taunts left'] ?? '', t.tauntsHow);
+        else taunt(p);
+      }
+    };
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <MountainWorld html={VESUVIUS_HTML} data={data} onEvent={onEvent} />
+      </>
+    );
+  }
 
   return (
     <ScrollView
