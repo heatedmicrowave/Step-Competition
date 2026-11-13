@@ -1,7 +1,9 @@
 import { useLocalSearchParams, router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, RefreshControl, ScrollView, Share, View } from 'react-native';
+import { artFor, CLIMBER_COLORS, useArtHeight, useScene, YOU_COLOR } from '../../components/Mountain';
 import { Button, fmt, Heading, Label, Numeral, pad2, Section, T, useColors } from '../../components/ui';
+import { course, position, progress, size } from '../../lib/courses';
 import { useAuth } from '../../lib/auth';
 import { errorIn, Strings, useT } from '../../lib/i18n';
 import { Competition, isoDay, supabase } from '../../lib/supabase';
@@ -21,7 +23,8 @@ function ago(t: Strings, ts: string) {
 export default function Leaderboard() {
   const c = useColors();
   const { me } = useAuth();
-  const { t, locale } = useT();
+  const { t, locale, lang } = useT();
+  const artH = useArtHeight();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [comp, setComp] = useState<Competition | null>(null);
   const [standings, setStandings] = useState<Standing[]>([]);
@@ -30,7 +33,7 @@ export default function Leaderboard() {
 
   const load = useCallback(async () => {
     const [cRes, mRes] = await Promise.all([
-      supabase.from('competitions').select('id, name, start_day, end_day, join_code').eq('id', id).single(),
+      supabase.from('competitions').select('id, name, start_day, end_day, join_code, course').eq('id', id).single(),
       supabase.from('competition_players').select('player_id').eq('competition_id', id),
     ]);
     if (cRes.error || mRes.error) { setMsg(errorIn(t, cRes.error || mRes.error)); return; }
@@ -66,6 +69,13 @@ export default function Leaderboard() {
   }, [load]);
 
   const top = Math.max(1, standings[0]?.total ?? 1);
+  const cs = course(comp?.course);
+  const journey = cs.kind !== 'classic';
+  let other = 0;
+  const colors = standings.map((p) => (p.id === me?.id ? YOU_COLOR : CLIMBER_COLORS[other++ % CLIMBER_COLORS.length]));
+  useScene(journey
+    ? { pose: 'climb', art: artFor(cs.id), climbers: standings.map((p, i) => ({ id: p.id, initial: (p.name.trim()[0] ?? '?').toUpperCase(), color: colors[i], frac: progress(cs, p.total) })) }
+    : { pose: 'aside' });
   const now = isoDay(new Date());
 
   async function leave() {
@@ -85,15 +95,17 @@ export default function Leaderboard() {
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
-      style={{ backgroundColor: c.bg }}
-      contentContainerStyle={{ padding: 20, paddingTop: 4 }}
+      contentContainerStyle={journey ? { paddingBottom: 48 } : { padding: 20, paddingTop: 4, paddingBottom: 48 }}
       refreshControl={<RefreshControl tintColor={c.ink} refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
     >
+      {journey && <View style={{ height: artH * 0.8 }} />}
+      <View style={journey ? { backgroundColor: c.bg, borderTopWidth: 2, borderColor: c.rule, padding: 20, paddingTop: 14, minHeight: 600 } : undefined}>
       {!!msg && <T color={c.red}>{msg}</T>}
       {comp && (
         <View style={{ marginBottom: 24 }}>
           <Label color={c.red}>{phase}</Label>
           <Heading size={40}>{comp.name}</Heading>
+          {journey && <T muted size={14}>{t.courseNames[cs.id][1]} · {cs.kind === 'climb' ? t.top(size(cs, lang, locale)) : t.routeLen(size(cs, lang, locale))}</T>}
         </View>
       )}
 
@@ -103,19 +115,31 @@ export default function Leaderboard() {
           const gap = i > 0 ? standings[0].total - p.total : 0;
           return (
             <View key={p.id} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14, paddingVertical: 14, borderBottomWidth: 1, borderColor: c.hair }}>
-              <Numeral size={44} color={lead ? c.red : c.muted}>{pad2(i + 1)}</Numeral>
+              <View style={{ alignItems: 'center', gap: 6 }}>
+                <Numeral size={44} color={lead ? c.red : c.muted}>{pad2(i + 1)}</Numeral>
+                {journey && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors[i] }} />}
+              </View>
               <View style={{ flex: 1, paddingTop: 4 }}>
                 <Heading size={22}>{p.name}{p.id === me?.id ? ` (${t.you})` : ''}</Heading>
                 <T muted size={13}>
                   {t.todaySteps(fmt(p.today))} · {p.last ? ago(t, p.last) : t.noData}{p.device_label ? ` · ${p.device_label}` : ''}
                 </T>
                 <View style={{ height: 3, backgroundColor: c.hair, marginTop: 8 }}>
-                  <View style={{ height: 3, backgroundColor: lead ? c.red : c.ink, width: `${(p.total / top) * 100}%` }} />
+                  <View style={{ height: 3, backgroundColor: lead ? c.red : c.ink, width: `${(journey ? progress(cs, p.total) : p.total / top) * 100}%` }} />
                 </View>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
-                <Numeral size={36}>{fmt(p.total)}</Numeral>
-                {gap > 0 && <T muted size={12}>-{fmt(gap)}</T>}
+                {journey ? (
+                  <>
+                    <Numeral size={30}>{position(cs, p.total, lang, locale)}</Numeral>
+                    <T muted size={12}>{progress(cs, p.total) >= 1 ? (cs.kind === 'climb' ? t.atTop : t.atEnd) : `${fmt(p.total)} · ${t.toGo(fmt(cs.goal - p.total))}`}</T>
+                  </>
+                ) : (
+                  <>
+                    <Numeral size={36}>{fmt(p.total)}</Numeral>
+                    {gap > 0 && <T muted size={12}>-{fmt(gap)}</T>}
+                  </>
+                )}
               </View>
             </View>
           );
@@ -129,6 +153,7 @@ export default function Leaderboard() {
         </Section>
       )}
       <Button title={t.leave} kind="plain" onPress={leave} />
+      </View>
     </ScrollView>
   );
 }

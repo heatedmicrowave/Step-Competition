@@ -17,7 +17,7 @@ AppState.addEventListener('change', (state) => {
 });
 
 export type Me = { id: string; name: string; source: string; device_label: string | null };
-export type Competition = { id: string; name: string; start_day: string; end_day: string; join_code: string };
+export type Competition = { id: string; name: string; start_day: string; end_day: string; join_code: string; course: string };
 
 /** A local-time YYYY-MM-DD date (competitions count days in each player's own time zone). */
 export function isoDay(d: Date) {

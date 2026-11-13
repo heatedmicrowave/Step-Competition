@@ -1,10 +1,11 @@
-// Visual language: a race bib / track scoreboard. Paper background, black ink, one track red.
-// Big condensed numerals, hard rules instead of floating cards, square corners, no emoji.
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, TextInputProps, useColorScheme, View, ViewProps } from 'react-native';
+// Visual language: dusk in the Alps. A dark warm ground, cream ink, one terracotta accent, and
+// the Matterhorn living behind the screens. Big condensed numerals, hard rules, no emoji.
+// One theme on purpose: the mountain art is drawn for this ground.
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, TextInputProps, View, ViewProps } from 'react-native';
 
-const light = { bg: '#F3F0E8', paper: '#FBF9F4', ink: '#141414', muted: '#6E6A62', rule: '#141414', hair: '#D8D2C4', red: '#D7261E', onRed: '#FFFFFF' };
-const dark = { bg: '#111110', paper: '#181816', ink: '#F2EFE8', muted: '#8F8A80', rule: '#F2EFE8', hair: '#2C2B27', red: '#FF4A3D', onRed: '#111110' };
-export type Colors = typeof light;
+// `red` is the accent (terracotta); the name stays so screens don't care which accent we pick.
+const dusk = { bg: '#1B1714', paper: '#241F1B', ink: '#F3EADB', muted: '#A69B8A', rule: '#F3EADB', hair: '#3A322B', red: '#E0683A', onRed: '#1B1714' };
+export type Colors = typeof dusk;
 
 export const font = {
   numeral: 'BarlowCondensed_700Bold',
@@ -13,7 +14,7 @@ export const font = {
 };
 
 export function useColors(): Colors {
-  return useColorScheme() === 'dark' ? dark : light;
+  return dusk;
 }
 
 /** A block that starts with a heavy rule and a small uppercase label, like a section of a results sheet. */
@@ -68,8 +69,8 @@ export function Input(props: TextInputProps) {
 }
 
 export const styles = StyleSheet.create({
-  button: { borderWidth: 1.5, borderRadius: 2, paddingVertical: 12, alignItems: 'center' },
-  input: { borderWidth: 1.5, borderRadius: 2, paddingHorizontal: 12, paddingVertical: 12, fontSize: 17 },
+  button: { borderWidth: 1.5, borderRadius: 6, minHeight: 50, justifyContent: 'center', paddingVertical: 12, alignItems: 'center' },
+  input: { borderWidth: 1.5, borderRadius: 6, paddingHorizontal: 12, paddingVertical: 12, fontSize: 17 },
 });
 
 export const fmt = (n: number) => n.toLocaleString();

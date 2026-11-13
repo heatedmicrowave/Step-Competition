@@ -1,7 +1,9 @@
 import { Link, Redirect, router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, AppState, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { useScene } from '../components/Mountain';
 import { Button, fmt, Heading, Label, Numeral, Section, T, useColors } from '../components/ui';
+import { course } from '../lib/courses';
 import { useAuth } from '../lib/auth';
 import { healthAvailable } from '../lib/health';
 import { Competition, errorText, isoDay, supabase } from '../lib/supabase';
@@ -13,6 +15,7 @@ export default function Home() {
   const c = useColors();
   const { session, me, loading } = useAuth();
   const { t, locale } = useT();
+  useScene({ pose: 'home' });
   const [comps, setComps] = useState<Competition[] | null>(null);
   const [today, setToday] = useState<number | null>(null);
   const [status, setStatus] = useState('');
@@ -38,7 +41,7 @@ export default function Home() {
     }
     const { data, error } = await supabase
       .from('competitions')
-      .select('id, name, start_day, end_day, join_code, competition_players!inner(player_id)')
+      .select('id, name, start_day, end_day, join_code, course, competition_players!inner(player_id)')
       .eq('competition_players.player_id', me.id)
       .order('end_day', { ascending: false });
     if (error) setStatus(errorText(error));
@@ -64,8 +67,7 @@ export default function Home() {
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
-      style={{ backgroundColor: c.bg }}
-      contentContainerStyle={{ padding: 20, paddingTop: 4 }}
+      contentContainerStyle={{ padding: 20, paddingTop: 4, paddingBottom: 48 }}
       refreshControl={<RefreshControl tintColor={c.ink} refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
     >
       <Link href="/settings" asChild>
@@ -77,6 +79,7 @@ export default function Home() {
             <T muted size={14}>{status}</T>
           </View>
           {!healthAvailable() && me.source !== 'fitbit' && <T muted size={14}>{t.noHealth}</T>}
+          {me.source === 'garmin' && <T muted size={13} style={{ marginTop: 6 }}>{t.garminHint}</T>}
         </Pressable>
       </Link>
 
@@ -116,9 +119,12 @@ function CompRow({ comp }: { comp: Competition }) {
   const right = now < comp.start_day ? t.startsOn(shortDate(comp.start_day, locale)) : now > comp.end_day ? shortDate(comp.end_day, locale) : daysLeft === 1 ? t.lastDay : t.daysLeft(daysLeft);
   return (
     <Link href={{ pathname: '/competition/[id]', params: { id: comp.id } }} asChild>
-      <Pressable style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderColor: c.hair, opacity: pressed ? 0.6 : 1 })}>
-        <View style={{ flex: 1, paddingRight: 12 }}><Heading size={24}>{comp.name}</Heading></View>
-        <Label>{right}</Label>
+      <Pressable style={({ pressed }) => ({ backgroundColor: c.paper, borderWidth: 1.5, borderColor: c.hair, borderRadius: 6, padding: 14, marginBottom: 10, gap: 4, opacity: pressed ? 0.7 : 1 })}>
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
+          <View style={{ flex: 1, paddingRight: 12 }}><Heading size={24}>{comp.name}</Heading></View>
+          <Label color={c.red}>{right}</Label>
+        </View>
+        <T muted size={13}>{t.courseNames[course(comp.course).id][0]}</T>
       </Pressable>
     </Link>
   );

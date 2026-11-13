@@ -1,6 +1,7 @@
 import { Redirect } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { useScene } from '../components/Mountain';
 import { Button, Input, Label, Numeral, Section, T, useColors } from '../components/ui';
 import { signInRedirect, useAuth } from '../lib/auth';
 import { errorIn, useT } from '../lib/i18n';
@@ -10,6 +11,7 @@ import { supabase } from '../lib/supabase';
 export default function SignIn() {
   const c = useColors();
   const { t } = useT();
+  useScene({ pose: 'home' });
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -25,7 +27,7 @@ export default function SignIn() {
   if (session) return <Redirect href="/" />;
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: c.bg }}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 96 }} keyboardShouldPersistTaps="handled">
         <View style={{ borderWidth: 2, borderColor: c.ink, padding: 16, marginBottom: 40 }}>
           <Label color={c.red}>Pass1</Label>
