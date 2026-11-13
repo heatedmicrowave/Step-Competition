@@ -38,7 +38,8 @@
           "background": true
         }
       ],
-      "@rnmapbox/maps"
+      "@rnmapbox/maps",
+      "expo-notifications"
     ],
     "scheme": "stepcompetition",
     "extra": {

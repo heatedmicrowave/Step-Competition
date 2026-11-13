@@ -113,10 +113,8 @@ export default function Home() {
             </Pressable>
           ))}
         </View>
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <View style={{ flex: 1 }}><Button title={t.moreChallenges} onPress={() => router.push('/challenges')} /></View>
-          <View style={{ flex: 1 }}><Button title={t.joinCode} kind="plain" onPress={() => router.push('/join')} /></View>
-        </View>
+        {/* The Challenges tab already lists every challenge, so only "Join with code" stays here. */}
+        <Button title={t.joinCode} kind="plain" onPress={() => router.push('/join')} />
       </Section>
     </ScrollView>
   );

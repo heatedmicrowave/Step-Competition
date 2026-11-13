@@ -47,12 +47,12 @@ export function ChallengeMap({ course, climbers, lang, locale, stepsWord }: {
       </ShapeSource>
 
       {scene.spots.filter((s) => s.flag).map((s) => (
-        <MarkerView key={s.name} coordinate={[s.lon, s.lat]} anchor={{ x: 0, y: 1 }} allowOverlap>
-          <View style={{ flexDirection: 'row', alignItems: 'flex-end' }} pointerEvents="none">
+        <MarkerView key={s.name} coordinate={[s.lon, s.lat]} anchor={{ x: s.left ? 1 : 0, y: 1 }} allowOverlap>
+          <View style={{ flexDirection: s.left ? 'row-reverse' : 'row', alignItems: 'flex-end' }} pointerEvents="none">
             <View style={{ width: 2, height: 26, backgroundColor: '#FFFFFF' }}>
               <View style={{ position: 'absolute', left: 2, top: 0, width: 0, height: 0, borderTopWidth: 5, borderBottomWidth: 5, borderLeftWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: ACCENT }} />
             </View>
-            <View style={{ marginLeft: 12, marginBottom: 12, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, backgroundColor: 'rgba(16,14,13,0.72)' }}>
+            <View style={{ marginLeft: s.left ? 0 : 12, marginRight: s.left ? 6 : 0, marginBottom: 12, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, backgroundColor: 'rgba(16,14,13,0.72)' }}>
               <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>{s.name}</Text>
               <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 10, fontVariant: ['tabular-nums'] }}>
                 {measure(course, s.at, lang, locale)} · {k(stepsTo(course, s))} {stepsWord}

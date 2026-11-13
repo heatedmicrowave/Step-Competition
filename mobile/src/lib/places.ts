@@ -5,7 +5,8 @@
 // and the Vesuvius spots were placed by hand and checked against elevation data.
 import type { Course, CourseId } from './courses';
 
-export type Spot = { name: string; lat: number; lon: number; at: number; flag?: boolean };
+/** `left`: the label sits left of the pole, for flags that would otherwise cover a neighbour's label. */
+export type Spot = { name: string; lat: number; lon: number; at: number; flag?: boolean; left?: boolean };
 export type Scene = {
   spots: Spot[];
   /** Where the camera starts: looking at the whole climb or route. */
@@ -19,7 +20,7 @@ export const SCENES: Partial<Record<CourseId, Scene>> = {
       { name: 'Furi', lat: 46.0039, lon: 7.7339, at: 1867 },
       { name: 'Schwarzsee', lat: 45.9908, lon: 7.7069, at: 2583, flag: true },
       { name: 'Hörnli Hut', lat: 45.9822, lon: 7.6731, at: 3260, flag: true },
-      { name: 'Solvay Hut', lat: 45.9792, lon: 7.6648, at: 4003, flag: true },
+      { name: 'Solvay Hut', lat: 45.9792, lon: 7.6648, at: 4003, flag: true, left: true },
       { name: 'Matterhorn', lat: 45.9764, lon: 7.6586, at: 4478, flag: true },
     ],
     camera: { lat: 45.9905, lon: 7.6905, zoom: 12.3, pitch: 72, heading: 245 },
