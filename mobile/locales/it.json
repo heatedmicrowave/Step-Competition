@@ -1,3 +1,4 @@
 {
-  "NSHealthShareUsageDescription": "Pass1 legge i tuoi passi giornalieri per metterti in classifica nelle tue sfide."
+  "NSHealthShareUsageDescription": "Pass1 legge i tuoi passi giornalieri per metterti in classifica nelle tue sfide.",
+  "NSHealthUpdateUsageDescription": "Pass1 legge solo i tuoi passi. Non scrive mai nulla in Salute."
 }

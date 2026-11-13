@@ -33,7 +33,7 @@
         "@kingstinct/react-native-healthkit",
         {
           "NSHealthShareUsageDescription": "Pass1 reads your daily step count so it can put you on your competitions' leaderboards.",
-          "NSHealthUpdateUsageDescription": false,
+          "NSHealthUpdateUsageDescription": "Pass1 only reads your steps. It never writes anything to Apple Health.",
           "background": true
         }
       ]
