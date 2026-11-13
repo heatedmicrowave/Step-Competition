@@ -5,6 +5,7 @@ import { View } from 'react-native';
 import { useColors } from '../components/ui';
 import { AuthProvider } from '../lib/auth';
 import { LanguageProvider, useT } from '../lib/i18n';
+import { usePush } from '../lib/push';
 
 export default function RootLayout() {
   const c = useColors();
@@ -28,6 +29,7 @@ export default function RootLayout() {
 function Screens() {
   const c = useColors();
   const { t } = useT();
+  usePush();
   return (
         <Stack
           screenOptions={{
