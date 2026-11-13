@@ -7,11 +7,14 @@ import { Text, View } from 'react-native';
 import { Course, measure } from '../lib/courses';
 import type { Lang } from '../lib/i18n';
 import { SCENES, spotAt, stepsTo } from '../lib/places';
+import { SwissPhotos } from './SwissPhotos';
 
 const TOKEN: string | undefined = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || undefined;
 if (TOKEN) Mapbox.setAccessToken(TOKEN);
 
 export const hasMap = (c: Course) => !!TOKEN && !!SCENES[c.id];
+/** True when the build has a Mapbox token, so the 3D maps (and the mountain home) can show. */
+export const MAP_ON = !!TOKEN;
 
 export type MapClimber = { id: string; initial: string; color: string; steps: number; you?: boolean };
 
@@ -41,6 +44,8 @@ export function ChallengeMap({ course, climbers, lang, locale, stepsWord }: {
       <RasterDemSource id="pass1-dem" url="mapbox://mapbox.mapbox-terrain-dem-v1" tileSize={514} maxZoomLevel={14}>
         <Terrain style={{ exaggeration: 1.15 }} />
       </RasterDemSource>
+
+      {course.id === 'matterhorn' && <SwissPhotos id="pass1" />}
 
       <ShapeSource id="pass1-trail" shape={trail}>
         <LineLayer id="pass1-trail-line" style={{ lineColor: ACCENT, lineWidth: 2.5, lineDasharray: [1, 2], lineCap: 'round' }} />
