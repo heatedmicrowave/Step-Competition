@@ -14,7 +14,7 @@ import { useAuth } from '../../lib/auth';
 import { Lang, LANGS, errorIn, useT } from '../../lib/i18n';
 import { countryName, loadBoard, loadPublicMe, phoneCountry } from '../../lib/publicBoard';
 import { register } from '../../lib/push';
-import { COMP_FIELDS, daysLeftOf, loadStandings, Standing } from '../../lib/standings';
+import { COMP_FIELDS, daysLeftOf, inviteMessage, loadStandings, Standing } from '../../lib/standings';
 import { Competition, errorText, isoDay, supabase } from '../../lib/supabase';
 import { fitbitStatus } from '../../lib/fitbit';
 import { syncSteps } from '../../lib/sync';
@@ -236,7 +236,7 @@ export default function Home() {
       case 'open': if (e.id) router.push({ pathname: '/competition/[id]', params: { id: e.id } }); break;
       case 'invite': {
         const x = live.find((l) => l.comp.id === e.id);
-        if (x) Share.share({ message: t.shareMsg(x.comp.name, x.comp.join_code) });
+        if (x) Share.share({ message: inviteMessage(t.shareMsg(x.comp.name, x.comp.join_code), x.comp.join_code) });
         break;
       }
       case 'new': router.push('/new'); break;

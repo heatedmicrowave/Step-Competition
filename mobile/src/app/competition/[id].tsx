@@ -8,7 +8,7 @@ import { Bar, Button, Card, fmt, Label, Numeral, Section, T, Title, useColors } 
 import { course, position, progress, size } from '../../lib/courses';
 import { useAuth } from '../../lib/auth';
 import { errorIn, Strings, useT } from '../../lib/i18n';
-import { COMP_FIELDS, loadStandings, Standing } from '../../lib/standings';
+import { COMP_FIELDS, inviteMessage, loadStandings, Standing } from '../../lib/standings';
 import { Competition, isoDay, supabase } from '../../lib/supabase';
 
 function ago(t: Strings, ts: string) {
@@ -165,7 +165,7 @@ export default function Leaderboard() {
         <Section label={t.inviteCode}>
           <Card style={{ alignItems: 'center', gap: 12 }}>
             <Numeral size={44}>{comp.join_code}</Numeral>
-            <View style={{ alignSelf: 'stretch' }}><Button title={t.sendFriend} onPress={() => Share.share({ message: t.shareMsg(comp.name, comp.join_code) })} /></View>
+            <View style={{ alignSelf: 'stretch' }}><Button title={t.sendFriend} onPress={() => Share.share({ message: inviteMessage(t.shareMsg(comp.name, comp.join_code), comp.join_code) })} /></View>
           </Card>
         </Section>
       )}

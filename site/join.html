@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Join a Pass1 challenge</title>
+<meta property="og:title" content="You're invited to a Pass1 challenge">
+<meta property="og:description" content="Tap to join the climb in Pass1.">
+<style>
+  :root { --bg:#F4F1EC; --ink:#171412; --muted:#6F665F; --accent:#C14A1F; --card:#FBF9F5; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; background:linear-gradient(#BFD0D8, #DCE2DF 45%, #F1E6D8 70%, var(--bg)); color:var(--ink);
+         font:16px/1.45 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+         padding: calc(env(safe-area-inset-top) + 32px) max(16px, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 32px) max(16px, env(safe-area-inset-left)); }
+  main { max-width:420px; margin:0 auto; text-align:center; }
+  svg { width:150px; height:auto; display:block; margin:0 auto 8px; }
+  .k { font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); }
+  h1 { font-size:30px; line-height:1.1; letter-spacing:-.5px; margin:6px 0 10px; text-wrap:balance; }
+  p { color:var(--muted); margin:0 0 18px; }
+  .code { display:inline-block; font-size:34px; font-weight:800; letter-spacing:8px; padding:10px 18px 10px 26px; border-radius:14px; background:var(--card); box-shadow:0 2px 10px rgba(23,20,18,.08); margin-bottom:20px; }
+  a.btn { display:block; padding:15px; border-radius:14px; background:var(--ink); color:#fff; font-weight:600; text-decoration:none; }
+  small { display:block; margin-top:16px; color:var(--muted); font-size:13px; }
+</style>
+</head>
+<body>
+<main>
+  <svg viewBox="40 90 430 440" aria-hidden="true">
+    <path d="M229 127 L222 200 L210 280 L196 360 L183 440 L170 520 L40 530 L80 470 L112 410 L140 350 L162 296 L184 238 L203 186 L216 152 Z" fill="#D9C2A6"/>
+    <path d="M229 127 L236 124 L245 133 L241 147 L262 200 L288 262 L318 326 L352 388 L400 438 L470 470 L470 530 L170 520 L183 440 L196 360 L210 280 L222 200 Z" fill="#7C6D66"/>
+    <path d="M222 140 L229 127 L236 124 L245 133 L240 146 L233 138 L227 150Z" fill="#FBF9F5"/>
+    <path d="M170 524 L183 440 L196 360 L210 280 L222 200 L229 134" fill="none" stroke="#C14A1F" stroke-width="8" stroke-dasharray="0.1 16" stroke-linecap="round"/>
+    <path d="M229 128 V92" stroke="#2A2422" stroke-width="3"/><path d="M230.5 93 Q 246 90 258 97 Q 246 101 258 107 Q 246 104 230.5 106Z" fill="#C14A1F"/>
+  </svg>
+  <div class="k">Pass1</div>
+  <h1>You're invited to a challenge</h1>
+  <p>Open it in Pass1 and you're in. Your friends are already on the trail.</p>
+  <div class="code" id="code">······</div>
+  <a class="btn" id="open" href="#">Open in Pass1</a>
+  <small>Don't have Pass1 yet? Ask the friend who sent this for the TestFlight link, then come back and tap Open. Or type the code in Pass1 under Join with code.</small>
+</main>
+<script>
+  // Opens the app straight on its Join screen with this code filled in.
+  const raw = new URLSearchParams(location.search).get('c') || '';
+  const code = raw.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+  const link = 'stepcompetition://join?code=' + code;
+  if (code) document.getElementById('code').textContent = code;
+  document.getElementById('open').href = link;
+  if (code) setTimeout(() => { location.href = link; }, 400);
+</script>
+</body>
+</html>
