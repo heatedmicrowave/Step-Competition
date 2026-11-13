@@ -120,6 +120,23 @@ const en = {
   sendFriend: 'Send to a friend',
   shareMsg: (comp: string, code: string) => `Join "${comp}" in Pass1. Code: ${code}`,
 
+  // Challenges
+  garminHint: 'Not updating? Open Garmin Connect for a second so it syncs.',
+  pickCourse: 'Where are we going?',
+  kinds: ['Climbs', 'Routes', 'Classic'],
+  courseNames: {
+    vesuvius: ['Vesuvius', 'Naples, Italy'],
+    half_dome: ['Half Dome', 'Yosemite, California'],
+    matterhorn: ['Matterhorn', 'Zermatt, Switzerland'],
+    big_sur: ['Big Sur', 'Carmel to San Simeon, Highway 1'],
+    classic: ['Most steps', 'Whoever walks the most wins'],
+  } as Record<string, [string, string]>,
+  toGo: (v: string) => `${v} to go`,
+  atTop: 'At the top!',
+  atEnd: 'Made it!',
+  top: (v: string) => `Top ${v}`,
+  routeLen: (v: string) => `${v} of coast`,
+
   // Messages from the server, by their exact English text
   server: {
     'no competition with that code': 'No competition with that code.',
@@ -231,6 +248,23 @@ const it: Strings = {
   sendFriend: 'Invita un amico',
   shareMsg: (comp, code) => `Unisciti alla sfida "${comp}" su Pass1. Codice: ${code}`,
 
+  // Sfide
+  garminHint: 'Non si aggiorna? Apri Garmin Connect un attimo per sincronizzare.',
+  pickCourse: 'Dove si va?',
+  kinds: ['Scalate', 'Percorsi', 'Classica'],
+  courseNames: {
+    vesuvius: ['Vesuvio', 'Napoli'],
+    half_dome: ['Half Dome', 'Yosemite, California'],
+    matterhorn: ['Cervino', 'Zermatt, Svizzera'],
+    big_sur: ['Big Sur', 'Da Carmel a San Simeon, Highway 1'],
+    classic: ['Chi fa più passi', 'Vince chi cammina di più'],
+  },
+  toGo: (v: string) => `ancora ${v}`,
+  atTop: 'In vetta!',
+  atEnd: 'Traguardo!',
+  top: (v: string) => `Vetta ${v}`,
+  routeLen: (v: string) => `${v} di costa`,
+
   server: {
     'no competition with that code': 'Nessuna sfida con questo codice.',
     'key not found or already linked': 'Chiave sbagliata o già collegata a un account.',
@@ -340,6 +374,23 @@ const nap: Strings = {
   sendFriend: "Mannalo a n'amico",
   shareMsg: (comp, code) => `Viene dint'â sfida "${comp}" ncopp' a Pass1. Codice: ${code}`,
 
+  // Sfide
+  garminHint: "Nun s'aggiorna? Arape Garmin Connect nu mumento, accussì se sincronizza.",
+  pickCourse: 'Addò jammo?',
+  kinds: ['Sagliute', 'Strade', 'Classica'],
+  courseNames: {
+    vesuvius: ["'O Vesuvio", 'Napule'],
+    half_dome: ['Half Dome', 'Yosemite, California'],
+    matterhorn: ['Cervino', 'Zermatt, Svizzera'],
+    big_sur: ['Big Sur', 'Da Carmel a San Simeon'],
+    classic: ['Chi fa cchiù passe', "Vence chi cammina 'e cchiù"],
+  },
+  toGo: (v: string) => `ancora ${v}`,
+  atTop: "'Ncoppa â vetta!",
+  atEnd: 'Traguardo!',
+  top: (v: string) => `Vetta ${v}`,
+  routeLen: (v: string) => `${v} 'e costa`,
+
   server: {
     'no competition with that code': "Nun ce sta nisciuna sfida cu stu codice.",
     'key not found or already linked': "'A chiave è sbagliata o è già cullegata.",
@@ -448,6 +499,23 @@ const es: Strings = {
   sendFriend: 'Invitar a un amigo',
   shareMsg: (comp, code) => `Únete a "${comp}" en Pass1. Código: ${code}`,
 
+  // Retos
+  garminHint: '¿No se actualiza? Abre Garmin Connect un momento para que sincronice.',
+  pickCourse: '¿A dónde vamos?',
+  kinds: ['Cumbres', 'Rutas', 'Clásico'],
+  courseNames: {
+    vesuvius: ['Vesubio', 'Nápoles, Italia'],
+    half_dome: ['Half Dome', 'Yosemite, California'],
+    matterhorn: ['Cervino', 'Zermatt, Suiza'],
+    big_sur: ['Big Sur', 'De Carmel a San Simeon, Highway 1'],
+    classic: ['Más pasos', 'Gana quien más camine'],
+  },
+  toGo: (v: string) => `faltan ${v}`,
+  atTop: '¡En la cima!',
+  atEnd: '¡Llegaste!',
+  top: (v: string) => `Cima ${v}`,
+  routeLen: (v: string) => `${v} de costa`,
+
   server: {
     'no competition with that code': 'No hay ningún reto con ese código.',
     'key not found or already linked': 'Esa clave no es correcta o ya está vinculada a una cuenta.',
@@ -555,6 +623,23 @@ const ja: Strings = {
   noData: 'データなし',
   sendFriend: '友だちを招待',
   shareMsg: (comp, code) => `Pass1の「${comp}」に参加しよう！ 招待コード：${code}`,
+
+  // チャレンジ
+  garminHint: '更新されない？Garmin Connectを少し開くと同期されます。',
+  pickCourse: 'どこへ行く？',
+  kinds: ['山', 'ルート', 'クラシック'],
+  courseNames: {
+    vesuvius: ['ヴェスヴィオ山', 'イタリア・ナポリ'],
+    half_dome: ['ハーフドーム', 'カリフォルニア・ヨセミテ'],
+    matterhorn: ['マッターホルン', 'スイス・ツェルマット'],
+    big_sur: ['ビッグサー', 'カーメル〜サンシメオン（ハイウェイ1）'],
+    classic: ['歩数バトル', 'いちばん歩いた人の勝ち'],
+  },
+  toGo: (v: string) => `あと${v}`,
+  atTop: '登頂！',
+  atEnd: 'ゴール！',
+  top: (v: string) => `山頂 ${v}`,
+  routeLen: (v: string) => `海岸線 ${v}`,
 
   server: {
     'no competition with that code': 'このコードのチャレンジは見つかりません。',

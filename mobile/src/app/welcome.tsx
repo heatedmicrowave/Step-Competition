@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { Button, font, Heading, Input, Label, T, useColors } from '../components/ui';
+import { useScene } from '../components/Mountain';
 import { useAuth } from '../lib/auth';
 import { Device, deviceName, DEVICES, fixFor } from '../lib/devices';
 import { healthAvailable } from '../lib/health';
@@ -15,6 +16,7 @@ export default function Welcome() {
   const c = useColors();
   const { me, reloadMe } = useAuth();
   const { t } = useT();
+  useScene({ pose: 'aside' });
   const [step, setStep] = useState<'name' | 'device' | 'fix'>(me && me.name !== 'New player' ? 'device' : 'name');
   const [name, setName] = useState('');
   const [device, setDevice] = useState<Device | null>(null);
@@ -51,7 +53,7 @@ export default function Welcome() {
   }
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: c.bg }}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 88, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
         {step === 'name' && (
           <>

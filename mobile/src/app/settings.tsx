@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { Button, Input, Section, T, useColors } from '../components/ui';
+import { useScene } from '../components/Mountain';
 import { useAuth } from '../lib/auth';
 import { errorIn, Lang, LANG_NAMES, LANGS, LangChoice, useT } from '../lib/i18n';
 import { supabase } from '../lib/supabase';
@@ -10,6 +11,7 @@ export default function Settings() {
   const c = useColors();
   const { me, reloadMe } = useAuth();
   const { t, choice, setChoice } = useT();
+  useScene({ pose: 'aside' });
   const [name, setName] = useState(me?.name === 'New player' ? '' : me?.name ?? '');
   const [key, setKey] = useState('');
   const [msg, setMsg] = useState('');
@@ -31,7 +33,7 @@ export default function Settings() {
   }
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
+    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
       <Section label={t.nameOnBoard}>
         <Input value={name} onChangeText={setName} placeholder={t.namePlaceholder} />
         <Button title={t.save} onPress={saveName} busy={busy === 'name'} />
