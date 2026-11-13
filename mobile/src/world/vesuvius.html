@@ -25,7 +25,7 @@
   .hero span { display:block; font-size:13px; font-weight:600; color:var(--muted); }
   [data-scene]:not([data-scene="overview"]) .hero { opacity:0; transform: translateY(-20px); }
 
-  .chev { position:absolute; top:max(12px, var(--st)); left:8px; width:44px; height:44px; border:0; background:transparent; color:#fff; filter: drop-shadow(0 1px 2px rgba(23,20,18,.6)); cursor:pointer; z-index:5; display:flex; align-items:center; justify-content:center; }
+  .chev { position:absolute; top:max(12px, var(--st)); left:8px; width:44px; height:44px; border:0; background:transparent; color:#fff; opacity:.9; filter: drop-shadow(0 1px 1.5px rgba(23,20,18,.45)); cursor:pointer; z-index:5; display:flex; align-items:center; justify-content:center; }
   [data-scene="overview"] .chev { color:var(--ink); filter:none; }
   .pull { position:absolute; top:max(10px, var(--st)); left:50%; transform:translateX(-50%); pointer-events:none; z-index:4; transition:opacity .3s; }
   .pull i { display:block; width:44px; height:5px; border-radius:3px; background:rgba(23,20,18,.35); }
@@ -358,7 +358,7 @@
   <b id="heroNum">27,400</b>
   <span id="heroSub">2nd · 3,800 behind Seniorwidebody</span>
 </div>
-<button class="chev" id="back" aria-label="Back"><svg width="14" height="24" viewBox="0 0 14 24"><path d="M12 2 L3 12 L12 22" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+<button class="chev" id="back" aria-label="Back"><svg width="14" height="24" viewBox="0 0 14 24"><path d="M12 2 L3 12 L12 22" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 <button class="soundBtn" id="soundBtn" aria-label="Sound"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8 v4 h3 l4 3.5 v-11 L6 8z" fill="currentColor"/><path class="waves" d="M13 7.5 q2 2.5 0 5 M15.5 5.5 q3.6 4.5 0 9"/><path class="slash" d="M13 7 l5 6 M18 7 l-5 6"/></svg></button>
 <div class="pull"><i></i></div>
 <div class="hint" id="hint" data-t="hint">Drag sideways · tap a place</div>
@@ -525,7 +525,7 @@
       '<text x="298" y="' + y + '" text-anchor="end" font-family="Caveat, cursive" font-size="18" font-weight="700" fill="' + ink + '">' + kfmt(h.st) + (h.st >= D.goal ? ' ✓' : '') + '</text>'; }).join('');
 
   }
-  // ---- Moving around: tap a place, fly in, the scene fades up. ‹ or swipe down to leave.
+  // ---- Moving around: tap a place, fly in, the scene fades up. ‹ to leave.
   const app = $('app'), world = $('world'), note = $('note');
   let scene = 'overview', anim = 0;
   const VW = 400, vh = () => Math.min(800, VW * world.clientHeight / Math.max(1, world.clientWidth));
@@ -766,10 +766,9 @@
   window.addEventListener('pointerup', () => { if (drag && drag.moved) { $('hint').classList.add('gone'); suppress = true; setTimeout(() => suppress = false, 50); } drag = null; });
   let suppress = false;
   window.addEventListener('resize', () => { if (scene === 'overview') { vb = home(); world.setAttribute('viewBox', vb.join(' ')); } });
-  // Swipe down anywhere in a place to go back to the whole climb.
   let sy = null, sx = 0;
   app.addEventListener('pointerdown', (e) => { sy = scene !== 'overview' && !e.target.closest('.note') ? e.clientY : null; sx = e.clientX; });
-  app.addEventListener('pointerup', (e) => { const dy = e.clientY - sy, dx = Math.abs(e.clientX - sx); if (sy != null && dy > 150 && dx < dy * .6) go('overview'); sy = null; });
+  // Leaving a place is the ‹ arrow only (no swipe-out).
   if (wanted()) setTimeout(() => sound(true), 300); // you left the sound on last time
 })();
 </script>
