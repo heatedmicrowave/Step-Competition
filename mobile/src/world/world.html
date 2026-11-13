@@ -96,7 +96,7 @@
   [data-scene]:not([data-scene="overview"]) .panel { transform: translateY(0); }
   .exit { position:absolute; top:max(14px, var(--st)); left:max(14px, env(safe-area-inset-left)); height:42px; padding:0 16px 0 12px; border-radius:21px; border:0; background:rgba(251,249,245,.95); box-shadow:0 3px 12px rgba(23,20,18,.18); font:600 14px inherit; font-family:inherit; color:var(--ink); cursor:pointer; z-index:5; transition:opacity .2s; }
   [data-scene="overview"] .exit { opacity:0; pointer-events:none; }
-  .chev { position:absolute; top:max(12px, var(--st)); left:max(8px, env(safe-area-inset-left)); width:44px; height:44px; border:0; background:transparent; color:#fff; filter: drop-shadow(0 1px 2px rgba(23,20,18,.55)); cursor:pointer; z-index:5; transition:opacity .2s; display:flex; align-items:center; justify-content:center; }
+  .chev { position:absolute; top:max(12px, var(--st)); left:max(8px, env(safe-area-inset-left)); width:44px; height:44px; border:0; background:transparent; color:#fff; opacity:.9; filter: drop-shadow(0 1px 1.5px rgba(23,20,18,.4)); cursor:pointer; z-index:5; transition:opacity .2s; display:flex; align-items:center; justify-content:center; }
   [data-scene="overview"] .chev { opacity:0; pointer-events:none; }
   .pull { position:absolute; top:max(10px, var(--st)); left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:6px; pointer-events:none; z-index:4; transition:opacity .3s; }
   .pull i { width:44px; height:5px; border-radius:3px; background:rgba(23,20,18,.35); }
@@ -631,8 +631,7 @@
   <canvas id="snow"></canvas>
 
 
-  <button class="chev" data-go="overview" aria-label="Back to the mountain"><svg width="14" height="24" viewBox="0 0 14 24"><path d="M11 3 L3 12 L11 21" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-  <div class="pull" id="pull"><i></i><span data-t="swipeBack">Swipe down for the mountain</span></div>
+  <button class="chev" data-go="overview" aria-label="Back to the mountain"><svg width="14" height="24" viewBox="0 0 14 24"><path d="M11 3 L3 12 L11 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   <button class="soundBtn" id="soundBtn" aria-label="Sound"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8 v4 h3 l4 3.5 v-11 L6 8z" fill="currentColor"/><path class="waves" d="M13 7.5 q2 2.5 0 5 M15.5 5.5 q3.6 4.5 0 9"/><path class="slash" d="M13 7 l5 6 M18 7 l-5 6"/></svg></button>
   <div class="note" id="note"></div>
   <button class="menuBtn" id="menuBtn" aria-label="Places"><i></i><i></i><i></i></button>
@@ -751,7 +750,6 @@
     menu.classList.remove('open');
     closeNote();
     if (name === scene) return;
-    if (name !== 'overview') { const pl = document.getElementById('pull'); visits++; pl.classList.toggle('quiet', visits > 3); clearTimeout(pl.t); pl.t = setTimeout(() => pl.classList.add('quiet'), 3000); }
     scene = name;
     app.dataset.scene = name;
     menu.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.go === name));
@@ -953,7 +951,7 @@
   window.__pull = () => { if (pull) { pull.sc.style.transform = ''; pull.sc.classList.remove('dragging'); pull = null; } };
   document.addEventListener('pointerdown', (e) => {
     const sc = e.target.closest('svg.scene');
-    if (!sc || scene === 'overview') return;
+    if (!sc || scene === 'overview' || true) return; // leaving a place is the ‹ arrow only (Maclain: no swipe-out)
     pull = { y: e.clientY, x: e.clientX, sc, dy: 0, dx: 0 };
   });
   addEventListener('pointermove', (e) => {
