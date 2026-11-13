@@ -1,4 +1,5 @@
 {
   "NSHealthShareUsageDescription": "参加中の競争のランキングに反映するため、毎日の歩数を読み取ります。",
-  "NSHealthUpdateUsageDescription": "Pass1は歩数を読み取るだけで、ヘルスケアに書き込むことはありません。"
+  "NSHealthUpdateUsageDescription": "Pass1は歩数を読み取るだけで、ヘルスケアに書き込むことはありません。",
+  "NSLocationWhenInUseUsageDescription": "Pass1 は位置情報を使いません。チャレンジの地図には、その山やルートだけが表示されます。"
 }
