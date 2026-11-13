@@ -1,8 +1,8 @@
-// The real place, in 3D: satellite photos on real terrain at dusk, real landmarks as flags, and
+// The real place, in 3D: satellite photos on real terrain, real landmarks as flags, and
 // everyone's dot on the trail. Without a Mapbox token the challenge screen keeps the drawn mountain.
 // The token lives in the EXPO_PUBLIC_MAPBOX_TOKEN environment variable on expo.dev (production), not
 // in the repo, so GitHub's secret scanning stays happy and nobody can copy it from the code.
-import Mapbox, { Camera, LineLayer, MapView, MarkerView, RasterDemSource, ShapeSource, StyleImport, Terrain } from '@rnmapbox/maps';
+import Mapbox, { Atmosphere, Camera, LineLayer, MapView, MarkerView, RasterDemSource, ShapeSource, Terrain } from '@rnmapbox/maps';
 import { Text, View } from 'react-native';
 import { Course, measure } from '../lib/courses';
 import type { Lang } from '../lib/i18n';
@@ -29,20 +29,21 @@ export function ChallengeMap({ course, climbers, lang, locale, stepsWord }: {
   return (
     <MapView
       style={{ flex: 1 }}
-      styleURL="mapbox://styles/mapbox/standard-satellite"
+      styleURL="mapbox://styles/mapbox/satellite-v9"
       scaleBarEnabled={false}
       compassEnabled={false}
       logoPosition={{ bottom: 8, left: 8 }}
       attributionPosition={{ bottom: 8, right: 8 }}
     >
-      <StyleImport id="basemap" existing config={{ lightPreset: 'dusk', showPlaceLabels: false, showRoadLabels: false, showPointOfInterestLabels: false, showTransitLabels: false }} />
-      <Camera defaultSettings={{ centerCoordinate: [camera.lon, camera.lat], zoomLevel: camera.zoom, pitch: camera.pitch, heading: camera.heading }} />
+      {/* Plain satellite photos: the Standard satellite style came up empty on build 6. */}
+      <Atmosphere style={{ color: '#3A3A4A', highColor: '#1E2233', horizonBlend: 0.08, spaceColor: '#0E1016', starIntensity: 0.15 }} />
+      <Camera centerCoordinate={[camera.lon, camera.lat]} zoomLevel={camera.zoom} pitch={camera.pitch} heading={camera.heading} animationDuration={0} />
       <RasterDemSource id="pass1-dem" url="mapbox://mapbox.mapbox-terrain-dem-v1" tileSize={514} maxZoomLevel={14}>
         <Terrain style={{ exaggeration: 1.15 }} />
       </RasterDemSource>
 
       <ShapeSource id="pass1-trail" shape={trail}>
-        <LineLayer id="pass1-trail-line" style={{ lineColor: ACCENT, lineWidth: 2.5, lineDasharray: [1, 2], lineCap: 'round', lineEmissiveStrength: 1 }} />
+        <LineLayer id="pass1-trail-line" style={{ lineColor: ACCENT, lineWidth: 2.5, lineDasharray: [1, 2], lineCap: 'round' }} />
       </ShapeSource>
 
       {scene.spots.filter((s) => s.flag).map((s) => (
