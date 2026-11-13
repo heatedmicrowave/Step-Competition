@@ -2,7 +2,8 @@
 // everyone's dot on the trail. Without a Mapbox token the challenge screen keeps the drawn mountain.
 // The token lives in the EXPO_PUBLIC_MAPBOX_TOKEN environment variable on expo.dev (production), not
 // in the repo, so GitHub's secret scanning stays happy and nobody can copy it from the code.
-import Mapbox, { Atmosphere, Camera, LineLayer, MapView, MarkerView, RasterDemSource, ShapeSource, Terrain } from '@rnmapbox/maps';
+import Mapbox, { Atmosphere, Camera, LineLayer, MapView, MarkerView, RasterDemSource, RasterLayer, RasterSource, ShapeSource, Terrain } from '@rnmapbox/maps';
+import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { Course, measure } from '../lib/courses';
 import type { Lang } from '../lib/i18n';
@@ -22,13 +23,19 @@ export function ChallengeMap({ course, climbers, lang, locale, stepsWord }: {
   course: Course; climbers: MapClimber[]; lang: Lang; locale?: string; stepsWord: string;
 }) {
   const scene = SCENES[course.id];
+  // Temporary: shows Mapbox's own error on the map, so we can see why the satellite photos don't load.
+  const [status, setStatus] = useState('loading');
   if (!TOKEN || !scene) return null;
   const { camera } = scene;
   const trail = { type: 'Feature' as const, properties: {}, geometry: { type: 'LineString' as const, coordinates: scene.spots.map((s) => [s.lon, s.lat]) } };
 
   return (
+    <View style={{ flex: 1 }}>
     <MapView
       style={{ flex: 1 }}
+      onDidFinishLoadingStyle={() => setStatus((v) => (v === 'loading' ? 'style ok' : v))}
+      onMapIdle={() => setStatus((v) => (v === 'style ok' || v === 'loading' ? 'idle ok' : v))}
+      onMapLoadingError={(e) => setStatus((v) => `${v === 'idle ok' || v === 'style ok' || v === 'loading' ? '' : v + '\n'}${e?.type ?? '?'} ${e?.sourceId ?? ''}: ${e?.error ?? 'error'}`.slice(-400))}
       styleURL="mapbox://styles/mapbox/satellite-v9"
       scaleBarEnabled={false}
       compassEnabled={false}
@@ -41,6 +48,11 @@ export function ChallengeMap({ course, climbers, lang, locale, stepsWord }: {
       <RasterDemSource id="pass1-dem" url="mapbox://mapbox.mapbox-terrain-dem-v1" tileSize={514} maxZoomLevel={14}>
         <Terrain style={{ exaggeration: 1.15 }} />
       </RasterDemSource>
+
+      {/* Backup: the satellite photos asked for directly, in case the style's own photo layer fails. */}
+      <RasterSource id="pass1-sat" tileUrlTemplates={[`https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}@2x.jpg90?access_token=${TOKEN}`]} tileSize={256} maxZoomLevel={19}>
+        <RasterLayer id="pass1-sat-layer" style={{ rasterOpacity: 1 }} />
+      </RasterSource>
 
       <ShapeSource id="pass1-trail" shape={trail}>
         <LineLayer id="pass1-trail-line" style={{ lineColor: ACCENT, lineWidth: 2.5, lineDasharray: [1, 2], lineCap: 'round' }} />
@@ -70,5 +82,9 @@ export function ChallengeMap({ course, climbers, lang, locale, stepsWord }: {
         </MarkerView>
       ))}
     </MapView>
+      <View pointerEvents="none" style={{ position: 'absolute', top: 8, left: 8, right: 8, padding: 6, borderRadius: 6, backgroundColor: 'rgba(0,0,0,0.6)' }}>
+        <Text style={{ color: '#FFFFFF', fontSize: 10 }}>{status}</Text>
+      </View>
+    </View>
   );
 }
