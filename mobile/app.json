@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.heatedmicrowave.stepcompetition",
@@ -36,7 +36,8 @@
           "NSHealthUpdateUsageDescription": "Pass1 only reads your steps. It never writes anything to Apple Health.",
           "background": true
         }
-      ]
+      ],
+      "@rnmapbox/maps"
     ],
     "scheme": "stepcompetition",
     "extra": {

@@ -1,8 +1,8 @@
 import { Redirect } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
-import { useScene } from '../components/Mountain';
-import { Button, Input, Label, Numeral, Section, T, useColors } from '../components/ui';
+import { MountainArt } from '../components/Mountain';
+import { Button, Input, Section, T, Title, useColors } from '../components/ui';
 import { signInRedirect, useAuth } from '../lib/auth';
 import { errorIn, useT } from '../lib/i18n';
 import { supabase } from '../lib/supabase';
@@ -11,7 +11,6 @@ import { supabase } from '../lib/supabase';
 export default function SignIn() {
   const c = useColors();
   const { t } = useT();
-  useScene({ pose: 'home' });
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -28,12 +27,12 @@ export default function SignIn() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 96 }} keyboardShouldPersistTaps="handled">
-        <View style={{ borderWidth: 2, borderColor: c.ink, padding: 16, marginBottom: 40 }}>
-          <Label color={c.red}>Pass1</Label>
-          <Numeral size={112}>10,000</Numeral>
-          <T muted>{t.tagline}</T>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 72 }} keyboardShouldPersistTaps="handled">
+        <View style={{ height: 220, borderRadius: 28, overflow: 'hidden', backgroundColor: '#1B1714', marginBottom: 20 }}>
+          <MountainArt art="matterhorn" viewBox="0 20 390 400" slice />
         </View>
+        <Title size={40}>Pass1</Title>
+        <T muted style={{ marginBottom: 32 }}>{t.tagline}</T>
         <Section label={sent ? t.linkSent(email.trim()) : t.signIn}>
           {!sent ? (
             <>

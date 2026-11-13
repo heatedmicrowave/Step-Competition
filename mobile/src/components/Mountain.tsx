@@ -1,9 +1,6 @@
-// The mountain behind the app. One backdrop sits under every screen; each screen says where it
-// wants it (front and centre on Today, pushed aside and faded on forms, close up with everyone's
-// dot on the trail inside a challenge) and the backdrop glides there.
-import { useFocusEffect } from 'expo-router';
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, StyleSheet, useWindowDimensions, View } from 'react-native';
+// The mountain and route drawings: small in cards, big with everyone's dot on the trail inside a
+// challenge.
+import { View } from 'react-native';
 import Svg, { Circle, G, Line, Polygon, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 import type { CourseId } from '../lib/courses';
 
@@ -69,8 +66,6 @@ export function artFor(id: CourseId): Exclude<CourseId, 'classic'> {
 }
 
 export type Climber = { id: string; initial: string; color: string; frac: number };
-export type Pose = 'home' | 'aside' | 'climb';
-type Scene = { pose: Pose; art?: Exclude<CourseId, 'classic'>; climbers?: Climber[] };
 
 /** A point `frac` (0–1) of the way along a trail. */
 function along(trail: [number, number][], frac: number) {
@@ -98,11 +93,17 @@ function placed(art: Art, climbers: Climber[]) {
   return out;
 }
 
-export function MountainArt({ art, climbers = [], showTrail }: { art: Exclude<CourseId, 'classic'>; climbers?: Climber[]; showTrail?: boolean }) {
+export function MountainArt({ art, climbers = [], showTrail, viewBox, slice }: {
+  art: Exclude<CourseId, 'classic'>; climbers?: Climber[]; showTrail?: boolean;
+  /** Crop to part of the 390 × 520 drawing, e.g. "40 180 330 200". */
+  viewBox?: string;
+  /** Fill the box and crop the overflow (thumbnails) rather than fitting inside it. */
+  slice?: boolean;
+}) {
   const a = ARTS[art];
   const top = a.trail[a.trail.length - 1];
   return (
-    <Svg width="100%" height="100%" viewBox={`0 0 ${VW} ${VH}`}>
+    <Svg width="100%" height="100%" viewBox={viewBox ?? `0 0 ${VW} ${VH}`} preserveAspectRatio={slice ? 'xMidYMax slice' : 'xMidYMid meet'}>
       {a.sea && <Rect x={-20} y={0} width={VW + 40} height={VH} fill={SEA} />}
       {a.shapes.map((s, i) => <Polygon key={i} points={s.points} fill={s.fill} opacity={s.opacity ?? 1} />)}
       {showTrail && (
@@ -127,74 +128,27 @@ export function MountainArt({ art, climbers = [], showTrail }: { art: Exclude<Co
   );
 }
 
-const SceneContext = createContext<(s: Scene) => void>(() => {});
-
-/** The backdrop plus the screens on top of it. */
-export function Backdrop({ children }: { children: React.ReactNode }) {
-  const { width: W, height: SH } = useWindowDimensions();
-  const A = (W * VH) / VW;
-  const box = A + 600; // the drawing plus ground below it, so it never shows a gap
-  const [scene, setScene] = useState<Scene>({ pose: 'home', art: 'matterhorn' });
-  const [art, setArt] = useState<Exclude<CourseId, 'classic'>>('matterhorn');
-  const x = useRef(new Animated.Value(0)).current;
-  const y = useRef(new Animated.Value(SH)).current;
-  const s = useRef(new Animated.Value(1)).current;
-  const o = useRef(new Animated.Value(0)).current;
-
-  const target = useCallback((pose: Pose) => {
-    // Where the drawing's top-left corner should land, and at what size.
-    const p = pose === 'home' ? { left: 0, top: SH - A * 0.88, scale: 1, opacity: 1 }
-      : pose === 'climb' ? { left: 0, top: 44, scale: 1, opacity: 1 }
-      : { left: W * 0.38, top: SH - A * 0.5, scale: 0.75, opacity: 0.22 };
-    // React Native scales around the centre of the box; shift so the top-left lands where we want.
-    return { x: p.left - (W / 2) * (1 - p.scale), y: p.top - (box / 2) * (1 - p.scale), scale: p.scale, opacity: p.opacity };
-  }, [W, SH, A, box]);
-
-  useEffect(() => {
-    const want = scene.art ?? 'matterhorn';
-    const t = target(scene.pose);
-    const move = () => Animated.parallel([
-      Animated.timing(x, { toValue: t.x, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(y, { toValue: t.y, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(s, { toValue: t.scale, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(o, { toValue: t.opacity, duration: 450, useNativeDriver: true }),
-    ]).start();
-    if (want !== art) {
-      Animated.timing(o, { toValue: 0, duration: 160, useNativeDriver: true }).start(() => { setArt(want); move(); });
-    } else move();
-  }, [scene.pose, scene.art, target]);
-
-  const set = useCallback((next: Scene) => setScene(next), []);
-  return (
-    <SceneContext.Provider value={set}>
-      <View style={{ flex: 1, backgroundColor: SKY }}>
-        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { width: W, height: box, opacity: o, transform: [{ translateX: x }, { translateY: y }, { scale: s }] }]}>
-          <View style={{ width: W, height: A }}>
-            <MountainArt art={art} climbers={scene.climbers} showTrail={scene.pose === 'climb'} />
-          </View>
-          <View style={{ flex: 1, backgroundColor: ARTS[art].sea ? SHADE : GROUND }} />
-        </Animated.View>
-        {children}
-      </View>
-    </SceneContext.Provider>
-  );
-}
-
-/** Call from a screen: where the mountain should be while this screen is showing. */
-export function useScene(scene: Scene) {
-  const set = useContext(SceneContext);
-  const key = JSON.stringify(scene);
-  const sceneRef = useRef(scene);
-  sceneRef.current = scene;
-  useFocusEffect(useCallback(() => { set(sceneRef.current); }, [key, set]));
-}
-
-/** How tall the drawing is on this screen, so a screen can leave room to see it. */
-export function useArtHeight() {
-  const { width } = useWindowDimensions();
-  return useMemo(() => (width * VH) / VW, [width]);
-}
-
 /** Dot colours: you are always the accent; everyone else gets one of these, told apart by lightness too. */
 export const CLIMBER_COLORS = ['#F3EADB', '#7FA7BF', '#B7C98F', '#C9A0DC', '#D9B36C', '#8FC9B9'];
 export const YOU_COLOR = ACCENT;
+
+// The part of each drawing a thumbnail shows.
+const THUMB_BOX: Record<Exclude<CourseId, 'classic'>, string> = {
+  matterhorn: '30 20 340 400', vesuvius: '30 200 340 300', half_dome: '30 200 340 300', big_sur: '80 100 260 300',
+};
+
+/** A small dark tile with the course's drawing (a podium for the classic race). */
+export function CourseThumb({ id, width = 64, height = 64, radius = 14 }: { id: CourseId; width?: number | `${number}%`; height?: number; radius?: number }) {
+  return (
+    <View style={{ width, height, borderRadius: radius, backgroundColor: id === 'big_sur' ? SEA : GROUND, overflow: 'hidden' }}>
+      {id === 'classic' ? (
+        <Svg width="100%" height="100%" viewBox="0 0 64 64" preserveAspectRatio="xMidYMax meet">
+          <Rect x={12} y={30} width={12} height={34} fill={SHADE} />
+          <Rect x={26} y={18} width={12} height={46} fill={LIT} />
+          <Rect x={40} y={38} width={12} height={26} fill={SHADE} />
+          <Polygon points="28,12 32,8 36,12" fill={ACCENT} />
+        </Svg>
+      ) : <MountainArt art={id} viewBox={THUMB_BOX[id]} slice />}
+    </View>
+  );
+}

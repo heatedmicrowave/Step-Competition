@@ -1,8 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
-import { Button, font, Heading, Input, Label, T, useColors } from '../components/ui';
-import { useScene } from '../components/Mountain';
+import { Button, Heading, Input, Label, T, useColors } from '../components/ui';
 import { useAuth } from '../lib/auth';
 import { Device, deviceName, DEVICES, fixFor } from '../lib/devices';
 import { healthAvailable } from '../lib/health';
@@ -16,7 +15,6 @@ export default function Welcome() {
   const c = useColors();
   const { me, reloadMe } = useAuth();
   const { t } = useT();
-  useScene({ pose: 'aside' });
   const [step, setStep] = useState<'name' | 'device' | 'fix'>(me && me.name !== 'New player' ? 'device' : 'name');
   const [name, setName] = useState('');
   const [device, setDevice] = useState<Device | null>(null);
@@ -58,7 +56,7 @@ export default function Welcome() {
         {step === 'name' && (
           <>
             <Label color={c.red}>{t.stepOf(1, 2)}</Label>
-            <Heading size={44}>{t.whatName}</Heading>
+            <Heading size={34}>{t.whatName}</Heading>
             <View style={{ gap: 10, marginTop: 24 }}>
               <Input value={name} onChangeText={setName} placeholder={t.nameOnBoard} autoFocus returnKeyType="next" onSubmitEditing={saveName} />
               <Button title={t.next} onPress={saveName} busy={busy === 'name'} />
@@ -69,7 +67,7 @@ export default function Welcome() {
         {step === 'device' && (
           <>
             <Label color={c.red}>{t.stepOf(2, 2)}</Label>
-            <Heading size={44}>{t.whatWear}</Heading>
+            <Heading size={34}>{t.whatWear}</Heading>
             <T muted style={{ marginTop: 6, marginBottom: 20 }}>{t.tapAllow}</T>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {DEVICES.map((d) => (
@@ -77,11 +75,11 @@ export default function Welcome() {
                   key={d.id}
                   onPress={() => (busy ? undefined : pick(d))}
                   style={({ pressed }) => ({
-                    width: '48.5%', height: 88, borderWidth: 1.5, borderColor: c.ink, padding: 12, justifyContent: 'flex-end',
-                    backgroundColor: busy === d.id ? c.ink : pressed ? c.hair : 'transparent',
+                    width: '48.5%', height: 76, borderRadius: 18, padding: 14, justifyContent: 'flex-end',
+                    backgroundColor: busy === d.id ? c.ink : pressed ? c.hair : c.paper,
                   })}
                 >
-                  <Text style={{ fontFamily: font.heading, fontSize: 24, textTransform: 'uppercase', color: busy === d.id ? c.bg : c.ink }}>
+                  <Text style={{ fontSize: 17, fontWeight: '600', color: busy === d.id ? c.paper : c.ink }}>
                     {busy === d.id ? t.connecting : deviceName(t, d)}
                   </Text>
                 </Pressable>
@@ -94,7 +92,7 @@ export default function Welcome() {
         {step === 'fix' && device && (
           <>
             <Label color={c.red}>{deviceName(t, device)}</Label>
-            <Heading size={40}>{t.oneMore}</Heading>
+            <Heading size={34}>{t.oneMore}</Heading>
             <T style={{ marginTop: 12, marginBottom: 24 }}>{fix}</T>
             <View style={{ gap: 10 }}>
               {device.route === 'apple_health' && healthAvailable() && !device.androidOnly && (
