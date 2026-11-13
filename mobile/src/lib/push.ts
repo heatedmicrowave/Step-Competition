@@ -14,7 +14,7 @@ Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
 });
 
-async function register(lang: Lang) {
+export async function register(lang: Lang) {
   const now = await Notifications.getPermissionsAsync();
   const perm = now.granted || !now.canAskAgain ? now : await Notifications.requestPermissionsAsync();
   if (!perm.granted) return;

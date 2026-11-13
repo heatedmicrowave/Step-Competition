@@ -1,69 +1,129 @@
+// Today: the drawn Matterhorn. Base camp is you (your chalet holds the settings, the mailbox is
+// notifications), the Hörnli Hut's trail signs are your challenges, and the summit book is the
+// leaderboard. The drawing itself lives in src/world/world.html; this screen feeds it the numbers.
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 import { Redirect, router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, AppState, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, AppState, Linking, Share, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MAP_ON } from '../../components/ChallengeMap';
-import { CompCard } from '../../components/CompCard';
-import { MountainHome } from '../../components/MountainHome';
-import { CourseThumb, MountainArt } from '../../components/Mountain';
-import { Button, Card, fmt, Label, Numeral, Section, T, Title, useColors } from '../../components/ui';
-import { COURSES, size } from '../../lib/courses';
+import { MountainWorld, WorldBoard, WorldData, WorldEvent, WorldHiker, WorldSign } from '../../components/MountainWorld';
+import { T, useColors } from '../../components/ui';
+import { course, position, progress } from '../../lib/courses';
 import { useAuth } from '../../lib/auth';
-import { healthAvailable } from '../../lib/health';
+import { Lang, LANGS, errorIn, useT } from '../../lib/i18n';
+import { countryName, loadBoard, loadPublicMe, phoneCountry } from '../../lib/publicBoard';
+import { register } from '../../lib/push';
+import { COMP_FIELDS, daysLeftOf, loadStandings, Standing } from '../../lib/standings';
 import { Competition, errorText, isoDay, supabase } from '../../lib/supabase';
-import { connectFitbit, fitbitError, fitbitStatus } from '../../lib/fitbit';
-import { useT } from '../../lib/i18n';
-import { BoardRow, loadBoard, loadPublicMe } from '../../lib/publicBoard';
-import { COMP_FIELDS } from '../../lib/standings';
+import { fitbitStatus } from '../../lib/fitbit';
 import { syncSteps } from '../../lib/sync';
+
+const ME = '#C14A1F';
+const OTHERS = ['#3E6C8A', '#4E7A4A', '#8A5A9E', '#B5892E', '#5F6B73', '#2F7F7A'];
+const SEEN = 'world.seen'; // today's steps the last time you looked, for the "+N today" walk
+
+type Loaded = {
+  today: number | null;
+  sync: string;
+  week: number;
+  best: { day: string; steps: number } | null;
+  alerts: boolean;
+  gain: number;
+  nickname: string | null;
+  publicOn: boolean;
+  boards: WorldBoard[];
+  live: { comp: Competition; board: Standing[] }[];
+};
+
+function monday() {
+  const d = new Date();
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return isoDay(d);
+}
 
 export default function Home() {
   const c = useColors();
   const { session, me, loading } = useAuth();
-  const { t, locale, lang } = useT();
+  const { t, lang, locale, setChoice } = useT();
   const insets = useSafeAreaInsets();
-  const [comps, setComps] = useState<Competition[] | null>(null);
-  const [today, setToday] = useState<number | null>(null);
-  const [status, setStatus] = useState('');
-  const [refreshing, setRefreshing] = useState(false);
-  const [reconnect, setReconnect] = useState(false);
-  // The summit's preview of the public board: null = not joined (or not set up yet).
-  const [top5, setTop5] = useState<BoardRow[] | null>(null);
+  const [d, setD] = useState<Loaded | null>(null);
+  const hikers = useRef<{ comp: Competition; list: Standing[] } | null>(null);
 
   const load = useCallback(async () => {
     if (!me) return;
     const fitbit = me.source === 'fitbit';
+    const now = isoDay(new Date());
+    let today: number | null = null;
+    let sync = '';
     try {
-      const steps = await syncSteps();
-      if (steps !== null) setToday(steps);
+      today = await syncSteps();
       if (fitbit) {
         // Fitbit steps arrive on the server; read today's back.
-        const { data: row } = await supabase.from('daily_steps').select('steps').eq('player_id', me.id).eq('day', isoDay(new Date())).maybeSingle();
-        setToday(row?.steps ?? 0);
+        const { data: row } = await supabase.from('daily_steps').select('steps').eq('player_id', me.id).eq('day', now).maybeSingle();
+        today = row?.steps ?? 0;
         const st = await fitbitStatus();
-        setReconnect(!!st?.needs_reconnect);
+        if (st?.needs_reconnect) sync = t.reconnectFitbit;
       }
-      setStatus(steps === null && !fitbit ? t.notConnectedHealth : t.synced(new Date().toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })));
+      if (!sync) sync = today === null && !fitbit ? t.notConnectedHealth : t.synced(new Date().toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' }));
     } catch (e) {
-      setStatus(t.syncFailed(errorText(e)));
+      sync = t.syncFailed(errorText(e));
     }
-    const { data, error } = await supabase
+
+    // This week, from Monday, and its best day.
+    let week = 0;
+    let best: Loaded['best'] = null;
+    const { data: days } = await supabase.from('daily_steps').select('day, steps').eq('player_id', me.id).gte('day', monday());
+    for (const r of (days ?? []) as { day: string; steps: number }[]) {
+      const s = r.day === now && today !== null ? today : r.steps;
+      week += s;
+      if (s > 0 && (!best || s > best.steps)) best = { day: new Date(r.day + 'T12:00:00').toLocaleDateString(locale, { weekday: 'long' }), steps: s };
+    }
+    if (today !== null && !(days ?? []).some((r: any) => r.day === now)) week += today;
+
+    // "+N today": how far you've walked since you last looked.
+    let gain = 0;
+    if (today !== null) {
+      try {
+        const seen = JSON.parse((await AsyncStorage.getItem(SEEN)) ?? 'null') as { day: string; steps: number } | null;
+        gain = seen && seen.day === now ? Math.max(0, today - seen.steps) : today;
+        await AsyncStorage.setItem(SEEN, JSON.stringify({ day: now, steps: today }));
+      } catch {}
+    }
+
+    // The mailbox flag: is the phone allowed to show our notifications?
+    let alerts = false;
+    try { alerts = (await Notifications.getPermissionsAsync()).granted; } catch {}
+
+    // Challenges you're in that haven't ended.
+    const { data: comps } = await supabase
       .from('competitions')
       .select(`${COMP_FIELDS}, competition_players!inner(player_id)`)
       .eq('competition_players.player_id', me.id)
-      .order('end_day', { ascending: false });
-    if (error) setStatus(errorText(error));
-    else setComps(data as unknown as Competition[]);
-    if (MAP_ON) {
-      try {
-        const pub = await loadPublicMe();
-        setTop5(pub.public_board ? (await loadBoard('week', null)).filter((r) => r.rank <= 5 || r.is_me).slice(0, 6) : null);
-      } catch { setTop5(null); }
-    }
-  }, [me?.id, t, locale]);
+      .gte('end_day', now)
+      .order('end_day', { ascending: true });
+    const live = await Promise.all(((comps ?? []) as unknown as Competition[]).map(async (comp) => ({ comp, board: await loadStandings(comp).catch(() => [] as Standing[]) })));
+
+    // The summit book: the world and your country, this week. Only if you've joined the public board.
+    let publicOn = false, nickname: string | null = null;
+    const boards: WorldBoard[] = [];
+    try {
+      const pub = await loadPublicMe();
+      publicOn = pub.public_board;
+      nickname = pub.nickname;
+      if (publicOn) {
+        const country = pub.country ?? phoneCountry();
+        const [world, home] = await Promise.all([loadBoard('week', null), country ? loadBoard('week', country) : Promise.resolve(null)]);
+        boards.push({ key: 'world', label: t.boardWorld, rows: world.map((r) => ({ rank: r.rank, name: r.nickname, sub: r.country ?? '', steps: r.steps, me: r.is_me })) });
+        if (home && country) boards.push({ key: country, label: countryName(country, locale), rows: home.map((r) => ({ rank: r.rank, name: r.nickname, sub: '', steps: r.steps, me: r.is_me })) });
+      }
+    } catch {}
+
+    setD({ today, sync, week, best, alerts, gain, nickname, publicOn, boards, live });
+  }, [me?.id, me?.device_label, t, locale]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
-  // Sync again every time the app comes back to the front.
+  // Sync again every time the app comes back to the front (also picks up a changed notification setting).
   useEffect(() => {
     const sub = AppState.addEventListener('change', (st) => { if (st === 'active') load(); });
     return () => sub.remove();
@@ -75,110 +135,119 @@ export default function Home() {
   if (me.name === 'New player') return <Redirect href="/welcome" />;
 
   const now = isoDay(new Date());
-  const live = (comps ?? []).filter((x) => x.end_day >= now);
-  const picks = COURSES.filter((x) => x.kind !== 'classic').slice(0, 3);
+  const kfmt = (st: number) => `${(st / 1000).toFixed(st >= 100000 || st % 1000 < 50 ? 0 : 1)}K`;
+  const fmt = (n: number) => n.toLocaleString(locale);
 
-  const syncLine = `${me.device_label ? `${me.device_label} · ` : ''}${status}`;
+  // Trail signs at the hut, one per challenge.
+  const live = d?.live ?? [];
+  const signs: WorldSign[] = live.slice(0, 3).map(({ comp, board }) => {
+    const cs = course(comp.course);
+    const journey = cs.kind !== 'classic';
+    const rank = board.findIndex((p) => p.id === me.id);
+    const mine = rank >= 0 ? board[rank] : null;
+    const { left, upcoming } = daysLeftOf(comp);
+    const total = Math.round((new Date(comp.end_day + 'T12:00:00').getTime() - new Date(comp.start_day + 'T12:00:00').getTime()) / 86400000) + 1;
+    const short = (iso: string) => new Date(iso + 'T12:00:00').toLocaleDateString(locale, { month: 'short', day: 'numeric' });
+    const lead = board[0]?.total || 0;
+    let k = 0;
+    return {
+      id: comp.id,
+      title: comp.name,
+      sub: !mine ? t.courseNames[cs.id][0] : journey ? `#${rank + 1} · ${position(cs, mine.total, lang, locale)}` : `#${rank + 1} · ${fmt(mine.total)} ${t.stepsWord}`,
+      kicker: upcoming ? t.startsOn(short(comp.start_day)) : t.dayOf(total - left + 1, total),
+      detail: `${t.courseNames[cs.id].join(' · ')}. ${upcoming ? '' : left === 1 ? t.lastDay : t.daysLeft(left)}`,
+      dots: board.map((p) => [Math.round((journey ? progress(cs, p.total) : lead ? p.total / lead : 0) * 1000) / 10, p.id === me.id ? ME : OTHERS[k++ % OTHERS.length]] as [number, string]),
+    };
+  });
 
-  const watchNotes = (
-    <>
-      {!healthAvailable() && me.source !== 'fitbit' && <T muted size={13}>{t.noHealth}</T>}
-      {me.source === 'garmin' && <T muted size={13} style={{ marginTop: 4 }}>{t.garminHint}</T>}
-    </>
-  );
-  const fitbitBox = reconnect && (
-    <Section label="Fitbit">
-      <T>{t.fitbitReconnectBody}</T>
-      <Button title={t.reconnectFitbit} onPress={async () => { const r = await connectFitbit(); if (r.ok) load(); else setStatus(fitbitError(t, r.code)); }} />
-    </Section>
-  );
-  const challenges = (
-    <>
-      {comps === null ? <ActivityIndicator color={c.ink} style={{ marginBottom: 26 }} /> : live.length > 0 && (
-        <Section label={t.yourChallenges}>
-          {live.map((x) => <CompCard key={x.id} comp={x} />)}
-        </Section>
-      )}
-      <Section label={t.startNew}>
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          {picks.map((x) => (
-            <Pressable key={x.id} onPress={() => router.push({ pathname: '/new', params: { course: x.id } })}
-              style={({ pressed }) => ({ flex: 1, backgroundColor: c.paper, borderRadius: 18, padding: 10, gap: 6, opacity: pressed ? 0.7 : 1 })}>
-              <CourseThumb id={x.id} width="100%" height={64} radius={12} />
-              <View>
-                <T bold size={14}>{t.courseNames[x.id][0]}</T>
-                <T muted size={12}>{size(x, lang, locale)}</T>
-              </View>
-            </Pressable>
-          ))}
-        </View>
-        {/* The Challenges tab already lists every challenge, so only "Join with code" stays here. */}
-        <Button title={t.joinCode} kind="plain" onPress={() => router.push('/join')} />
-      </Section>
-    </>
-  );
+  // Hikers on the mountain: everyone in your main climb (a climb first, then a route).
+  const started = live.filter((x) => x.comp.start_day <= now && x.board.length > 0);
+  const main = started.find((x) => course(x.comp.course).id === 'matterhorn')
+    ?? started.find((x) => course(x.comp.course).kind === 'climb')
+    ?? started.find((x) => course(x.comp.course).kind === 'route');
+  hikers.current = main ? { comp: main.comp, list: main.board } : null;
+  let k = 0;
+  const climb: WorldData['climb'] = main ? {
+    id: main.comp.id,
+    name: main.comp.name,
+    goal: course(main.comp.course).goal,
+    hikers: main.board.map((p): WorldHiker => ({
+      id: p.id,
+      n: (p.name.trim()[0] ?? '?').toUpperCase(),
+      name: p.name,
+      c: p.id === me.id ? ME : OTHERS[k++ % OTHERS.length],
+      st: p.total,
+      today: p.today,
+      watch: p.device_label ?? p.source,
+      me: p.id === me.id || undefined,
+    })),
+  } : null;
 
-  if (MAP_ON) {
-    return (
-      <MountainHome
-        steps={today}
-        sub={syncLine}
-        labels={{ base: [t.placeBase, me.name], hut: [t.placeHut, t.yourChallenges], summit: [t.placeSummit, t.tabBoard] }}
-        panels={{
-          base: (
-            <View style={{ gap: 4 }}>
-              <Title size={24}>{me.name}</Title>
-              <T muted size={14}>{syncLine}</T>
-              {watchNotes}
-              <View style={{ height: 16 }} />
-              {fitbitBox}
-              <Button title={t.tabAccount} kind="plain" onPress={() => router.navigate('/account')} />
-            </View>
-          ),
-          hut: challenges,
-          summit: (
-            <View style={{ gap: 12 }}>
-              <Title size={24}>{t.tabBoard}</Title>
-              {top5 === null ? <T muted>{t.boardJoinBody}</T> : top5.length === 0 ? <T muted>{t.boardEmpty}</T> : (
-                <Card style={{ padding: 0 }}>
-                  {top5.map((r, i) => (
-                    <View key={`${r.rank}-${r.nickname}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, minHeight: 46, borderTopWidth: i ? 1 : 0, borderColor: c.hair }}>
-                      <T bold color={r.rank <= 3 ? c.red : c.muted}>{r.rank}</T>
-                      <View style={{ flex: 1 }}><T bold>{r.nickname}{r.is_me ? ` (${t.you})` : ''}</T></View>
-                      <T bold>{fmt(r.steps)}</T>
-                    </View>
-                  ))}
-                </Card>
-              )}
-              <Button title={top5 === null ? t.boardJoinBtn : t.seeAll} onPress={() => router.navigate('/board')} />
-            </View>
-          ),
-        }}
-      />
-    );
+  const data: WorldData = {
+    lang,
+    locale,
+    insetTop: insets.top,
+    today: d ? d.today : null,
+    sync: d?.sync ?? '',
+    week: d?.week ?? 0,
+    best: d?.best ?? null,
+    name: me.name,
+    nickname: d?.nickname ?? null,
+    watch: me.device_label ?? '',
+    alerts: d?.alerts ?? false,
+    gain: climb ? d?.gain ?? 0 : 0,
+    publicOn: d?.publicOn ?? false,
+    t: { ...t.world, stepsToday: t.stepsToday },
+    signs,
+    climb,
+    boards: d?.boards ?? [],
+  };
+
+  async function taunt(compId: string, playerId: string) {
+    const h = hikers.current;
+    const p = h && h.comp.id === compId ? h.list.find((x) => x.id === playerId) : null;
+    if (!p || p.id === me!.id) return;
+    const { data: left } = await supabase.rpc('app_taunts_left', { p_competition: compId });
+    if (!Number(left)) { Alert.alert(t.server['no taunts left'] ?? '', t.tauntsHow); return; }
+    Alert.alert(t.tauntTo(p.name), t.tauntsLeft(Number(left)), [
+      ...t.taunts.map((line, n) => ({ text: line, onPress: async () => {
+        const { error } = await supabase.rpc('app_send_taunt', { p_competition: compId, p_target: p.id, p_line: n });
+        Alert.alert(error ? errorIn(t, error) : t.tauntSent(p.name));
+      } })),
+      { text: t.cancel, style: 'cancel' as const },
+    ]);
   }
 
-  return (
-    <ScrollView
-      style={{ backgroundColor: c.bg }}
-      contentContainerStyle={{ padding: 20, paddingTop: insets.top + 16, paddingBottom: 32 }}
-      refreshControl={<RefreshControl tintColor={c.ink} refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
-    >
-      <Label>{new Date().toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })}</Label>
-      <View style={{ marginBottom: 16 }}><Title size={34}>{t.tabToday}</Title></View>
+  async function alertsTapped() {
+    try {
+      const perm = await Notifications.getPermissionsAsync();
+      if (!perm.granted && perm.canAskAgain) {
+        await register(lang);
+        load();
+      } else {
+        // Already on, or turned off in iOS Settings: only Settings can change it now.
+        Linking.openSettings();
+      }
+    } catch {}
+  }
 
-      <Card style={{ padding: 20, marginBottom: 26, overflow: 'hidden' }}>
-        <View pointerEvents="none" style={{ position: 'absolute', right: -24, bottom: -36, width: 190, height: 170, opacity: 0.16 }}>
-          <MountainArt art="matterhorn" viewBox="60 0 290 390" />
-        </View>
-        <Numeral size={64}>{today === null ? '—' : fmt(today)}</Numeral>
-        <T bold size={15}>{t.stepsToday}</T>
-        <T muted size={13} style={{ marginTop: 16 }}>{syncLine}</T>
-        {watchNotes}
-      </Card>
+  function onEvent(e: WorldEvent) {
+    switch (e.type) {
+      case 'open': if (e.id) router.push({ pathname: '/competition/[id]', params: { id: e.id } }); break;
+      case 'invite': {
+        const x = live.find((l) => l.comp.id === e.id);
+        if (x) Share.share({ message: t.shareMsg(x.comp.name, x.comp.join_code) });
+        break;
+      }
+      case 'new': router.push('/new'); break;
+      case 'join': router.push('/join'); break;
+      case 'alerts': alertsTapped(); break;
+      case 'lang': if (LANGS.includes(e.id as Lang)) setChoice(e.id as Lang); break;
+      case 'account': router.navigate('/account'); break;
+      case 'board': router.navigate('/board'); break;
+      case 'taunt': if (e.id && e.player) taunt(e.id, e.player); break;
+    }
+  }
 
-      {fitbitBox}
-      {challenges}
-    </ScrollView>
-  );
+  return <MountainWorld data={data} onEvent={onEvent} />;
 }
