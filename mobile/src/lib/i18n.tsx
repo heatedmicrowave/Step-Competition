@@ -199,6 +199,7 @@ const en = {
   } as { tips: string[][] } & Record<string, string | string[][]>,
   // The drawn mountain on the home screen (src/world/world.html)
   world: {
+    sound: "Sound",
     stepsToday: "Steps today",
     summit: "Summit",
     summitSub: "Leaderboard",
@@ -437,6 +438,7 @@ const it: Strings = {
   },
   // The drawn mountain on the home screen (src/world/world.html)
   world: {
+    sound: "Suono",
     stepsToday: "Passi oggi",
     summit: "Vetta",
     summitSub: "Classifica",
@@ -674,6 +676,7 @@ const nap: Strings = {
   },
   // The drawn mountain on the home screen (src/world/world.html)
   world: {
+    sound: "'O suono",
     stepsToday: "Passe 'e oggi",
     summit: "'A cimma",
     summitSub: "Classifica",
@@ -910,6 +913,7 @@ const es: Strings = {
   },
   // The drawn mountain on the home screen (src/world/world.html)
   world: {
+    sound: "Sonido",
     stepsToday: "Pasos hoy",
     summit: "Cumbre",
     summitSub: "Clasificación",
@@ -1146,6 +1150,7 @@ const ja: Strings = {
   },
   // The drawn mountain on the home screen (src/world/world.html)
   world: {
+    sound: "サウンド",
     stepsToday: "今日の歩数",
     summit: "山頂",
     summitSub: "ランキング",

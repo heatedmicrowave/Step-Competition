@@ -82,6 +82,7 @@
   .note .card { padding:0; background:transparent; box-shadow:none; }
   .soundBtn { position:absolute; top:max(14px, var(--st)); right:calc(max(14px, env(safe-area-inset-right)) + 50px); width:42px; height:42px; border-radius:21px; border:0; background:rgba(251,249,245,.95); box-shadow:0 3px 12px rgba(23,20,18,.18); cursor:pointer; z-index:5; display:flex; align-items:center; justify-content:center; color:var(--muted); }
   .soundBtn.on { color:var(--accent); }
+  .soundBtn { display:none !important; } /* sound lives in the menu and your chalet now */
   .soundBtn .waves { display:none; } .soundBtn.on .waves { display:inline; } .soundBtn.on .slash { display:none; }
   #flag { transform-origin: 158px 447px; transition: transform .45s cubic-bezier(.3,1.6,.5,1); }
   #mail.off #flag { transform: rotate(90deg); }
@@ -639,6 +640,7 @@
     <button data-go="summit"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M2 19 L11 3 L20 19Z" fill="#8A7A71"/><path d="M11 3 V0" stroke="#C14A1F"/></svg><span><b data-t="summit">Summit</b><small data-t="summitSub">Leaderboard</small></span></button>
     <button data-go="hut"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M3 11 L11 5 L19 11Z" fill="#5A4A42"/><rect x="5" y="11" width="12" height="8" fill="#D8CFC3"/></svg><span><b data-t="hut">Hörnli Hut</b><small data-t="hutSub">Your challenges</small></span></button>
     <button data-go="base"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M2 12 L8 7 L14 12Z" fill="#5A4A42"/><rect x="3.5" y="12" width="9" height="7" fill="#9A6A48"/><path d="M14 19 V9 M12 9 h4" stroke="#C14A1F" stroke-width="1.6"/></svg><span><b data-t="base">Base camp</b><small data-t="baseSub">You and your watch</small></span></button>
+    <button id="soundItem"><svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="#5A4A42" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8 v4 h3 l4 3.5 v-11 L6 8z" fill="#5A4A42"/><path d="M13 7.5 q2 2.5 0 5 M15.5 5.5 q3.6 4.5 0 9"/></svg><span><b data-t="sound">Sound</b><small class="soundState">Off</small></span></button>
     <button id="nightBtn"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M15 3 a8 8 0 1 0 4 12 a6.5 6.5 0 1 1 -4 -12z" fill="#22305A"/></svg><span id="nightLbl">Try night<small>Follows your clock in the app</small></span></button>
   </div>
 
@@ -716,7 +718,7 @@
       yourChalet: 'Your chalet', settings: 'Settings', watch: 'Watch', language: 'Language', bookName: 'Name in the summit book', notOnBoard: 'Not signed yet', account: 'Account', accountSub: 'Privacy, sign out',
       change: 'Change', edit: 'Edit', open: 'Open', invite: 'Invite', newChallenge: 'New challenge', newTitle: 'Where to?', newBody: 'Pick a climb or a route, then send your friends the invite code.', startOne: 'Start one', joinCode: 'Join with code',
       inClimb: 'In this challenge', kOf: '{a} of {b}', today: 'Today', thatsYou: "that's you", onTrail: 'on the trail', taunt: 'Taunt', signBook: 'Sign the summit book to see', signBook2: 'the world and your country.', joinBoard: 'Join the board →', plusToday: '+{n} today',
-      leave: 'Leave', length: 'Length', starts: 'Starts', tomorrow: 'Tomorrow', startBtn: 'Start', comingSoon: 'Coming soon', lengths: ['1 day', '2 days', '1 week', '2 weeks', '1 month', '3 months'],
+      sound: 'Sound', leave: 'Leave', length: 'Length', starts: 'Starts', tomorrow: 'Tomorrow', startBtn: 'Start', comingSoon: 'Coming soon', lengths: ['1 day', '2 days', '1 week', '2 weeks', '1 month', '3 months'],
     },
     signs: [
       { id: 'c1', title: 'Matterhorn climb', sub: "44.6K of 150K · you're 2nd", kicker: 'Day 4 of 14', detail: "You're 2nd, 3,410 steps behind Seniorwidebody.", dots: [[20.8, '#4E7A4A'], [29.7, '#C14A1F'], [32, '#3E6C8A']],
@@ -844,6 +846,7 @@
     return '<div class="kicker">' + esc(T.yourChalet) + '</div><h2>' + esc(T.settings) + '</h2>' +
       row(T.watch, [D.watch, D.sync].filter(Boolean).join(' · '), T.change, 'account') +
       '<div class="row"><div class="grow">' + esc(T.language) + '<div class="langs" style="margin-top:8px">' + L.map(([k, n]) => '<span class="chip' + (k === D.lang ? ' on' : '') + '" data-act="lang" data-id="' + k + '">' + n + '</span>').join('') + '</div></div></div>' +
+      '<div class="row"><div class="grow">' + esc(T.sound || 'Sound') + '<small class="soundState">' + esc(soundOn ? T.on : T.off) + '</small></div><span class="chip" id="soundChip" style="cursor:pointer">' + esc(soundOn ? T.off : T.on) + '</span></div>' +
       row(T.bookName, D.nickname || T.notOnBoard, T.edit, 'board') +
       row(T.account, T.accountSub, T.open, 'account');
   }
@@ -938,7 +941,7 @@
     if (e.target.closest('.note .x')) { closeNote(); return; }
     if (e.target.closest('#mail')) { post({ type: 'alerts' }); return; }
     if (e.target.closest('[data-open="settings"]')) { openNote('settings', settingsHtml()); return; }
-    if (e.target.closest('#soundBtn')) { sound(!soundOn); return; }
+    if (e.target.closest('#soundBtn, #soundItem, #soundChip')) { sound(!soundOn); reopen(); return; }
     if (menu.classList.contains('open') && !menu.contains(e.target)) { menu.classList.remove('open'); return; }
     // Tapping the open mountain while zoomed in takes you back out.
     if (scene !== 'overview' && svg.contains(e.target)) go('overview');
@@ -1194,6 +1197,7 @@
 
   // ---- Draw everything from the data.
   function applyText() {
+    try { document.querySelectorAll('.soundState').forEach((e) => e.textContent = soundOn ? T.on : T.off); } catch (_) {} // (before the sound code has loaded)
     document.querySelectorAll('[data-t]').forEach((e) => { const v = T[e.dataset.t]; if (typeof v === 'string') e.textContent = v; });
     document.querySelectorAll('[data-tu]').forEach((e) => { const v = T[e.dataset.tu]; if (typeof v === 'string') e.textContent = v.toUpperCase(); });
   }
@@ -1359,8 +1363,10 @@
       G.wind.gain.setTargetAtTime(0, now(), .2); G.town.gain.setTargetAtTime(0, now(), .2);
     }
     document.getElementById('soundBtn').classList.toggle('on', soundOn);
+    document.querySelectorAll('.soundState').forEach((e) => e.textContent = soundOn ? T.on : T.off);
   }
   if (wanted()) setTimeout(() => sound(true), 300); // you left the sound on last time
+  applyText();
 })();
 </script>
 </body></html>

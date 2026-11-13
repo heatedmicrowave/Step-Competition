@@ -51,6 +51,7 @@
 
   .soundBtn { position:absolute; top:max(14px, var(--st)); right:14px; width:42px; height:42px; border-radius:21px; border:0; background:rgba(251,249,245,.95); box-shadow:0 3px 12px rgba(23,20,18,.18); cursor:pointer; z-index:5; display:flex; align-items:center; justify-content:center; color:var(--muted); }
   .soundBtn.on { color:var(--accent); }
+  .soundBtn { display:none !important; } /* turned on or off from the menu on the home mountain; remembered here */
   .soundBtn .waves { display:none; } .soundBtn.on .waves { display:inline; } .soundBtn.on .slash { display:none; }
   body.app .phone { max-width:none; max-height:none; height:100vh; margin:0; border-radius:0; box-shadow:none; }
   body.app .note { bottom:calc(16px + env(safe-area-inset-bottom)); }
