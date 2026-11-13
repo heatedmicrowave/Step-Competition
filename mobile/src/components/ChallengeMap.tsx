@@ -2,8 +2,10 @@
 // everyone's dot on the trail. Without a Mapbox token the challenge screen keeps the drawn mountain.
 // The token lives in the EXPO_PUBLIC_MAPBOX_TOKEN environment variable on expo.dev (production), not
 // in the repo, so GitHub's secret scanning stays happy and nobody can copy it from the code.
-import Mapbox, { Atmosphere, Camera, LineLayer, MapView, MarkerView, RasterDemSource, ShapeSource, Terrain } from '@rnmapbox/maps';
-import { Text, View } from 'react-native';
+import Mapbox, { Camera, LineLayer, MapView, MarkerView, RasterDemSource, ShapeSource, Terrain } from '@rnmapbox/maps';
+import { useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
+import { MAP_PROPS, MapLook } from './mapLook';
 import { Course, measure } from '../lib/courses';
 import type { Lang } from '../lib/i18n';
 import { SCENES, spotAt, stepsTo } from '../lib/places';
@@ -25,21 +27,20 @@ export function ChallengeMap({ course, climbers, lang, locale, stepsWord }: {
   course: Course; climbers: MapClimber[]; lang: Lang; locale?: string; stepsWord: string;
 }) {
   const scene = SCENES[course.id];
+  // A tapped flag shows its details; otherwise only the next landmark ahead of you is named.
+  const [picked, setPicked] = useState<string | null>(null);
   if (!TOKEN || !scene) return null;
   const { camera } = scene;
   const trail = { type: 'Feature' as const, properties: {}, geometry: { type: 'LineString' as const, coordinates: scene.spots.map((s) => [s.lon, s.lat]) } };
+  const flags = scene.spots.filter((s) => s.flag);
+  const mine = climbers.find((p) => p.you)?.steps ?? 0;
+  const next = flags.find((s) => stepsTo(course, s) > mine) ?? flags[flags.length - 1];
 
   return (
-    <MapView
-      style={{ flex: 1 }}
-      styleURL="mapbox://styles/mapbox/satellite-v9"
-      scaleBarEnabled={false}
-      compassEnabled={false}
-      logoPosition={{ bottom: 8, left: 8 }}
-      attributionPosition={{ bottom: 8, right: 8 }}
-    >
-      {/* Plain satellite photos: the Standard satellite style came up empty on build 6. */}
-      <Atmosphere style={{ color: '#3A3A4A', highColor: '#1E2233', horizonBlend: 0.08, spaceColor: '#0E1016', starIntensity: 0.15 }} />
+    <MapView style={{ flex: 1 }} {...MAP_PROPS} onPress={() => setPicked(null)}
+      // Above the bottom fade, so Mapbox's logo and credit stay visible as their terms require.
+      logoPosition={{ bottom: 44, left: 22 }} attributionPosition={{ bottom: 44, right: 22 }}>
+      <MapLook />
       <Camera centerCoordinate={[camera.lon, camera.lat]} zoomLevel={camera.zoom} pitch={camera.pitch} heading={camera.heading} animationDuration={0} />
       <RasterDemSource id="pass1-dem" url="mapbox://mapbox.mapbox-terrain-dem-v1" tileSize={514} maxZoomLevel={14}>
         <Terrain style={{ exaggeration: 1.15 }} />
@@ -48,29 +49,35 @@ export function ChallengeMap({ course, climbers, lang, locale, stepsWord }: {
       {course.id === 'matterhorn' && <SwissPhotos id="pass1" />}
 
       <ShapeSource id="pass1-trail" shape={trail}>
-        <LineLayer id="pass1-trail-line" style={{ lineColor: ACCENT, lineWidth: 2.5, lineDasharray: [1, 2], lineCap: 'round' }} />
+        <LineLayer id="pass1-trail-line" style={{ lineColor: ACCENT, lineWidth: 2, lineOpacity: 0.9, lineDasharray: [1, 2], lineCap: 'round' }} />
       </ShapeSource>
 
-      {scene.spots.filter((s) => s.flag).map((s) => (
-        <MarkerView key={s.name} coordinate={[s.lon, s.lat]} anchor={{ x: s.left ? 1 : 0, y: 1 }} allowOverlap>
-          <View style={{ flexDirection: s.left ? 'row-reverse' : 'row', alignItems: 'flex-end' }} pointerEvents="none">
-            <View style={{ width: 2, height: 26, backgroundColor: '#FFFFFF' }}>
-              <View style={{ position: 'absolute', left: 2, top: 0, width: 0, height: 0, borderTopWidth: 5, borderBottomWidth: 5, borderLeftWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: ACCENT }} />
-            </View>
-            <View style={{ marginLeft: s.left ? 0 : 12, marginRight: s.left ? 6 : 0, marginBottom: 12, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, backgroundColor: 'rgba(16,14,13,0.72)' }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>{s.name}</Text>
-              <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 10, fontVariant: ['tabular-nums'] }}>
-                {measure(course, s.at, lang, locale)} · {k(stepsTo(course, s))} {stepsWord}
-              </Text>
-            </View>
-          </View>
-        </MarkerView>
-      ))}
+      {flags.map((s) => {
+        const named = picked ? picked === s.name : next === s;
+        return (
+          <MarkerView key={s.name} coordinate={[s.lon, s.lat]} anchor={{ x: s.left ? 1 : 0, y: 1 }} allowOverlap>
+            <Pressable onPress={() => setPicked(picked === s.name ? null : s.name)} hitSlop={14}
+              style={{ flexDirection: s.left ? 'row-reverse' : 'row', alignItems: 'flex-end' }}>
+              <View style={{ width: 1.5, height: 22, backgroundColor: '#FFFFFF' }}>
+                <View style={{ position: 'absolute', left: 1.5, top: 0, width: 0, height: 0, borderTopWidth: 4, borderBottomWidth: 4, borderLeftWidth: 9, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: ACCENT }} />
+              </View>
+              {named && (
+                <View style={{ marginLeft: s.left ? 0 : 11, marginRight: s.left ? 5 : 0, marginBottom: 10, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 7, backgroundColor: 'rgba(23,20,18,0.55)' }}>
+                  <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '600' }}>{s.name}</Text>
+                  <Text style={{ color: 'rgba(255,255,255,0.78)', fontSize: 10, fontVariant: ['tabular-nums'] }}>
+                    {measure(course, s.at, lang, locale)} · {k(stepsTo(course, s))} {stepsWord}
+                  </Text>
+                </View>
+              )}
+            </Pressable>
+          </MarkerView>
+        );
+      })}
 
       {climbers.map((p) => (
         <MarkerView key={p.id} coordinate={spotAt(course, scene, p.steps)} anchor={{ x: 0.5, y: 0.5 }} allowOverlap isSelected={p.you}>
-          <View pointerEvents="none" style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: p.color, borderWidth: 2, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontSize: 12, fontWeight: '800', color: p.you ? '#FFFFFF' : '#171412' }}>{p.initial}</Text>
+          <View pointerEvents="none" style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: p.color, borderWidth: 2, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ fontSize: 11, fontWeight: '800', color: p.you ? '#FFFFFF' : '#171412' }}>{p.initial}</Text>
           </View>
         </MarkerView>
       ))}

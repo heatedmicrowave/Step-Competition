@@ -2,7 +2,8 @@
 // the way in: Zermatt (base camp: you and your watch), the Hörnli Hut (your challenges) and the
 // summit (the public board). Tap one and the camera flies there and its panel slides up. The view
 // stays still until you tap: no forced panning.
-import { Atmosphere, Camera, LineLayer, MapView, MarkerView, RasterDemSource, ShapeSource, Terrain } from '@rnmapbox/maps';
+import { Camera, LineLayer, MapView, MarkerView, RasterDemSource, ShapeSource, Terrain } from '@rnmapbox/maps';
+import { MAP_PROPS, MapLook, PAGE } from './mapLook';
 import { SCENES } from '../lib/places';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
@@ -49,17 +50,9 @@ export function MountainHome({ steps, sub, labels, panels }: {
   const panelH = Math.round(height * 0.55);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0E1016' }}>
-      <MapView
-        style={{ flex: 1 }}
-        styleURL="mapbox://styles/mapbox/satellite-v9"
-        scaleBarEnabled={false}
-        compassEnabled={false}
-        logoPosition={{ bottom: 8, left: 8 }}
-        attributionPosition={{ bottom: 8, right: 8 }}
-        onPress={() => setOpen(null)}
-      >
-        <Atmosphere style={{ color: '#3A3A4A', highColor: '#1E2233', horizonBlend: 0.08, spaceColor: '#0E1016', starIntensity: 0.15 }} />
+    <View style={{ flex: 1, backgroundColor: PAGE }}>
+      <MapView style={{ flex: 1 }} {...MAP_PROPS} onPress={() => setOpen(null)}>
+        <MapLook />
         <Camera
           defaultSettings={{ centerCoordinate: [HOME.lon, HOME.lat], zoomLevel: HOME.zoom, pitch: HOME.pitch, heading: HOME.heading }}
           {...(moved ? { centerCoordinate: [cam.lon, cam.lat], zoomLevel: cam.zoom, pitch: cam.pitch, heading: cam.heading,
@@ -72,19 +65,19 @@ export function MountainHome({ steps, sub, labels, panels }: {
         <SwissPhotos id="home" />
         {/* The normal route up, as in the Matterhorn challenge. */}
         <ShapeSource id="home-trail" shape={TRAIL}>
-          <LineLayer id="home-trail-line" style={{ lineColor: ACCENT, lineWidth: 2.5, lineDasharray: [1, 2], lineCap: 'round' }} />
+          <LineLayer id="home-trail-line" style={{ lineColor: ACCENT, lineWidth: 2, lineOpacity: 0.9, lineDasharray: [1, 2], lineCap: 'round' }} />
         </ShapeSource>
 
         {(Object.keys(PLACES) as Place[]).map((p) => (
           <MarkerView key={p} coordinate={[PLACES[p].lon, PLACES[p].lat]} anchor={{ x: 0, y: 1 }} allowOverlap>
             <Pressable onPress={() => { setMoved(true); setOpen(open === p ? null : p); }} hitSlop={12}
               style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-              <View style={{ width: 2, height: 30, backgroundColor: '#FFFFFF' }}>
-                <View style={{ position: 'absolute', left: 2, top: 0, width: 0, height: 0, borderTopWidth: 6, borderBottomWidth: 6, borderLeftWidth: 13, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: ACCENT }} />
+              <View style={{ width: 1.5, height: 26, backgroundColor: '#FFFFFF' }}>
+                <View style={{ position: 'absolute', left: 1.5, top: 0, width: 0, height: 0, borderTopWidth: 5, borderBottomWidth: 5, borderLeftWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: ACCENT }} />
               </View>
-              <View style={{ marginLeft: 14, marginBottom: 14, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10,
-                backgroundColor: open === p ? ACCENT : 'rgba(16,14,13,0.74)' }}>
-                <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700' }}>{labels[p][0]}</Text>
+              <View style={{ marginLeft: 12, marginBottom: 12, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 9,
+                backgroundColor: open === p ? ACCENT : 'rgba(23,20,18,0.55)' }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '600' }}>{labels[p][0]}</Text>
                 <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, fontWeight: '500' }}>{labels[p][1]}</Text>
               </View>
             </Pressable>
@@ -94,7 +87,7 @@ export function MountainHome({ steps, sub, labels, panels }: {
 
       {/* Today's steps, floating at the top. */}
       <View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 8, left: 16, right: 16, alignItems: 'flex-start' }}>
-        <View style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, backgroundColor: 'rgba(16,14,13,0.62)' }}>
+        <View style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, backgroundColor: 'rgba(23,20,18,0.55)' }}>
           <Text style={{ color: '#FFFFFF', fontSize: 40, lineHeight: 44, fontWeight: '800', fontVariant: ['tabular-nums'], letterSpacing: -1 }}>
             {steps === null ? '—' : fmt(steps)}
           </Text>
