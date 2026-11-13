@@ -35,3 +35,9 @@ export function daysLeftOf(comp: Competition) {
   const left = Math.round((new Date(comp.end_day + 'T12:00:00').getTime() - new Date(now + 'T12:00:00').getTime()) / 86400000) + 1;
   return { now, left, upcoming: now < comp.start_day, over: now > comp.end_day };
 }
+
+/** The link friends tap to join: a small page on the website that opens Pass1 on its Join screen. */
+export const inviteUrl = (code: string) => `https://heatedmicrowave.github.io/Step-Competition/site/join.html?c=${code}`;
+
+/** The invite text plus its link, for the share sheet. */
+export const inviteMessage = (msg: string, code: string) => `${msg}\n${inviteUrl(code)}`;
