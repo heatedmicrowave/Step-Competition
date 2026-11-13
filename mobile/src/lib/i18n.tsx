@@ -140,6 +140,12 @@ const en = {
   atEnd: 'Made it!',
   top: (v: string) => `Top ${v}`,
   routeLen: (v: string) => `${v} of coast`,
+  // Taunts: one per 5,000 steps in a challenge. Same order as taunt_line() in 007_passed_you.sql.
+  taunts: ['Getting comfy down there?', 'The view from up here is great 👋', 'Did your shoes fall asleep?', 'Catch me if you can 🏃', "I'll save you a spot at the top."],
+  tauntsLeft: (n: number) => (n === 1 ? '🔥 1 taunt to send' : `🔥 ${n} taunts to send`),
+  tauntsHow: 'Every 5,000 steps here earns you one. Tap 🔥 next to someone.',
+  tauntTo: (name: string) => `Taunt ${name}`,
+  tauntSent: (name: string) => `Sent to ${name} 🔥`,
   // Public leaderboard
   tabBoard: 'Leaderboard',
   boardWorld: 'World',
@@ -166,6 +172,8 @@ const en = {
     'this account already has its own steps': 'This account already has its own steps, so it can’t take over a website player.',
     'nickname taken': 'Nickname taken. Try another.',
     'bad nickname': 'Use 3 to 20 letters or numbers (_ and . are OK, no spaces).',
+    'no taunts left': 'No taunts left. Walk 5,000 more steps to earn one.',
+    'taunt just sent': 'You just taunted them. Give it a minute.',
     'email rate limit exceeded': 'Too many sign-in emails right now. Wait a few minutes and try again.',
   } as Record<string, string>,
 };
@@ -292,6 +300,11 @@ const it: Strings = {
   atEnd: 'Traguardo!',
   top: (v: string) => `Vetta ${v}`,
   routeLen: (v: string) => `${v} di costa`,
+  taunts: ['Comodo lì sotto?', 'Da quassù la vista è fantastica 👋', 'Ti si sono addormentate le scarpe?', 'Prendimi se ci riesci 🏃', 'Ti tengo un posto in cima.'],
+  tauntsLeft: (n: number) => (n === 1 ? '🔥 1 provocazione da mandare' : `🔥 ${n} provocazioni da mandare`),
+  tauntsHow: 'Ogni 5.000 passi qui ne guadagni una. Tocca 🔥 accanto a qualcuno.',
+  tauntTo: (name: string) => `Provoca ${name}`,
+  tauntSent: (name: string) => `Mandata a ${name} 🔥`,
   // Public leaderboard
   tabBoard: 'Classifica',
   boardWorld: 'Mondo',
@@ -317,6 +330,8 @@ const it: Strings = {
     'this account already has its own steps': 'Questo account ha già i suoi passi, quindi non si può collegare a un giocatore del sito.',
     'nickname taken': 'Nickname già preso. Provane un altro.',
     'bad nickname': 'Usa da 3 a 20 lettere o numeri (_ e . vanno bene, niente spazi).',
+    'no taunts left': 'Niente provocazioni rimaste. Fai altri 5.000 passi per guadagnarne una.',
+    'taunt just sent': "L'hai appena provocato. Aspetta un minuto.",
     'email rate limit exceeded': 'Troppe email di accesso in questo momento. Aspetta qualche minuto e riprova.',
   },
 };
@@ -442,6 +457,11 @@ const nap: Strings = {
   atEnd: 'Traguardo!',
   top: (v: string) => `Vetta ${v}`,
   routeLen: (v: string) => `${v} 'e costa`,
+  taunts: ['Staje cummuoto llà abbascio?', "'A vista 'a ccà ncoppa è na bellezza 👋", "S'hanno addurmute 'e scarpe toje?", "Acchiappame si si' capace 🏃", "Te tengo 'o posto ncopp'â cimma."],
+  tauntsLeft: (n: number) => (n === 1 ? '🔥 1 sfottò da mannà' : `🔥 ${n} sfottò da mannà`),
+  tauntsHow: "Ogne 5.000 passe ccà te ne guadagne uno. Tocca 🔥 vicino a quaccheduno.",
+  tauntTo: (name: string) => `Sfotte a ${name}`,
+  tauntSent: (name: string) => `Mannato a ${name} 🔥`,
   // Public leaderboard
   tabBoard: 'Classifica',
   boardWorld: 'Munno',
@@ -467,6 +487,8 @@ const nap: Strings = {
     'this account already has its own steps': "Stu account tene già 'e passe suoje, nun se po' cullegà a nu jucatore d'o sito.",
     'nickname taken': "Stu nickname già ce l'ha quaccheduno. Pruvane n'ato.",
     'bad nickname': 'Miette da 3 a 20 lettere o nummere (_ e . vanno buone, senza spazie).',
+    'no taunts left': "Nun te so' rimaste sfottò. Fanne n'ati 5.000 passe pe' ne guadagnà uno.",
+    'taunt just sent': "L'hê appena sfuttuto. Aspetta nu minuto.",
     'email rate limit exceeded': "Troppe email pe' trasì mo. Aspetta quacche minuto e riprova.",
   },
 };
@@ -591,6 +613,11 @@ const es: Strings = {
   atEnd: '¡Llegaste!',
   top: (v: string) => `Cima ${v}`,
   routeLen: (v: string) => `${v} de costa`,
+  taunts: ['¿Cómodo ahí abajo?', 'La vista desde aquí arriba es genial 👋', '¿Se te durmieron las zapatillas?', 'Atrápame si puedes 🏃', 'Te guardo un sitio en la cima.'],
+  tauntsLeft: (n: number) => (n === 1 ? '🔥 1 pique para enviar' : `🔥 ${n} piques para enviar`),
+  tauntsHow: 'Cada 5.000 pasos aquí ganas uno. Toca 🔥 junto a alguien.',
+  tauntTo: (name: string) => `Picar a ${name}`,
+  tauntSent: (name: string) => `Enviado a ${name} 🔥`,
   // Public leaderboard
   tabBoard: 'Clasificación',
   boardWorld: 'Mundo',
@@ -616,6 +643,8 @@ const es: Strings = {
     'this account already has its own steps': 'Esta cuenta ya tiene sus propios pasos, así que no se puede vincular a un jugador de la web.',
     'nickname taken': 'Ese apodo ya está cogido. Prueba otro.',
     'bad nickname': 'Usa de 3 a 20 letras o números (_ y . valen, sin espacios).',
+    'no taunts left': 'No te quedan piques. Camina 5.000 pasos más para ganar uno.',
+    'taunt just sent': 'Le acabas de picar. Espera un minuto.',
     'email rate limit exceeded': 'Demasiados correos de acceso ahora mismo. Espera unos minutos y vuelve a intentarlo.',
   },
 };
@@ -740,6 +769,11 @@ const ja: Strings = {
   atEnd: 'ゴール！',
   top: (v: string) => `山頂 ${v}`,
   routeLen: (v: string) => `海岸線 ${v}`,
+  taunts: ['下の居心地はどう？', 'ここからの眺め、最高だよ 👋', '靴、寝ちゃった？', '追いつけるものならどうぞ 🏃', '頂上で席とっておくね。'],
+  tauntsLeft: (n: number) => `🔥 挑発 あと${n}回`,
+  tauntsHow: 'ここで 5,000 歩ごとに 1 回もらえます。相手の横の 🔥 をタップ。',
+  tauntTo: (name: string) => `${name}さんを挑発`,
+  tauntSent: (name: string) => `${name}さんに送りました 🔥`,
   // Public leaderboard
   tabBoard: 'ランキング',
   boardWorld: '世界',
@@ -765,6 +799,8 @@ const ja: Strings = {
     'this account already has its own steps': 'このアカウントにはすでに歩数データがあるため、ウェブ版のプレイヤーを引き継げません。',
     'nickname taken': 'そのニックネームは使われています。別のものをどうぞ。',
     'bad nickname': '英数字 3〜20 文字で入力してください（_ と . は可、スペース不可）。',
+    'no taunts left': '挑発が残っていません。あと 5,000 歩で 1 回もらえます。',
+    'taunt just sent': 'さっき送ったばかりです。少し待ってください。',
     'email rate limit exceeded': 'ログインメールの送信回数が多すぎます。数分待ってからもう一度お試しください。',
   },
 };

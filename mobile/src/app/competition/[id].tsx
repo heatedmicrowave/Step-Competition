@@ -27,6 +27,7 @@ export default function Leaderboard() {
   const [standings, setStandings] = useState<Standing[]>([]);
   const [msg, setMsg] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [taunts, setTaunts] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -36,6 +37,9 @@ export default function Leaderboard() {
       setStandings(await loadStandings(k));
       setComp(k);
       setMsg('');
+      // Taunts left (null until the server has them, so older setups just don't show any).
+      const tl = await supabase.rpc('app_taunts_left', { p_competition: id });
+      setTaunts(tl.error || tl.data == null ? null : Number(tl.data));
     } catch (e) {
       setMsg(errorIn(t, e));
     }
@@ -64,6 +68,18 @@ export default function Leaderboard() {
         const { error } = await supabase.rpc('app_leave_competition', { p_competition: id });
         if (error) setMsg(errorIn(t, error)); else router.back();
       } },
+    ]);
+  }
+
+  function taunt(p: Standing) {
+    Alert.alert(t.tauntTo(p.name), undefined, [
+      ...t.taunts.map((line, i) => ({ text: line, onPress: async () => {
+        const { data, error } = await supabase.rpc('app_send_taunt', { p_competition: id, p_target: p.id, p_line: i });
+        if (error) { setMsg(errorIn(t, error)); return; }
+        setTaunts(Number(data));
+        Alert.alert(t.tauntSent(p.name));
+      } })),
+      { text: t.cancel, style: 'cancel' as const },
     ]);
   }
 
@@ -98,6 +114,12 @@ export default function Leaderboard() {
         </View>
       )}
 
+      {taunts != null && standings.length > 1 && (
+        <View style={{ marginBottom: 10, gap: 2 }}>
+          {taunts > 0 && <T bold>{t.tauntsLeft(taunts)}</T>}
+          <T muted size={13}>{t.tauntsHow}</T>
+        </View>
+      )}
       <Card style={{ padding: 0, marginBottom: 26 }}>
         {standings.map((p, i) => {
           const lead = i === 0 && p.total > 0;
@@ -110,7 +132,15 @@ export default function Leaderboard() {
               </View>
               {journey && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors[i], borderWidth: 1, borderColor: c.rule }} />}
               <View style={{ flex: 1, gap: 4 }}>
-                <T bold>{p.name}{p.id === me?.id ? ` (${t.you})` : ''}</T>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <T bold>{p.name}{p.id === me?.id ? ` (${t.you})` : ''}</T>
+                  {!!taunts && p.id !== me?.id && (
+                    <Pressable onPress={() => taunt(p)} hitSlop={10} accessibilityLabel={t.tauntTo(p.name)}
+                      style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, backgroundColor: c.hair }}>
+                      <Text style={{ fontSize: 14 }}>🔥</Text>
+                    </Pressable>
+                  )}
+                </View>
                 <T muted size={12}>{t.todaySteps(fmt(p.today))} · {p.last ? ago(t, p.last) : t.noData}{p.device_label ? ` · ${p.device_label}` : ''}</T>
                 <Bar value={journey ? progress(cs, p.total) : p.total / top} color={lead ? c.red : c.ink} />
               </View>
