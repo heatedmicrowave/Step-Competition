@@ -585,7 +585,7 @@
   });
 
 
-  // ---- Sound (off until you tap the speaker): the sea from the panorama, a tarantella in town,
+  // ---- Sound (off until you tap the speaker): the sea and a soft tarantella over the bay, louder in town,
   // wind at the Osservatorio, the volcano rumbling at the crater.
   let actx, master, soundOn = false, layers = {}, tune = 0;
   function initAudio() {
@@ -612,43 +612,68 @@
     n.buffer = b; f.type = 'highpass'; f.frequency.value = 2500; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.025, t + .3); g.gain.exponentialRampToValueAtTime(.0001, t + 1.8);
     n.connect(f).connect(g).connect(master); n.start(t); n.stop(t + 2);
   }
-  // A short original tarantella in A minor, 6/8: mandolin, bass and tambourine.
+  // A short original tarantella in A minor, 6/8, played on plucked strings: a nylon guitar
+  // keeping the oom-pah-pah and a second guitar on the tune, with a tambourine. The strings are
+  // made with Karplus-Strong (a burst of noise looping through a tiny delay), which is how real
+  // strings ring. It plays softly over the whole bay and comes up when you walk into town.
   const NOTE = (n) => 440 * Math.pow(2, n / 12); // semitones from A4
   const MEL = [[0, 3, 7, 12, 10, 7], [8, 7, 5, 3, 2, 0], [-5, 0, 3, 7, 5, 3], [2, 3, 5, 7, 7, null], [0, 3, 7, 12, 10, 7], [8, 7, 5, 3, 5, 7], [8, 7, 5, 3, 2, -1], [0, null, 0, -5, 0, null]];
   const BASS = [-24, -19, -24, -29, -24, -19, -29, -24];
-  function pluck(f, t, vol, dur) {
-    const o = actx.createOscillator(), o2 = actx.createOscillator(), g = actx.createGain(), fl = actx.createBiquadFilter();
-    o.type = 'triangle'; o2.type = 'square'; o.frequency.value = f; o2.frequency.value = f * 1.003; fl.type = 'lowpass'; fl.frequency.value = 2600;
-    const g2 = actx.createGain(); g2.gain.value = .25; o2.connect(g2).connect(fl); o.connect(fl); fl.connect(g).connect(master);
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .006); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
-    o.start(t); o2.start(t); o.stop(t + dur + .02); o2.stop(t + dur + .02);
+  const AM = [-12, -9, -5], DM = [-12, -7, -4], EM = [-13, -10, -5];
+  const CHORDS = [AM, DM, AM, EM, AM, DM, EM, AM];
+  const strings = {};
+  function string(n, bright) { // one plucked note, rendered once and reused
+    const key = n + '|' + bright; if (strings[key]) return strings[key];
+    const sr = actx.sampleRate, f = NOTE(n), N = Math.max(2, Math.round(sr / f)), len = Math.floor(sr * 1.6);
+    const buf = actx.createBuffer(1, len, sr), out = buf.getChannelData(0), ring = new Float32Array(N);
+    for (let i = 0; i < N; i++) ring[i] = Math.random() * 2 - 1;
+    for (let pass = 0; pass < (bright ? 1 : 3); pass++) for (let i = 1; i < N; i++) ring[i] = (ring[i] + ring[i - 1]) / 2; // softer pick = warmer
+    const decay = f < 150 ? .998 : .996; let idx = 0;
+    for (let i = 0; i < len; i++) { const y = ring[idx], nx = ring[(idx + 1) % N]; out[i] = y; ring[idx] = decay * .5 * (y + nx); idx = (idx + 1) % N; }
+    return (strings[key] = buf);
+  }
+  function play(n, t, vol, bright) {
+    const src = actx.createBufferSource(), g = actx.createGain();
+    src.buffer = string(n, bright); g.gain.value = vol; src.connect(g).connect(music); src.start(t);
   }
   function tamb(t, vol) {
     const n = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
-    const b = actx.createBuffer(1, actx.sampleRate * .2, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
-    n.buffer = b; f.type = 'highpass'; f.frequency.value = 6000; g.gain.value = vol; n.connect(f).connect(g).connect(master); n.start(t);
+    if (!tamb.buf) { const b = actx.createBuffer(1, actx.sampleRate * .18, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3); tamb.buf = b; }
+    n.buffer = tamb.buf; f.type = 'highpass'; f.frequency.value = 7000; g.gain.value = vol; n.connect(f).connect(g).connect(music); n.start(t);
   }
-  function tarantella() {
-    if (!soundOn || scene !== 'napoli') { tune = 0; return; }
-    const e = .15, start = actx.currentTime + .05;
-    MEL.forEach((bar, i) => {
-      bar.forEach((n, j) => { const t = start + (i * 6 + j) * e; if (n != null) { pluck(NOTE(n), t, .05, .22); if (j === 5 && bar[5] === bar[4]) pluck(NOTE(n), t + e / 2, .03, .15); } tamb(t, j % 3 === 0 ? .05 : .018); });
-      pluck(NOTE(BASS[i]), start + i * 6 * e, .07, .5); pluck(NOTE(BASS[i] + 7), start + (i * 6 + 3) * e, .05, .4);
-    });
-    tune = setTimeout(tarantella, MEL.length * 6 * e * 1000 - 40);
+  let music, barAt = 0, bar = 0;
+  const E8 = .16; // one eighth note
+  function scheduleBars() { // keeps about a second of music queued, bar by bar
+    if (!soundOn) { tune = 0; return; }
+    while (barAt < actx.currentTime + 1.2) {
+      const i = bar % MEL.length, t0 = barAt;
+      MEL[i].forEach((n, j) => { const t = t0 + j * E8; if (n != null) { play(n + 12, t, .32, true); if (j >= 4 && MEL[i][j - 1] === n) play(n + 12, t + E8 / 2, .18, true); } tamb(t, j % 3 === 0 ? .05 : .02); });
+      play(BASS[i], t0, .55, false); play(BASS[i] + 7, t0 + 3 * E8, .4, false);
+      [1, 2, 4, 5].forEach((j) => CHORDS[i].forEach((n, k) => play(n, t0 + j * E8 + k * .012, .16, false)));
+      barAt += 6 * E8; bar++;
+    }
+    tune = setTimeout(scheduleBars, 300);
   }
+  const MUSIC = { overview: .35, napoli: 1, oss: .12, crater: 0 };
   function ambience() {
     if (!soundOn) return;
     const t = actx.currentTime;
-    layers.sea.g.gain.setTargetAtTime(scene === 'overview' ? .08 : scene === 'napoli' ? .015 : 0, t, .6);
+    layers.sea.g.gain.setTargetAtTime(scene === 'overview' ? .06 : scene === 'napoli' ? .012 : 0, t, .6);
     layers.wind.g.gain.setTargetAtTime(scene === 'oss' ? .05 : scene === 'crater' ? .03 : 0, t, .6);
     layers.rumble.g.gain.setTargetAtTime(scene === 'crater' ? .7 : 0, t, .8);
-    clearTimeout(tune); tune = 0; if (scene === 'napoli') tarantella();
+    if (!music) {
+      music = actx.createGain(); music.gain.value = 0;
+      const body = actx.createBiquadFilter(); body.type = 'peaking'; body.frequency.value = 220; body.gain.value = 4; body.Q.value = 1;
+      const tone = actx.createBiquadFilter(); tone.type = 'lowpass'; tone.frequency.value = 3200;
+      music.connect(body).connect(tone).connect(master);
+    }
+    music.gain.setTargetAtTime(.5 * (MUSIC[scene] || 0), t, .7);
+    if (!tune) { barAt = Math.max(barAt, t + .05); scheduleBars(); }
   }
   function sound(on) {
     soundOn = on;
     if (on) { try { if (!actx) initAudio(); actx.resume && actx.resume(); } catch (e) { soundOn = false; } }
-    else if (actx) { Object.values(layers).forEach((l) => l.g.gain.setTargetAtTime(0, actx.currentTime, .2)); clearTimeout(tune); tune = 0; }
+    else if (actx) { Object.values(layers).forEach((l) => l.g.gain.setTargetAtTime(0, actx.currentTime, .2)); if (music) music.gain.setTargetAtTime(0, actx.currentTime, .2); clearTimeout(tune); tune = 0; }
     $('soundBtn').classList.toggle('on', soundOn);
     if (soundOn) ambience();
   }

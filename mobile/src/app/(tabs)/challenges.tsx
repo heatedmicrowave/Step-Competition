@@ -38,14 +38,14 @@ export default function Challenges() {
       {kinds.map(([k, i]) => (
         <Section key={k} label={t.kinds[i]}>
           {COURSES.filter((x) => x.kind === k).map((x) => (
-            <Pressable key={x.id} onPress={() => router.push({ pathname: '/new', params: { course: x.id } })}
-              style={({ pressed }) => ({ backgroundColor: c.paper, borderRadius: 20, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 14, opacity: pressed ? 0.7 : 1 })}>
+            <Pressable key={x.id} disabled={x.soon} onPress={() => router.push({ pathname: '/new', params: { course: x.id } })}
+              style={({ pressed }) => ({ backgroundColor: c.paper, borderRadius: 20, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 14, opacity: x.soon ? 0.5 : pressed ? 0.7 : 1 })}>
               <CourseThumb id={x.id} width={72} height={56} radius={12} />
               <View style={{ flex: 1 }}>
                 <T bold size={17}>{t.courseNames[x.id][0]}</T>
                 <T muted size={13}>{t.courseNames[x.id][1]}</T>
               </View>
-              {x.kind !== 'classic' && <Label color={c.red}>{size(x, lang, locale)}</Label>}
+              {x.soon ? <Label>{t.comingSoon}</Label> : x.kind !== 'classic' && <Label color={c.red}>{size(x, lang, locale)}</Label>}
             </Pressable>
           ))}
         </Section>

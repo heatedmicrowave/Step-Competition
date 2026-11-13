@@ -12,14 +12,16 @@ export type Course = {
   /** Climbs: altitude in metres at the start and the top. Routes: 0 and the length in km. */
   from: number;
   to: number;
+  /** Drawn world not ready yet: shown, but can't be started. */
+  soon?: boolean;
 };
 
 export const COURSES: Course[] = [
   { id: 'vesuvius', kind: 'climb', goal: 60_000, from: 0, to: 1281 },
-  { id: 'half_dome', kind: 'climb', goal: 100_000, from: 1220, to: 2694 },
+  { id: 'half_dome', kind: 'climb', goal: 100_000, from: 1220, to: 2694, soon: true },
   { id: 'matterhorn', kind: 'climb', goal: 150_000, from: 1620, to: 4478 },
   // Highway 1, Carmel to San Simeon: about 90 miles, at roughly 2,000 steps a mile.
-  { id: 'big_sur', kind: 'route', goal: 180_000, from: 0, to: 145 },
+  { id: 'big_sur', kind: 'route', goal: 180_000, from: 0, to: 145, soon: true },
   { id: 'classic', kind: 'classic', goal: 0, from: 0, to: 0 },
 ];
 

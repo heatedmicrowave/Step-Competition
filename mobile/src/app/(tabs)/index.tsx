@@ -239,7 +239,7 @@ export default function Home() {
         if (x) Share.share({ message: inviteMessage(t.shareMsg(x.comp.name, x.comp.join_code), x.comp.join_code) });
         break;
       }
-      case 'new': router.push('/new'); break;
+      case 'new': router.navigate('/challenges'); break;
       case 'join': router.push('/join'); break;
       case 'alerts': alertsTapped(); break;
       case 'lang': if (LANGS.includes(e.id as Lang)) setChoice(e.id as Lang); break;
