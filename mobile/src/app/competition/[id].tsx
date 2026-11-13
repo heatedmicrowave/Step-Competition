@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, RefreshControl, ScrollView, Share, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Share, Text, View } from 'react-native';
 import { ChallengeMap, hasMap } from '../../components/ChallengeMap';
 import { Fade } from '../../components/Fade';
 import { MountainWorld, WorldEvent } from '../../components/MountainWorld';
@@ -93,6 +93,9 @@ export default function Leaderboard() {
   const dayN = comp ? Math.min(days, Math.max(0, Math.round((new Date(now + 'T12:00:00').getTime() - new Date(comp.start_day + 'T12:00:00').getTime()) / 86400000) + 1)) : 0;
   const phase = !comp ? '' : now > comp.end_day ? t.finalResults : now < comp.start_day ? t.startsOn(new Date(comp.start_day + 'T12:00:00').toLocaleDateString(locale, { month: 'short', day: 'numeric' })) : t.dayOf(dayN, days);
 
+  // Still loading: a quiet screen, so a challenge with its own world doesn't flash the plain page first.
+  if (!comp && !list && !msg) return (<><Stack.Screen options={{ headerShown: false, gestureEnabled: false }} /><View style={{ flex: 1, backgroundColor: c.bg, justifyContent: 'center' }}><ActivityIndicator color={c.ink} /></View></>);
+
   // Vesuvius has its own drawn world: Naples, the Osservatorio and the crater.
   if (comp && cs.id === 'vesuvius' && !list) {
     const V = t.vesuvius as Record<string, any>;
@@ -126,7 +129,7 @@ export default function Leaderboard() {
     };
     return (
       <>
-        <Stack.Screen options={{ headerShown: false }} />
+        <Stack.Screen options={{ headerShown: false, gestureEnabled: false, fullScreenGestureEnabled: false }} />
         <MountainWorld html={VESUVIUS_HTML} data={data} onEvent={onEvent} />
       </>
     );

@@ -1,4 +1,5 @@
-// The bottom bar: Today, Challenges, Leaderboard, Account.
+// Today (the mountain), Challenges, Leaderboard, Account. There is no bottom bar: everything is reached
+// from the mountain itself (hut = challenges, summit = leaderboard, your chalet = account).
 import { Tabs } from 'expo-router';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useColors } from '../../components/ui';
@@ -25,7 +26,7 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: c.red,
         tabBarInactiveTintColor: c.muted,
-        tabBarStyle: { backgroundColor: c.paper, borderTopColor: c.rule },
+        tabBarStyle: { display: 'none' },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
         sceneStyle: { backgroundColor: c.bg },
       }}

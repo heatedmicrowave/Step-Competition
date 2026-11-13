@@ -727,8 +727,25 @@
     layers.rumble.g.gain.setTargetAtTime(scene === 'crater' ? .7 : 0, t, .8);
     music();
   }
+
+  // iPhones mute web sound when the side switch is on silent. Marking the page as playback (and keeping a
+  // silent clip looping) puts it in media mode, so it plays like music does. Your on/off choice is remembered.
+  function unmute() {
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+    if (unmute.a) { unmute.a.play().catch(() => {}); return; }
+    try {
+      const sr = 8000, n = sr / 2, b = new ArrayBuffer(44 + n * 2), v = new DataView(b), w = (o, t) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+      w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+      const a = new Audio(URL.createObjectURL(new Blob([b], { type: 'audio/wav' }))); a.loop = true; a.setAttribute('playsinline', ''); a.play().catch(() => {}); unmute.a = a;
+    } catch (e) {}
+  }
+  const remember = (on) => { try { localStorage.setItem('pass1.sound', on ? '1' : '0'); } catch (e) {} };
+  const wanted = () => { try { return localStorage.getItem('pass1.sound') === '1'; } catch (e) { return false; } };
+  // The phone can pause web audio (a call, the app in the background): any touch wakes it again.
+  document.addEventListener('pointerdown', () => { if (soundOn && actx && actx.state !== 'running') { unmute(); actx.resume && actx.resume(); } }, true);
   function sound(on) {
-    soundOn = on;
+    soundOn = on; remember(on);
+    if (on) unmute(); else if (unmute.a) unmute.a.pause();
     if (on) { try { if (!actx) initAudio(); actx.resume && actx.resume(); } catch (e) { soundOn = false; } }
     else if (actx) { Object.values(layers).forEach((l) => l.g.gain.setTargetAtTime(0, actx.currentTime, .2)); musicOff(); }
     $('soundBtn').classList.toggle('on', soundOn);
@@ -750,9 +767,10 @@
   let suppress = false;
   window.addEventListener('resize', () => { if (scene === 'overview') { vb = home(); world.setAttribute('viewBox', vb.join(' ')); } });
   // Swipe down anywhere in a place to go back to the whole climb.
-  let sy = null;
-  app.addEventListener('pointerdown', (e) => { sy = scene !== 'overview' && !e.target.closest('.note') ? e.clientY : null; });
-  app.addEventListener('pointerup', (e) => { if (sy != null && e.clientY - sy > 70) go('overview'); sy = null; });
+  let sy = null, sx = 0;
+  app.addEventListener('pointerdown', (e) => { sy = scene !== 'overview' && !e.target.closest('.note') ? e.clientY : null; sx = e.clientX; });
+  app.addEventListener('pointerup', (e) => { const dy = e.clientY - sy, dx = Math.abs(e.clientX - sx); if (sy != null && dy > 150 && dx < dy * .6) go('overview'); sy = null; });
+  if (wanted()) setTimeout(() => sound(true), 300); // you left the sound on last time
 })();
 </script>
 </body></html>

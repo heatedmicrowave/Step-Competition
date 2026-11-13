@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { HomeBack } from '../../components/HomeBack';
 import { Button, Card, Input, Section, T, Title, useColors } from '../../components/ui';
 import { useAuth } from '../../lib/auth';
 import { errorIn, Lang, LANG_NAMES, LANGS, LangChoice, useT } from '../../lib/i18n';
@@ -35,6 +36,7 @@ export default function Account() {
 
   return (
     <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ padding: 20, paddingTop: insets.top + 16, paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
+      <HomeBack />
       <View style={{ marginBottom: 16 }}><Title size={34}>{t.tabAccount}</Title></View>
 
       <Section label={t.nameOnBoard}>

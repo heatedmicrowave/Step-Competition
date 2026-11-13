@@ -5,6 +5,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CompCard } from '../../components/CompCard';
 import { CourseThumb } from '../../components/Mountain';
+import { HomeBack } from '../../components/HomeBack';
 import { Button, Label, Section, T, Title, useColors } from '../../components/ui';
 import { useAuth } from '../../lib/auth';
 import { COURSES, size } from '../../lib/courses';
@@ -33,6 +34,7 @@ export default function Challenges() {
 
   return (
     <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ padding: 20, paddingTop: insets.top + 16, paddingBottom: 32 }}>
+      <HomeBack />
       <View style={{ marginBottom: 16 }}><Title size={34}>{t.tabChallenges}</Title></View>
 
       {kinds.map(([k, i]) => (
