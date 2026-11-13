@@ -1,16 +1,13 @@
 import { useLocalSearchParams, router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, RefreshControl, ScrollView, Share, View } from 'react-native';
-import { artFor, CLIMBER_COLORS, useArtHeight, useScene, YOU_COLOR } from '../../components/Mountain';
-import { Button, fmt, Heading, Label, Numeral, pad2, Section, T, useColors } from '../../components/ui';
+import { Alert, Pressable, RefreshControl, ScrollView, Share, Text, View } from 'react-native';
+import { artFor, CLIMBER_COLORS, MountainArt, YOU_COLOR } from '../../components/Mountain';
+import { Bar, Button, Card, fmt, Label, Numeral, Section, T, Title, useColors } from '../../components/ui';
 import { course, position, progress, size } from '../../lib/courses';
 import { useAuth } from '../../lib/auth';
 import { errorIn, Strings, useT } from '../../lib/i18n';
+import { COMP_FIELDS, loadStandings, Standing } from '../../lib/standings';
 import { Competition, isoDay, supabase } from '../../lib/supabase';
-
-type Player = { id: string; name: string; device_label: string | null; source: string };
-type Row = { player_id: string; day: string; steps: number; updated_at: string };
-type Standing = Player & { total: number; today: number; last: string | null };
 
 function ago(t: Strings, ts: string) {
   const m = Math.round((Date.now() - new Date(ts).getTime()) / 60000);
@@ -24,7 +21,6 @@ export default function Leaderboard() {
   const c = useColors();
   const { me } = useAuth();
   const { t, locale, lang } = useT();
-  const artH = useArtHeight();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [comp, setComp] = useState<Competition | null>(null);
   const [standings, setStandings] = useState<Standing[]>([]);
@@ -32,31 +28,16 @@ export default function Leaderboard() {
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
-    const [cRes, mRes] = await Promise.all([
-      supabase.from('competitions').select('id, name, start_day, end_day, join_code, course').eq('id', id).single(),
-      supabase.from('competition_players').select('player_id').eq('competition_id', id),
-    ]);
-    if (cRes.error || mRes.error) { setMsg(errorIn(t, cRes.error || mRes.error)); return; }
-    const k = cRes.data as Competition;
-    const ids = mRes.data.map((r) => r.player_id as string);
-    const [pRes, sRes] = await Promise.all([
-      supabase.from('public_players').select('id, name, device_label, source').in('id', ids),
-      supabase.from('daily_steps').select('player_id, day, steps, updated_at').in('player_id', ids).gte('day', k.start_day).lte('day', k.end_day),
-    ]);
-    if (pRes.error || sRes.error) { setMsg(errorIn(t, pRes.error || sRes.error)); return; }
-    const rows = sRes.data as Row[];
-    const today = isoDay(new Date());
-    setComp(k);
-    setStandings((pRes.data as Player[]).map((p) => {
-      const mine = rows.filter((r) => r.player_id === p.id);
-      return {
-        ...p,
-        total: mine.reduce((a, r) => a + r.steps, 0),
-        today: mine.find((r) => r.day === today)?.steps ?? 0,
-        last: mine.reduce<string | null>((a, r) => (a && a > r.updated_at ? a : r.updated_at), null),
-      };
-    }).sort((a, b) => b.total - a.total));
-    setMsg('');
+    try {
+      const { data, error } = await supabase.from('competitions').select(COMP_FIELDS).eq('id', id).single();
+      if (error) throw error;
+      const k = data as Competition;
+      setStandings(await loadStandings(k));
+      setComp(k);
+      setMsg('');
+    } catch (e) {
+      setMsg(errorIn(t, e));
+    }
   }, [id, t]);
 
   useEffect(() => {
@@ -73,9 +54,6 @@ export default function Leaderboard() {
   const journey = cs.kind !== 'classic';
   let other = 0;
   const colors = standings.map((p) => (p.id === me?.id ? YOU_COLOR : CLIMBER_COLORS[other++ % CLIMBER_COLORS.length]));
-  useScene(journey
-    ? { pose: 'climb', art: artFor(cs.id), climbers: standings.map((p, i) => ({ id: p.id, initial: (p.name.trim()[0] ?? '?').toUpperCase(), color: colors[i], frac: progress(cs, p.total) })) }
-    : { pose: 'aside' });
   const now = isoDay(new Date());
 
   async function leave() {
@@ -94,66 +72,64 @@ export default function Leaderboard() {
 
   return (
     <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      contentContainerStyle={journey ? { paddingBottom: 48 } : { padding: 20, paddingTop: 4, paddingBottom: 48 }}
+      contentContainerStyle={{ padding: 20, paddingTop: 4, paddingBottom: 48 }}
       refreshControl={<RefreshControl tintColor={c.ink} refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
     >
-      {journey && <View style={{ height: artH * 0.8 }} />}
-      <View style={journey ? { backgroundColor: c.bg, borderTopWidth: 2, borderColor: c.rule, padding: 20, paddingTop: 14, minHeight: 600 } : undefined}>
       {!!msg && <T color={c.red}>{msg}</T>}
       {comp && (
-        <View style={{ marginBottom: 24 }}>
+        <View style={{ marginBottom: 16 }}>
           <Label color={c.red}>{phase}</Label>
-          <Heading size={40}>{comp.name}</Heading>
+          <Title size={32}>{comp.name}</Title>
           {journey && <T muted size={14}>{t.courseNames[cs.id][1]} · {cs.kind === 'climb' ? t.top(size(cs, lang, locale)) : t.routeLen(size(cs, lang, locale))}</T>}
         </View>
       )}
 
-      <View style={{ borderTopWidth: 2, borderColor: c.rule, marginBottom: 32 }}>
+      {comp && journey && (
+        // The climb: everyone is a dot on the trail.
+        <View style={{ height: 360, borderRadius: 24, overflow: 'hidden', backgroundColor: '#1B1714', marginBottom: 20 }}>
+          <MountainArt art={artFor(cs.id)} showTrail viewBox={cs.kind === 'route' ? '0 0 390 520' : '0 10 390 500'} slice={false}
+            climbers={standings.map((p, i) => ({ id: p.id, initial: (p.name.trim()[0] ?? '?').toUpperCase(), color: colors[i], frac: progress(cs, p.total) }))} />
+        </View>
+      )}
+
+      <Card style={{ padding: 0, marginBottom: 26 }}>
         {standings.map((p, i) => {
           const lead = i === 0 && p.total > 0;
           const gap = i > 0 ? standings[0].total - p.total : 0;
+          const done = journey && progress(cs, p.total) >= 1;
           return (
-            <View key={p.id} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14, paddingVertical: 14, borderBottomWidth: 1, borderColor: c.hair }}>
-              <View style={{ alignItems: 'center', gap: 6 }}>
-                <Numeral size={44} color={lead ? c.red : c.muted}>{pad2(i + 1)}</Numeral>
-                {journey && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors[i] }} />}
+            <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderTopWidth: i ? 1 : 0, borderColor: c.hair }}>
+              <View style={{ width: 28, alignItems: 'center' }}>
+                <Text style={{ fontSize: 20, fontWeight: '800', color: lead ? c.red : c.muted, fontVariant: ['tabular-nums'] }}>{i + 1}</Text>
               </View>
-              <View style={{ flex: 1, paddingTop: 4 }}>
-                <Heading size={22}>{p.name}{p.id === me?.id ? ` (${t.you})` : ''}</Heading>
-                <T muted size={13}>
-                  {t.todaySteps(fmt(p.today))} · {p.last ? ago(t, p.last) : t.noData}{p.device_label ? ` · ${p.device_label}` : ''}
+              {journey && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors[i], borderWidth: 1, borderColor: c.rule }} />}
+              <View style={{ flex: 1, gap: 4 }}>
+                <T bold>{p.name}{p.id === me?.id ? ` (${t.you})` : ''}</T>
+                <T muted size={12}>{t.todaySteps(fmt(p.today))} · {p.last ? ago(t, p.last) : t.noData}{p.device_label ? ` · ${p.device_label}` : ''}</T>
+                <Bar value={journey ? progress(cs, p.total) : p.total / top} color={lead ? c.red : c.ink} />
+              </View>
+              <View style={{ alignItems: 'flex-end', minWidth: 76 }}>
+                <Numeral size={22}>{journey ? position(cs, p.total, lang, locale) : fmt(p.total)}</Numeral>
+                <T muted size={12}>
+                  {journey ? (done ? (cs.kind === 'climb' ? t.atTop : t.atEnd) : t.toGo(fmt(cs.goal - p.total))) : gap > 0 ? `-${fmt(gap)}` : ' '}
                 </T>
-                <View style={{ height: 3, backgroundColor: c.hair, marginTop: 8 }}>
-                  <View style={{ height: 3, backgroundColor: lead ? c.red : c.ink, width: `${(journey ? progress(cs, p.total) : p.total / top) * 100}%` }} />
-                </View>
-              </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                {journey ? (
-                  <>
-                    <Numeral size={30}>{position(cs, p.total, lang, locale)}</Numeral>
-                    <T muted size={12}>{progress(cs, p.total) >= 1 ? (cs.kind === 'climb' ? t.atTop : t.atEnd) : `${fmt(p.total)} · ${t.toGo(fmt(cs.goal - p.total))}`}</T>
-                  </>
-                ) : (
-                  <>
-                    <Numeral size={36}>{fmt(p.total)}</Numeral>
-                    {gap > 0 && <T muted size={12}>-{fmt(gap)}</T>}
-                  </>
-                )}
               </View>
             </View>
           );
         })}
-      </View>
+      </Card>
 
       {comp && (
         <Section label={t.inviteCode}>
-          <Numeral size={56}>{comp.join_code}</Numeral>
-          <Button title={t.sendFriend} onPress={() => Share.share({ message: t.shareMsg(comp.name, comp.join_code) })} />
+          <Card style={{ alignItems: 'center', gap: 12 }}>
+            <Numeral size={44}>{comp.join_code}</Numeral>
+            <View style={{ alignSelf: 'stretch' }}><Button title={t.sendFriend} onPress={() => Share.share({ message: t.shareMsg(comp.name, comp.join_code) })} /></View>
+          </Card>
         </Section>
       )}
-      <Button title={t.leave} kind="plain" onPress={leave} />
-      </View>
+      <Pressable onPress={leave} style={{ alignItems: 'center', padding: 12 }} hitSlop={8}>
+        <Text style={{ color: c.red, fontSize: 16, fontWeight: '600' }}>{t.leave}</Text>
+      </Pressable>
     </ScrollView>
   );
 }

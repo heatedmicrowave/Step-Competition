@@ -121,6 +121,9 @@ const en = {
   shareMsg: (comp: string, code: string) => `Join "${comp}" in Pass1. Code: ${code}`,
 
   // Challenges
+  tabToday: 'Today', tabChallenges: 'Challenges', tabAccount: 'Account',
+  yourChallenges: 'Your challenges', startNew: 'Start a new one', moreChallenges: 'More challenges', joinCode: 'Join with code',
+  oldSite: 'Used the old website?',
   garminHint: 'Not updating? Open Garmin Connect for a second so it syncs.',
   pickCourse: 'Where are we going?',
   kinds: ['Climbs', 'Routes', 'Classic'],
@@ -249,6 +252,9 @@ const it: Strings = {
   shareMsg: (comp, code) => `Unisciti alla sfida "${comp}" su Pass1. Codice: ${code}`,
 
   // Sfide
+  tabToday: 'Oggi', tabChallenges: 'Sfide', tabAccount: 'Account',
+  yourChallenges: 'Le tue sfide', startNew: 'Inizia una nuova', moreChallenges: 'Altre sfide', joinCode: 'Entra con un codice',
+  oldSite: 'Usavi il vecchio sito?',
   garminHint: 'Non si aggiorna? Apri Garmin Connect un attimo per sincronizzare.',
   pickCourse: 'Dove si va?',
   kinds: ['Scalate', 'Percorsi', 'Classica'],
@@ -375,6 +381,9 @@ const nap: Strings = {
   shareMsg: (comp, code) => `Viene dint'â sfida "${comp}" ncopp' a Pass1. Codice: ${code}`,
 
   // Sfide
+  tabToday: 'Ogge', tabChallenges: 'Sfide', tabAccount: 'Account',
+  yourChallenges: "'E sfide toje", startNew: 'Accumencia na nova', moreChallenges: 'Ati sfide', joinCode: 'Trase cu nu codice',
+  oldSite: "Usave 'o sito viecchio?",
   garminHint: "Nun s'aggiorna? Arape Garmin Connect nu mumento, accussì se sincronizza.",
   pickCourse: 'Addò jammo?',
   kinds: ['Sagliute', 'Strade', 'Classica'],
@@ -500,6 +509,9 @@ const es: Strings = {
   shareMsg: (comp, code) => `Únete a "${comp}" en Pass1. Código: ${code}`,
 
   // Retos
+  tabToday: 'Hoy', tabChallenges: 'Retos', tabAccount: 'Cuenta',
+  yourChallenges: 'Tus retos', startNew: 'Empieza uno nuevo', moreChallenges: 'Más retos', joinCode: 'Unirme con código',
+  oldSite: '¿Usabas la web antigua?',
   garminHint: '¿No se actualiza? Abre Garmin Connect un momento para que sincronice.',
   pickCourse: '¿A dónde vamos?',
   kinds: ['Cumbres', 'Rutas', 'Clásico'],
@@ -625,6 +637,9 @@ const ja: Strings = {
   shareMsg: (comp, code) => `Pass1の「${comp}」に参加しよう！ 招待コード：${code}`,
 
   // チャレンジ
+  tabToday: '今日', tabChallenges: 'チャレンジ', tabAccount: 'アカウント',
+  yourChallenges: '参加中のチャレンジ', startNew: '新しく始める', moreChallenges: 'ほかのチャレンジ', joinCode: 'コードで参加',
+  oldSite: '以前のウェブ版を使っていましたか？',
   garminHint: '更新されない？Garmin Connectを少し開くと同期されます。',
   pickCourse: 'どこへ行く？',
   kinds: ['山', 'ルート', 'クラシック'],
