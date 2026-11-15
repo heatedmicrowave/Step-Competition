@@ -1389,7 +1389,16 @@
   const remember = (on) => { try { localStorage.setItem('pass1.sound', on ? '1' : '0'); } catch (e) {} };
   const wanted = () => { try { return localStorage.getItem('pass1.sound') === '1'; } catch (e) { return false; } };
   // The phone can pause web audio (a call, the app in the background): any touch wakes it again.
-  document.addEventListener('pointerdown', () => { if (soundOn && actx && actx.state !== 'running') { unmute(); actx.resume && actx.resume(); } }, true);
+  // Leaving this screen or the app goes quiet; coming back picks up again (your on/off choice stays).
+  let away = false;
+  function hush(off) {
+    away = !!off;
+    if (away) { if (unmute.a) unmute.a.pause(); if (actx && actx.suspend) actx.suspend(); }
+    else if (soundOn) { unmute(); if (actx && actx.resume) actx.resume(); }
+  }
+  window.__pause = hush;
+  document.addEventListener('visibilitychange', () => hush(document.hidden));
+  document.addEventListener('pointerdown', () => { if (!away && soundOn && actx && actx.state !== 'running') { unmute(); actx.resume && actx.resume(); } }, true);
   function sound(on) {
     soundOn = on; remember(on);
     if (on) unmute(); else if (unmute.a) unmute.a.pause();

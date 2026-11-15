@@ -1,8 +1,9 @@
 // The home screen: a drawn Matterhorn you move around on (see src/world/world.html).
 // The drawing runs in a WebView. We hand it the numbers with window.__pass1(data), and it tells us
 // what was tapped with postMessage ({ type: 'open', id } and so on).
-import { useEffect, useMemo, useRef } from 'react';
-import { View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { AppState, View } from 'react-native';
 import { WebView as RNWebView, WebViewMessageEvent, WebViewProps } from 'react-native-webview';
 import { WORLD_HTML } from '../world/worldHtml';
 
@@ -50,6 +51,18 @@ export function MountainWorld({ data, onEvent, html = WORLD_HTML }: { data: Worl
   useEffect(() => {
     if (ready.current) web.current?.injectJavaScript(`window.__pass1 && window.__pass1(${json}); true;`);
   }, [json]);
+
+  // Sound only plays while this screen is the one you're looking at and the app is open.
+  const focused = useRef(true);
+  const hush = useCallback((off: boolean) => web.current?.injectJavaScript(`window.__pause && window.__pause(${off}); true;`), []);
+  useFocusEffect(useCallback(() => {
+    focused.current = true; hush(AppState.currentState !== 'active');
+    return () => { focused.current = false; hush(true); };
+  }, [hush]));
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (st) => hush(st !== 'active' || !focused.current));
+    return () => sub.remove();
+  }, [hush]);
 
   function onMessage(e: WebViewMessageEvent) {
     let m: WorldEvent;
