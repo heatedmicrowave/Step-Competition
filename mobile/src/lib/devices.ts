@@ -1,13 +1,13 @@
 // Every device we support, and the shortest way to connect each one.
 // "apple_health": the watch's own app already writes steps into Apple Health, so one Allow is enough.
-// "fitbit": Fitbit doesn't write to Apple Health; we sign in with Google and read from Fitbit's servers.
+// "fitbit" / "whoop": one sign-in, then our server reads steps straight from that watch's own cloud.
 
 import type { Strings } from './i18n';
 
 export type Device = {
   id: string;            // stored as players.source
   name: string;
-  route: 'apple_health' | 'fitbit';
+  route: 'apple_health' | 'fitbit' | 'whoop';
   /** Words that identify this brand's app among Apple Health sources (lowercase). */
   match: string[];
   /** The brand's own app, named in the one-line fix shown if we can't see its steps after Allow. */
@@ -26,8 +26,7 @@ export const DEVICES: Device[] = [
   { id: 'fitbit', name: 'Fitbit', route: 'fitbit', match: ['fitbit'] },
   { id: 'oura', name: 'Oura', route: 'apple_health', match: ['oura'],
     app: 'Oura' },
-  { id: 'whoop', name: 'WHOOP', route: 'apple_health', match: ['whoop'],
-    app: 'WHOOP' },
+  { id: 'whoop', name: 'WHOOP', route: 'whoop', match: ['whoop'] },
   { id: 'samsung', name: 'Galaxy Watch', route: 'apple_health', match: ['samsung'],
     androidOnly: true },
   { id: 'xiaomi', name: 'Xiaomi', route: 'apple_health', match: ['xiaomi', 'mi fitness', 'mifit', 'zepp life'],

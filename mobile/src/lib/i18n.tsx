@@ -106,6 +106,15 @@ const en = {
     no_refresh_token: "Google didn't give us lasting access. Try again.",
   } as Record<string, string>,
   fitbitUnknown: (code: string) => `Couldn't connect Fitbit (${code}).`,
+  // WHOOP sign-in
+  whoopErrors: {
+    access_denied: 'WHOOP sign-in was cancelled.',
+    closed: 'WHOOP sign-in was closed before finishing.',
+    expired: 'That took too long. Try again.',
+    no_refresh_token: "WHOOP didn't give us lasting access. Try again.",
+  } as Record<string, string>,
+  whoopUnknown: (code: string) => `Couldn't connect WHOOP (${code}).`,
+  reconnectWhoop: 'Reconnect WHOOP',
 
   // Leaderboard
   justNow: 'just now',
@@ -351,6 +360,14 @@ const it: Strings = {
     no_refresh_token: 'Google non ci ha dato un accesso permanente. Riprova.',
   },
   fitbitUnknown: (code) => `Non riesco a collegare Fitbit (${code}).`,
+  whoopErrors: {
+    access_denied: 'Accesso a WHOOP annullato.',
+    closed: "L'accesso a WHOOP è stato chiuso prima della fine.",
+    expired: 'Ci è voluto troppo. Riprova.',
+    no_refresh_token: 'WHOOP non ci ha dato un accesso stabile. Riprova.',
+  },
+  whoopUnknown: (code) => `Non riesco a collegare WHOOP (${code}).`,
+  reconnectWhoop: 'Ricollega WHOOP',
 
   justNow: 'adesso',
   minAgo: (n) => `${n} min fa`,
@@ -592,6 +609,14 @@ const nap: Strings = {
     no_refresh_token: "Google nun ce ha dato l'accesso pe' sempe. Riprova.",
   },
   fitbitUnknown: (code) => `Nun se cullega Fitbit (${code}).`,
+  whoopErrors: {
+    access_denied: "L'accesso a WHOOP è stato annullato.",
+    closed: "L'accesso a WHOOP s'è chiuso primma 'e fernì.",
+    expired: "Ce sì miso troppo. Pruova n'ata vota.",
+    no_refresh_token: "WHOOP nun ce ha dato n'accesso fisso. Pruova n'ata vota.",
+  },
+  whoopUnknown: (code) => `Nun se cullega WHOOP (${code}).`,
+  reconnectWhoop: 'Torna a cullegà WHOOP',
 
   justNow: 'mo mo',
   minAgo: (n) => `${n} min fa`,
@@ -832,6 +857,14 @@ const es: Strings = {
     no_refresh_token: 'Google no nos dio acceso permanente. Inténtalo de nuevo.',
   },
   fitbitUnknown: (code) => `No se pudo conectar Fitbit (${code}).`,
+  whoopErrors: {
+    access_denied: 'Se canceló el inicio de sesión en WHOOP.',
+    closed: 'El inicio de sesión en WHOOP se cerró antes de terminar.',
+    expired: 'Tardó demasiado. Inténtalo de nuevo.',
+    no_refresh_token: 'WHOOP no nos dio acceso permanente. Inténtalo de nuevo.',
+  },
+  whoopUnknown: (code) => `No se pudo conectar WHOOP (${code}).`,
+  reconnectWhoop: 'Reconectar WHOOP',
 
   justNow: 'ahora',
   minAgo: (n) => `hace ${n} min`,
@@ -1072,6 +1105,14 @@ const ja: Strings = {
     no_refresh_token: 'Googleから継続的なアクセス許可を得られませんでした。もう一度お試しください。',
   },
   fitbitUnknown: (code) => `Fitbitに接続できませんでした（${code}）。`,
+  whoopErrors: {
+    access_denied: 'WHOOPへのサインインがキャンセルされました。',
+    closed: 'WHOOPへのサインインが途中で閉じられました。',
+    expired: '時間がかかりすぎました。もう一度お試しください。',
+    no_refresh_token: 'WHOOPから継続的なアクセスを得られませんでした。もう一度お試しください。',
+  },
+  whoopUnknown: (code) => `WHOOPに接続できませんでした（${code}）。`,
+  reconnectWhoop: 'WHOOPを再接続',
 
   justNow: 'たった今',
   minAgo: (n) => `${n}分前`,

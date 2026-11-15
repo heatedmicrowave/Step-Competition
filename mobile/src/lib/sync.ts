@@ -2,14 +2,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Linking } from 'react-native';
 import { askForStepAccess, healthAvailable, lastStepTime, listStepSources, readDailySteps, watchSteps } from './health';
 import { DEVICES, Device, matchesDevice } from './devices';
-import { syncFitbitNow } from './fitbit';
+import { syncCloudNow } from './cloud';
 import { supabase } from './supabase';
 
 const SOURCE_KEY = 'stepSourceBundleId';
 const ASKED_KEY = 'healthAsked';
-const ROUTE_KEY = 'stepRoute'; // 'apple_health' | 'fitbit'
+const ROUTE_KEY = 'stepRoute'; // 'apple_health' | 'fitbit' | 'whoop'
+type Route = 'apple_health' | 'fitbit' | 'whoop';
+const cloudRoute = async () => { const r = await AsyncStorage.getItem(ROUTE_KEY); return r === 'fitbit' || r === 'whoop' ? r : null; };
 
-export async function setRoute(route: 'apple_health' | 'fitbit') {
+export async function setRoute(route: Route) {
   await AsyncStorage.setItem(ROUTE_KEY, route);
 }
 
@@ -23,11 +25,12 @@ export async function setChosenSource(bundleId: string | null) {
 
 /**
  * Apple Health route: reads the last 7 days on the phone and uploads them. Returns today's steps.
- * Fitbit route: asks the server to pull from Google now; returns null (the leaderboard shows the result).
+ * Fitbit / WHOOP route: asks the server to pull from that watch's cloud now; returns null (the leaderboard shows the result).
  */
 export async function syncSteps(): Promise<number | null> {
-  if ((await AsyncStorage.getItem(ROUTE_KEY)) === 'fitbit') {
-    await syncFitbitNow();
+  const cloud = await cloudRoute();
+  if (cloud) {
+    await syncCloudNow(cloud);
     return null;
   }
   if (!healthAvailable()) return null;
@@ -42,7 +45,7 @@ export async function syncSteps(): Promise<number | null> {
  * Lets the home say "last steps 8:12" (not just when we looked) and offer to open the watch's app.
  */
 export async function watchFreshness(): Promise<{ device: Device; last: Date | null } | null> {
-  if (!healthAvailable() || (await AsyncStorage.getItem(ROUTE_KEY)) === 'fitbit') return null;
+  if (!healthAvailable() || (await cloudRoute())) return null;
   const bundleId = await getChosenSource();
   if (!bundleId) return null;
   const device = DEVICES.find((d) => d.app && d.id !== 'other' && matchesDevice(d, bundleId, ''));
@@ -66,7 +69,7 @@ let watching = false;
 /** Keeps steps uploading whenever Apple Health gets new ones. Safe to call on every launch. */
 export async function startBackgroundSync() {
   if (watching || !healthAvailable() || !(await AsyncStorage.getItem(ASKED_KEY))) return;
-  if ((await AsyncStorage.getItem(ROUTE_KEY)) === 'fitbit') return;
+  if (await cloudRoute()) return;
   watching = true;
   await watchSteps(() => { syncSteps().then(() => listeners.forEach((fn) => fn())).catch(() => {}); });
 }

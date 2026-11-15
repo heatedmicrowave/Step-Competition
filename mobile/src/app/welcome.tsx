@@ -6,7 +6,7 @@ import { useAuth } from '../lib/auth';
 import { Device, deviceName, DEVICES, fixFor } from '../lib/devices';
 import { healthAvailable } from '../lib/health';
 import { errorText } from '../lib/supabase';
-import { connectFitbit, fitbitError } from '../lib/fitbit';
+import { cloudError, connectCloud } from '../lib/cloud';
 import { useT } from '../lib/i18n';
 import { connectDevice, setRoute } from '../lib/sync';
 
@@ -32,10 +32,10 @@ export default function Welcome() {
   async function pick(d: Device) {
     setDevice(d); setMsg(''); setBusy(d.id);
     try {
-      if (d.route === 'fitbit') {
-        const r = await connectFitbit();
-        if (r.ok) { await setRoute('fitbit'); await reloadMe(); router.replace('/'); }
-        else { setFix(fitbitError(t, r.code)); setStep('fix'); }
+      if (d.route === 'fitbit' || d.route === 'whoop') {
+        const r = await connectCloud(d.route);
+        if (r.ok) { await setRoute(d.route); await reloadMe(); router.replace('/'); }
+        else { setFix(cloudError(t, d.route, r.code)); setStep('fix'); }
       } else if (!healthAvailable()) {
         setFix(t.noHealthPhone);
         setStep('fix');
@@ -98,7 +98,7 @@ export default function Welcome() {
               {device.route === 'apple_health' && healthAvailable() && !device.androidOnly && (
                 <Button title={t.checkAgain} onPress={() => pick(device)} busy={busy === device.id} />
               )}
-              {device.route === 'fitbit' && <Button title={t.tryAgain} onPress={() => pick(device)} busy={busy === device.id} />}
+              {device.route !== 'apple_health' && <Button title={t.tryAgain} onPress={() => pick(device)} busy={busy === device.id} />}
               <Button title={t.pickDifferent} kind="plain" onPress={() => setStep('device')} />
             </View>
           </>
