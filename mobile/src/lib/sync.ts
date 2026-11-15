@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { askForStepAccess, healthAvailable, listStepSources, readDailySteps, watchSteps } from './health';
-import { Device, matchesDevice } from './devices';
+import { Linking } from 'react-native';
+import { askForStepAccess, healthAvailable, lastStepTime, listStepSources, readDailySteps, watchSteps } from './health';
+import { DEVICES, Device, matchesDevice } from './devices';
 import { syncFitbitNow } from './fitbit';
 import { supabase } from './supabase';
 
@@ -34,6 +35,27 @@ export async function syncSteps(): Promise<number | null> {
   const { error } = await supabase.rpc('app_submit_steps', { p_days: days });
   if (error) throw error;
   return days[days.length - 1]?.steps ?? 0;
+}
+
+/**
+ * For a watch read through Apple Health: when its app last handed steps over today.
+ * Lets the home say "last steps 8:12" (not just when we looked) and offer to open the watch's app.
+ */
+export async function watchFreshness(): Promise<{ device: Device; last: Date | null } | null> {
+  if (!healthAvailable() || (await AsyncStorage.getItem(ROUTE_KEY)) === 'fitbit') return null;
+  const bundleId = await getChosenSource();
+  if (!bundleId) return null;
+  const device = DEVICES.find((d) => d.app && d.id !== 'other' && matchesDevice(d, bundleId, ''));
+  if (!device) return null;
+  return { device, last: await lastStepTime(bundleId) };
+}
+
+/** Opens the watch's own app so it syncs (Garmin Connect only hands steps to Apple Health when it syncs). */
+export async function openWatchApp(d: Device) {
+  for (const url of d.open ?? []) {
+    try { await Linking.openURL(url); return; } catch { /* not this one */ }
+  }
+  if (d.store) await Linking.openURL(d.store).catch(() => {});
 }
 
 // Screens that want to redraw when new steps arrive while the app is open (e.g. Garmin Connect just synced).

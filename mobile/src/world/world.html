@@ -353,6 +353,10 @@
       <text x="200" y="-96" font-size="60" font-weight="800" letter-spacing="-1.5" fill="#FFFFFF" fill-opacity=".88" id="stepsNum">8,412</text>
       <text x="200" y="-68" font-size="12" font-weight="700" letter-spacing="3" fill="#FFFFFF" fill-opacity=".9" data-tu="stepsToday">STEPS TODAY</text>
       <text x="200" y="-53" font-size="9.5" font-weight="500" fill="#FFFFFF" fill-opacity=".78" id="syncLine">Garmin · synced 2 min ago</text>
+      <g id="nudge" data-act="openWatch" style="cursor:pointer;display:none">
+        <rect id="nudgeBg" x="110" y="-46" width="180" height="19" rx="9.5" fill="#FFFFFF" fill-opacity=".2" stroke="#FFFFFF" stroke-opacity=".45" stroke-width=".7"/>
+        <text id="nudgeText" x="200" y="-33.2" font-size="9.5" font-weight="700" fill="#FFFFFF">Tap to sync with Garmin Connect ›</text>
+      </g>
       <g opacity=".85">
         <use href="#swiss" x="137" y="-6.5" width="9" height="9"/>
         <text x="206" y="1.3" font-size="10" font-weight="800" letter-spacing="4" fill="#3D3631">MATTERHORN</text>
@@ -1215,6 +1219,8 @@
     applyText();
     $('stepsNum').textContent = D.today == null ? '—' : fmt(D.today);
     $('syncLine').textContent = [D.watch, D.sync].filter(Boolean).join(' · ');
+    { const n = $('nudge'); n.style.display = D.nudge ? '' : 'none';
+      if (D.nudge) { const tx = $('nudgeText'); tx.textContent = D.nudge + ' ›'; const w = Math.min(300, tx.getComputedTextLength() + 26); const r = $('nudgeBg'); r.setAttribute('x', (200 - w / 2).toFixed(1)); r.setAttribute('width', w.toFixed(1)); } }
     $('weekNum').textContent = fmt(D.week);
     $('bestLabel').textContent = (T.bestDay + (D.best ? ' · ' + D.best.day : '')).toUpperCase();
     $('bestNum').textContent = D.best ? fmt(D.best.steps) + ' ' + T.steps : '—';
