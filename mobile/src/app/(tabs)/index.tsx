@@ -18,7 +18,7 @@ import { COMP_FIELDS, daysLeftOf, inviteMessage, loadStandings, Standing } from 
 import { hasWorld } from '../../lib/worlds';
 import { Competition, errorText, isoDay, supabase } from '../../lib/supabase';
 import { fitbitStatus } from '../../lib/fitbit';
-import { syncSteps } from '../../lib/sync';
+import { onNewSteps, syncSteps } from '../../lib/sync';
 
 const ME = '#C14A1F';
 const OTHERS = ['#3E6C8A', '#4E7A4A', '#8A5A9E', '#B5892E', '#5F6B73', '#2F7F7A'];
@@ -129,7 +129,8 @@ export default function Home() {
   // Sync again every time the app comes back to the front (also picks up a changed notification setting).
   useEffect(() => {
     const sub = AppState.addEventListener('change', (st) => { if (st === 'active') load(); });
-    return () => sub.remove();
+    const off = onNewSteps(() => load()); // new steps landed in Apple Health while you're looking
+    return () => { sub.remove(); off(); };
   }, [load]);
 
   if (loading) return <View style={{ flex: 1, justifyContent: 'center', backgroundColor: c.bg }}><ActivityIndicator color={c.ink} /></View>;

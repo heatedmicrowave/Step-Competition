@@ -36,13 +36,17 @@ export async function syncSteps(): Promise<number | null> {
   return days[days.length - 1]?.steps ?? 0;
 }
 
+// Screens that want to redraw when new steps arrive while the app is open (e.g. Garmin Connect just synced).
+const listeners = new Set<() => void>();
+export function onNewSteps(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; }
+
 let watching = false;
 /** Keeps steps uploading whenever Apple Health gets new ones. Safe to call on every launch. */
 export async function startBackgroundSync() {
   if (watching || !healthAvailable() || !(await AsyncStorage.getItem(ASKED_KEY))) return;
   if ((await AsyncStorage.getItem(ROUTE_KEY)) === 'fitbit') return;
   watching = true;
-  await watchSteps(() => { syncSteps().catch(() => {}); });
+  await watchSteps(() => { syncSteps().then(() => listeners.forEach((fn) => fn())).catch(() => {}); });
 }
 
 export type ConnectResult = { ok: true; label: string } | { ok: false };
