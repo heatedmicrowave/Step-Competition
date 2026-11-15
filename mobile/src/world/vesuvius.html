@@ -370,6 +370,7 @@
 <div class="note" id="note"></div>
 </div>
 
+<script>/*MUSIC*/</script>
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -626,113 +627,46 @@
     n.buffer = b; f.type = 'highpass'; f.frequency.value = 2500; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.025, t + .3); g.gain.exponentialRampToValueAtTime(.0001, t + 1.8);
     n.connect(f).connect(g).connect(master); n.start(t); n.stop(t + 2);
   }
-  // ---- Music: two short original tunes on plucked strings. Over the bay, a slow, easy Neapolitan
-  // waltz on nylon guitars only: one fingerpicking the chords, one playing the tune. In Napoli, a tarantella
-  // (A minor, 6/8): guitar oom-pah-pah, a mandolin on the tune, a tambourine. Strings are made with
-  // Karplus-Strong (a burst of noise ringing through a tiny delay, the way a real string rings),
-  // played a little loose in time and touch, through a guitar body and a small room, so it sounds
-  // played rather than programmed. Up at the volcano the music fades and the mountain takes over.
-  const NOTE = (n) => 440 * Math.pow(2, n / 12); // semitones from A4
-  const plucks = {};
-  function pluck(n, kind) { // one plucked note, rendered once and reused
-    const key = n + kind; if (plucks[key]) return plucks[key];
-    const sr = actx.sampleRate, f = NOTE(n), N = Math.max(4, Math.floor(sr / f - .5)), nylon = kind !== 'mando', soft = kind === 'nylon';
-    const len = Math.floor(sr * (nylon ? 2.6 : 1.3)), buf = actx.createBuffer(1, len, sr), out = buf.getChannelData(0);
-    let ex = new Float32Array(N); for (let i = 0; i < N; i++) ex[i] = Math.random() * 2 - 1;
-    for (let k = 0; k < (soft ? 4 : nylon ? 2 : 1); k++) for (let i = 1; i < N; i++) ex[i] = (ex[i] + ex[i - 1]) / 2; // a flesh pick is soft, a plectrum bright
-    const pp = Math.max(1, Math.round(N * (nylon ? .2 : .11))), ring = new Float32Array(N); // where along the string it was plucked
-    let mean = 0; for (let i = 0; i < N; i++) { ring[i] = ex[i] - .9 * (i >= pp ? ex[i - pp] : 0); mean += ring[i] / N; }
-    for (let i = 0; i < N; i++) ring[i] -= mean;
-    const decay = nylon ? (f < 160 ? .9992 : .9975) : .994; let idx = 0;
-    for (let i = 0; i < len; i++) { const y = ring[idx]; out[i] = y * (i < 40 ? i / 40 : 1); ring[idx] = decay * .5 * (y + ring[(idx + 1) % N]); idx = (idx + 1) % N; }
-    for (let i = 0; i < 400; i++) out[len - 1 - i] *= i / 400;
-    return (plucks[key] = { buf, rate: f * (N + .5) / sr }); // fine-tune: the loop length is whole samples
-  }
+  // ---- Music: two original pieces, played on sampled instruments and recorded (src/world/music/,
+  // made by compose.py). Over the bay, a slow 1950s-style lounge tune on two nylon guitars; in Napoli,
+  // a tarantella with accordion, mandolin-style picking, guitar and tambourine. They're baked into the page
+  // by scripts/build-world.js (window.__MUSIC) and loop seamlessly. Up at the volcano the music fades out.
+  const LOOP = { bay: 101.052632, tar: 41.739130 };   // one pass of each piece, in seconds
+  const songs = { bay: {}, tar: {} };
   let musicIn = null;
-  function play(bus, n, t, vol, kind, pan, detune) {
-    const p = pluck(n, kind), src = actx.createBufferSource(), g = actx.createGain();
-    src.buffer = p.buf; src.playbackRate.value = p.rate * (detune || 1);
-    g.gain.value = vol * (.82 + .3 * Math.random());
-    let out = src.connect(g);
-    if (pan && actx.createStereoPanner) { const sp = actx.createStereoPanner(); sp.pan.value = pan; out = out.connect(sp); }
-    out.connect(bus); src.start(Math.max(actx.currentTime, t + (Math.random() - .5) * .014));
-  }
-  function mando(bus, n, t, dur, vol) { // a mandolin: two strings per note, and a tremolo on the long ones
-    const step = .085, hits = dur > .3 ? Math.floor(dur / step) : 1;
-    for (let h = 0; h < hits; h++) { const v = vol * (h ? .55 + .1 * (h % 2) : 1) * (h > hits - 3 && h ? .7 : 1);
-      play(bus, n, t + h * step, v, 'mando', .25, 1.0015); play(bus, n, t + h * step + .004, v * .8, 'mando', .35, .9985); }
-  }
-  function strum(bus, notes, t, vol, up) { (up ? notes.slice().reverse() : notes).forEach((n, k) => play(bus, n, t + k * .018, vol, 'nylon', -.2)); }
-  function tamb(bus, t, vol) { // jingles: a couple of quick bright shakes
-    if (!tamb.buf) { const b = actx.createBuffer(1, actx.sampleRate * .16, actx.sampleRate), d = b.getChannelData(0);
-      for (let i = 0; i < d.length; i++) { const e = Math.pow(1 - i / d.length, 4), j = i < d.length * .35 ? 1 : .5; d[i] = (Math.random() * 2 - 1) * e * j * (1 + .6 * Math.sin(i * .9)); } tamb.buf = b; }
-    const n = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
-    n.buffer = tamb.buf; n.playbackRate.value = .9 + .2 * Math.random(); f.type = 'bandpass'; f.frequency.value = 6500 + 1500 * Math.random(); f.Q.value = 1.4;
-    g.gain.value = vol * (.7 + .5 * Math.random()); n.connect(f).connect(g);
-    if (actx.createStereoPanner) { const sp = actx.createStereoPanner(); sp.pan.value = .45; g.connect(sp).connect(bus); } else g.connect(bus);
-    n.start(t + (Math.random() - .5) * .01);
-  }
-
-  // The bay: an easy waltz in C, one bar = six eighths. Each bar is [chord, chord for the second half, tune],
-  // and the tune is [note, start eighth, length in eighths].
-  const V = { C: [-21, -14, -9, -5], Am: [-24, -17, -12, -9], F: [-28, -16, -12, -9], G: [-26, -14, -10, -7], Dm: [-19, -12, -7, -4], G7: [-26, -14, -10, -4], E7: [-29, -17, -10, -7] };
-  const BAY = [
-    ['C', 'C', [[7, 0, 3], [5, 3, 1], [3, 4, 2]]], ['Am', 'Am', [[0, 0, 4], [3, 4, 2]]],
-    ['F', 'F', [[5, 0, 3], [3, 3, 1], [0, 4, 2]]], ['G', 'G7', [[2, 0, 6]]],
-    ['C', 'C', [[7, 0, 3], [8, 3, 1], [10, 4, 2]]], ['Am', 'E7', [[12, 0, 4], [11, 4, 2]]],
-    ['Dm', 'G7', [[8, 0, 2], [7, 2, 1], [5, 3, 3]]], ['C', 'C', [[3, 0, 6]]],
-  ];
-  function bayBar(s, i, t0) {
-    const [c1, c2, tune] = BAY[i], e = s.e8;
-    [0, 1, 2, 3, 2, 1].forEach((k, j) => { const v = V[j < 3 ? c1 : c2]; play(s.bus, v[k], t0 + j * e, k ? .2 : .42, 'nylon', -.15); });
-    tune.forEach(([n, at, len]) => { play(s.bus, n - 12, t0 + at * e, .34, 'lead', .2); if (len >= 4) play(s.bus, n - 12, t0 + (at + 3) * e, .16, 'lead', .2); });
-  }
-
-  // Napoli: the tarantella.
-  const MEL = [[0, 3, 7, 12, 10, 7], [8, 7, 5, 3, 2, 0], [-5, 0, 3, 7, 5, 3], [2, 3, 5, 7, 7, null], [0, 3, 7, 12, 10, 7], [8, 7, 5, 3, 5, 7], [8, 7, 5, 3, 2, -1], [0, null, 0, -5, 0, null]];
-  const BASS = [-24, -19, -24, -29, -24, -19, -29, -24];
-  const AM = [-12, -9, -5], DM = [-12, -7, -4], EM = [-13, -10, -5];
-  const CHORDS = [AM, DM, AM, EM, AM, DM, EM, AM];
-  function tarBar(s, i, t0) {
-    const e = s.e8, m = MEL[i];
-    m.forEach((n, j) => { if (n == null) return; let len = 1; while (j + len < 6 && m[j + len] === null) len++;
-      mando(s.bus, n + 12, t0 + j * e, len * e, .2); });
-    for (let j = 0; j < 6; j++) { tamb(s.bus, t0 + j * e, j % 3 === 0 ? .14 : .05); if (j % 3 === 0) tamb(s.bus, t0 + j * e + e / 2, .04); }
-    play(s.bus, BASS[i], t0, .5, 'nylon', -.2); play(s.bus, BASS[i] + 7, t0 + 3 * e, .38, 'nylon', -.2);
-    [1, 2, 4, 5].forEach((j) => strum(s.bus, CHORDS[i], t0 + j * e, .13, j % 3 === 2));
-  }
-
-  const songs = { bay: { fn: bayBar, len: BAY.length, e8: .29 }, tar: { fn: tarBar, len: MEL.length, e8: .13 } };
-  function tick(s) { // keeps about a second and a half of music queued, bar by bar
-    if (!soundOn || !s.on) { s.timer = 0; return; }
-    while (s.at < actx.currentTime + 1.5) { s.fn(s, s.bar % s.len, s.at); s.at += 6 * s.e8; s.bar++; }
-    s.timer = setTimeout(() => tick(s), 300);
-  }
   function musicSetup() {
     if (musicIn) return;
-    musicIn = actx.createGain(); musicIn.gain.value = .55;
-    const body = actx.createBiquadFilter(); body.type = 'peaking'; body.frequency.value = 200; body.gain.value = 5; body.Q.value = 1.2;
-    const air = actx.createBiquadFilter(); air.type = 'peaking'; air.frequency.value = 2400; air.gain.value = -3; air.Q.value = .8;
-    const tone = actx.createBiquadFilter(); tone.type = 'lowpass'; tone.frequency.value = 5200;
-    const room = actx.createConvolver(), sr = actx.sampleRate, ir = actx.createBuffer(2, sr * 2.2, sr);
-    for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3.5) * (i < sr * .012 ? i / (sr * .012) : 1); }
-    room.buffer = ir; const wet = actx.createGain(); wet.gain.value = .22;
-    musicIn.connect(body).connect(air).connect(tone); tone.connect(master); tone.connect(room).connect(wet).connect(master);
-    Object.values(songs).forEach((s) => { s.bus = actx.createGain(); s.bus.gain.value = 0; s.bus.connect(musicIn); s.on = false; s.at = 0; s.bar = 0; });
+    musicIn = actx.createGain(); musicIn.gain.value = .45; musicIn.connect(master);
+    Object.entries(songs).forEach(([k, s]) => {
+      s.k = k; s.bus = actx.createGain(); s.bus.gain.value = 0; s.bus.connect(musicIn); s.on = false;
+      const src = (window.__MUSIC || {})[k]; if (!src) return;
+      try {
+        const bin = atob(src), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+        actx.decodeAudioData(u.buffer, (buf) => { s.buf = buf; if (s.on) startSong(s); }, () => {});
+      } catch (e) {}
+    });
   }
+  function startSong(s) {
+    if (!s.buf || s.node) return;
+    const n = actx.createBufferSource(); n.buffer = s.buf; n.loop = true;
+    n.loopStart = 0; n.loopEnd = Math.min(s.buf.duration, LOOP[s.k]);
+    n.connect(s.bus); n.start(); s.node = n;
+  }
+  function stopSong(s) { if (s.node) { try { s.node.stop(); } catch (e) {} s.node.disconnect(); s.node = null; } }
   const MIX = { overview: { bay: .9 }, napoli: { tar: 1 }, oss: { bay: .25 }, crater: {} };
   function music() {
     musicSetup();
     const t = actx.currentTime, mix = MIX[scene] || {};
-    Object.entries(songs).forEach(([k, s]) => {
-      const v = mix[k] || 0;
+    Object.values(songs).forEach((s) => {
+      const v = mix[s.k] || 0;
       s.bus.gain.setTargetAtTime(v, t, v ? .8 : .5);
       clearTimeout(s.fade);
-      if (v && !s.on) { s.on = true; if (s.at < t) { s.at = t + .15; s.bar = 0; } if (!s.timer) tick(s); }
-      if (!v && s.on) s.fade = setTimeout(() => { s.on = false; }, 2500); // let it fade, then stop; it starts from the top next time
+      if (v && !s.on) { s.on = true; startSong(s); }
+      if (v && s.on && !s.node) startSong(s);
+      if (!v && s.on) s.fade = setTimeout(() => { s.on = false; stopSong(s); }, 2500); // fade, then stop; it starts from the top next time
     });
   }
-  function musicOff() { if (!musicIn) return; Object.values(songs).forEach((s) => { s.bus.gain.setTargetAtTime(0, actx.currentTime, .2); s.on = false; clearTimeout(s.timer); s.timer = 0; }); }
+  function musicOff() { if (!musicIn) return; Object.values(songs).forEach((s) => { s.bus.gain.setTargetAtTime(0, actx.currentTime, .2); clearTimeout(s.fade); s.fade = setTimeout(() => stopSong(s), 400); s.on = false; }); }
   function ambience() {
     if (!soundOn) return;
     const t = actx.currentTime;
