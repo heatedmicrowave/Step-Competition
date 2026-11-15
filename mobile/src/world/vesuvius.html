@@ -756,6 +756,7 @@
   render();
   post({ type: 'ready' });
   setTimeout(() => $('hint').classList.add('gone'), 4500);
+  try { const n = +(localStorage.getItem('pass1.hint.ves') || 0); if (n >= 2) $('hint').classList.add('gone'); localStorage.setItem('pass1.hint.ves', n + 1); } catch (e) {} // only your first couple of visits
   // Drag sideways along the panorama.
   let drag = null;
   world.addEventListener('pointerdown', (e) => { if (scene === 'overview') drag = { x: e.clientX, p: panX, moved: false }; });

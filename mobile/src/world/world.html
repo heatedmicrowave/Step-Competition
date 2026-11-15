@@ -23,6 +23,12 @@
   .plume { opacity:0; transition: opacity .5s; }
   [data-scene="summit"] .plume { opacity:1; }
   .stop { cursor:pointer; }
+  /* Place names sit lightly on the drawing: no dark boxes */
+  .stoplabel rect[rx] { display:none; }
+  .stoplabel text { fill:#171412; stroke:rgba(251,249,245,.85); stroke-width:3px; paint-order:stroke; stroke-linejoin:round; }
+  .stoplabel text + text { fill:#5A4F48; font-size:9.5px; }
+  [data-night] .stoplabel text { fill:#FBF9F5; stroke:rgba(23,20,18,.55); }
+  [data-night] .stoplabel text + text { fill:#DCD6CC; }
   .cloud { animation: drift 38s ease-in-out infinite alternate; }
   .cloud.b { animation-duration: 52s; animation-delay:-20s; }
   [data-scene="summit"] .cloud { animation-duration: 14s; }
@@ -657,6 +663,7 @@
   const svg = document.getElementById('world');
   const menu = document.getElementById('menu');
   const hint = document.getElementById('hint');
+  try { const n = +(localStorage.getItem('pass1.hint.home') || 0); if (n >= 2) hint.classList.add('gone'); localStorage.setItem('pass1.hint.home', n + 1); } catch (e) {} // only your first couple of visits
   const skyText = document.getElementById('skyText');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reduce && svg.pauseAnimations) { svg.pauseAnimations(); document.getElementById('town').pauseAnimations(); }
@@ -1117,7 +1124,7 @@
     marks.innerHTML = ''; wg.innerHTML = ''; walkers = []; me = null;
     document.querySelector('[href="#ovMid"]').textContent = D.climb ? kfmt(goal()) : '';
     if (!D.climb) return;
-    [.2, .4, .8].forEach((f) => {
+    [].forEach((f) => { // (the 20/40/80% flags are gone: just the hut and the top are numbered now)
       const q = at(goal() * f), x = q.x - 5, y = q.y;
       marks.insertAdjacentHTML('beforeend',
         '<line x1="' + x + '" y1="' + y + '" x2="' + x + '" y2="' + (y - 11) + '" stroke="#fff" stroke-width=".8"/>' +
