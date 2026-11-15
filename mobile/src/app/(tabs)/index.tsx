@@ -2,10 +2,9 @@
 // notifications), the Hörnli Hut's trail signs are your challenges, and the summit book is the
 // leaderboard. The drawing itself lives in src/world/world.html; this screen feeds it the numbers.
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Notifications from 'expo-notifications';
 import { Redirect, router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, AppState, Linking, Share, View } from 'react-native';
+import { ActivityIndicator, Alert, AppState, Share, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MountainWorld, WorldBoard, WorldCourse, WorldData, WorldEvent, WorldHiker, WorldSign } from '../../components/MountainWorld';
 import { T, useColors } from '../../components/ui';
@@ -13,7 +12,7 @@ import { course, COURSES, progress, size } from '../../lib/courses';
 import { useAuth } from '../../lib/auth';
 import { Lang, LANGS, errorIn, useT } from '../../lib/i18n';
 import { countryName, loadBoard, loadPublicMe, phoneCountry } from '../../lib/publicBoard';
-import { register } from '../../lib/push';
+import { alertsOn, toggleAlerts } from '../../lib/push';
 import { COMP_FIELDS, daysLeftOf, inviteMessage, loadStandings, Standing } from '../../lib/standings';
 import { hasWorld } from '../../lib/worlds';
 import { Competition, errorText, isoDay, supabase } from '../../lib/supabase';
@@ -108,7 +107,7 @@ export default function Home() {
 
     // The mailbox flag: is the phone allowed to show our notifications?
     let alerts = false;
-    try { alerts = (await Notifications.getPermissionsAsync()).granted; } catch {}
+    try { alerts = await alertsOn(); } catch {}
 
     // Challenges you're in that haven't ended.
     const { data: comps } = await supabase
@@ -218,7 +217,7 @@ export default function Home() {
     alerts: d?.alerts ?? false,
     gain: climb ? d?.gain ?? 0 : 0,
     publicOn: d?.publicOn ?? false,
-    t: { ...t.world, stepsToday: t.stepsToday, leave: t.leave, length: t.length, starts: t.starts, today: t.today, tomorrow: t.tomorrow, startBtn: t.startBtn, lengths: t.lengths, comingSoon: t.comingSoon },
+    t: { ...t.world, yourChallenges: t.yourChallenges, stepsToday: t.stepsToday, leave: t.leave, length: t.length, starts: t.starts, today: t.today, tomorrow: t.tomorrow, startBtn: t.startBtn, lengths: t.lengths, comingSoon: t.comingSoon },
     signs,
     climb,
     boards: d?.boards ?? [],
@@ -247,16 +246,8 @@ export default function Home() {
   }
 
   async function alertsTapped() {
-    try {
-      const perm = await Notifications.getPermissionsAsync();
-      if (!perm.granted && perm.canAskAgain) {
-        await register(lang);
-        load();
-      } else {
-        // Already on, or turned off in iOS Settings: only Settings can change it now.
-        Linking.openSettings();
-      }
-    } catch {}
+    try { await toggleAlerts(lang); } catch {}
+    load();
   }
 
   // Start a challenge from the hut's noticeboard. A climb with its own world opens it; anything else
