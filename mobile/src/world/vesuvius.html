@@ -211,8 +211,8 @@
   <g transform="translate(40 356)">
     <path d="M0 0 H184 Q 192 0 192 8 V40 Q 192 48 184 48 H22 L4 60 L10 48 H8 Q 0 48 0 40Z" fill="#FBF7EE" stroke="#2A2620" stroke-width="1"/>
     <text x="10" y="16" font-size="11" font-weight="800" fill="#C14A1F">Uè!</text>
-    <text x="10" y="29" font-size="9.6" fill="#2A2620" class="tipA">Pizza tonight? Earn it first:</text>
-    <text x="10" y="41" font-size="9.6" fill="#2A2620" class="tipB">one lap of the block.</text>
+    <text x="10" y="29" font-size="9.6" font-style="italic" fill="#2A2620" class="tipA">Pizza stasera? Primma t'a guadagne:</text>
+    <text x="10" y="41" font-size="9.6" fill="#2A2620" class="tipB">Pizza tonight? Walk for it first.</text>
   </g>
 
   <!-- the street -->
@@ -394,7 +394,7 @@
     days: [20400, 21100, 9760, 27144],
     t: {
       napoliSub: 'You', ossSub: 'The challenge · 608 m', craterSub: 'Standings · 1,281 m', hint: 'Drag sideways · tap a place',
-      tips: [['Pizza tonight? Earn it first:', 'one lap of the block.'], ['Walk to the bakery, not the car.', 'The bread tastes better.'], ['Slow and steady wins the climb.', 'All the way up.'], ['Up we go, one step at a time.', 'The crater is waiting.'], ['Take the stairs, like in the old town.', 'Every step is a step up Vesuvius.']],
+      tips: [["Pizza stasera? Primma t'a guadagne:", 'Pizza tonight? Walk for it first.'], ["Va' ô furno a pere, no cu 'a machina.", 'Walk to the bakery, not the car.'], ['Chi va chiano va sano e va luntano.', 'Slow and steady goes a long way.'], ['Jamme, jamme, ’ncoppa jamme jà!', 'Up we go, like the funicular song!'], ["Fa' 'e scale, comme into ô centro storico.", 'Take the stairs, like in the old town.']],
       today: 'Today', thisClimb: 'This climb', place: 'Place', open: 'Open', invite: 'Invite', details: 'All the details',
       seismo: 'your group, day by day', seismoTitle: 'Your group, day by day', seismoBody: 'Every day you all walk shows up as a tremor. Big day, big quake.', dayN: 'Day {n}',
       challengeBody: 'From the shore in Naples, past the Osservatorio, to the crater rim at 1,281 m. {goal} steps to the top.',
@@ -552,7 +552,10 @@
     $('hint').classList.add('gone');
     fly([q.x - w / 2, q.y - h / 2, w, h], 420);
     scene = id; app.dataset.scene = id; ambience();
-    if (id === 'napoli') { const t = TIPS()[tipN++ % TIPS().length]; document.querySelector('.tipA').textContent = t[0]; document.querySelector('.tipB').textContent = t[1]; }
+    // Nonna speaks Napoletano first; the line under it is in your language.
+    if (id === 'napoli') { const t = TIPS()[tipN++ % TIPS().length];
+      ['.tipA', '.tipB'].forEach((c, i) => { const e = document.querySelector(c); e.textContent = t[i]; e.removeAttribute('textLength');
+        if (e.getComputedTextLength() > 174) { e.setAttribute('textLength', '174'); e.setAttribute('lengthAdjust', 'spacingAndGlyphs'); } }); }
   }
   $('back').addEventListener('click', () => { if (scene !== 'overview') go('overview'); else post({ type: 'back' }); });
 
