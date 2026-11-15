@@ -26,7 +26,10 @@ export const DEVICES: Device[] = [
   { id: 'fitbit', name: 'Fitbit', route: 'fitbit', match: ['fitbit'] },
   { id: 'oura', name: 'Oura', route: 'apple_health', match: ['oura'],
     app: 'Oura' },
-  { id: 'whoop', name: 'WHOOP', route: 'whoop', match: ['whoop'] },
+  // WHOOP direct (route 'whoop', supabase/functions/whoop) is built but parked until we have a WHOOP
+  // developer login (needs a paid membership). Until then WHOOP goes through Apple Health.
+  { id: 'whoop', name: 'WHOOP', route: 'apple_health', match: ['whoop'],
+    app: 'WHOOP' },
   { id: 'samsung', name: 'Galaxy Watch', route: 'apple_health', match: ['samsung'],
     androidOnly: true },
   { id: 'xiaomi', name: 'Xiaomi', route: 'apple_health', match: ['xiaomi', 'mi fitness', 'mifit', 'zepp life'],
