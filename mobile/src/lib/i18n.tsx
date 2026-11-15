@@ -181,6 +181,15 @@ const en = {
   // Messages from the server, by their exact English text
   // The Vesuvius challenge world (src/world/vesuvius.html)
   vesuvius: {
+    placeNapoli: "Naples",
+    placeOss: "Observatory",
+    placeCrater: "The crater",
+    standings: "Standings",
+    menu: "Today's menu",
+    seismograph: "Seismograph",
+    postA: "Greetings from",
+    postB: "Vesuvius!",
+    alone: "Climbing alone? Invite a friend →",
     napoliSub: "You",
     ossSub: "The challenge · 608 m",
     craterSub: "Standings · 1,281 m",
@@ -196,7 +205,7 @@ const en = {
     seismoTitle: "Your group, day by day",
     seismoBody: "Every day you all walk shows up as a tremor. Big day, big quake.",
     dayN: "Day {n}",
-    challengeBody: "From the shore in Naples, past the Osservatorio, to the crater rim at 1,281 m. {goal} steps to the top.",
+    challengeBody: "From the shore in Naples, past the Observatory, to the crater rim at 1,281 m. {goal} steps to the top.",
     inviteTitle: "Invite a friend",
     inviteBody: "Send the postcard: your friend taps the link and lands right in this climb.",
     inClimb: "In this climb",
@@ -431,6 +440,15 @@ const it: Strings = {
 
   // The Vesuvius challenge world (src/world/vesuvius.html)
   vesuvius: {
+    placeNapoli: "Napoli",
+    placeOss: "Osservatorio",
+    placeCrater: "Il cratere",
+    standings: "Classifica",
+    menu: "Menu del giorno",
+    seismograph: "Sismografo",
+    postA: "Saluti dal",
+    postB: "Vesuvio!",
+    alone: "Sali da solo? Invita un amico →",
     napoliSub: "Tu",
     ossSub: "La sfida · 608 m",
     craterSub: "Classifica · 1.281 m",
@@ -680,6 +698,15 @@ const nap: Strings = {
 
   // The Vesuvius challenge world (src/world/vesuvius.html)
   vesuvius: {
+    placeNapoli: "Napule",
+    placeOss: "L'Osservatorio",
+    placeCrater: "'O cratere",
+    standings: "Classifica",
+    menu: "'O menù d'ogge",
+    seismograph: "Sismografo",
+    postA: "Salute d'ô",
+    postB: "Vesuvio!",
+    alone: "Sagli sulo? Chiamma n'amico →",
     napoliSub: "Tu",
     ossSub: "'A sfida · 608 m",
     craterSub: "Classifica · 1.281 m",
@@ -928,6 +955,15 @@ const es: Strings = {
 
   // The Vesuvius challenge world (src/world/vesuvius.html)
   vesuvius: {
+    placeNapoli: "Nápoles",
+    placeOss: "Observatorio",
+    placeCrater: "El cráter",
+    standings: "Clasificación",
+    menu: "Menú del día",
+    seismograph: "Sismógrafo",
+    postA: "Saludos desde el",
+    postB: "¡Vesubio!",
+    alone: "¿Subes solo? Invita a un amigo →",
     napoliSub: "Tú",
     ossSub: "El reto · 608 m",
     craterSub: "Clasificación · 1.281 m",
@@ -1176,6 +1212,15 @@ const ja: Strings = {
 
   // The Vesuvius challenge world (src/world/vesuvius.html)
   vesuvius: {
+    placeNapoli: "ナポリ",
+    placeOss: "観測所",
+    placeCrater: "火口",
+    standings: "順位",
+    menu: "本日のメニュー",
+    seismograph: "地震計",
+    postA: "ヴェスヴィオから",
+    postB: "こんにちは！",
+    alone: "ひとりで登山中？友達を招待 →",
     napoliSub: "あなた",
     ossSub: "チャレンジ · 608 m",
     craterSub: "ランキング · 1,281 m",
