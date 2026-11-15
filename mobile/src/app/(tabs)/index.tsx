@@ -17,7 +17,7 @@ import { register } from '../../lib/push';
 import { COMP_FIELDS, daysLeftOf, inviteMessage, loadStandings, Standing } from '../../lib/standings';
 import { hasWorld } from '../../lib/worlds';
 import { Competition, errorText, isoDay, supabase } from '../../lib/supabase';
-import { fitbitStatus } from '../../lib/fitbit';
+import { cloudStatus } from '../../lib/cloud';
 import { onNewSteps, openWatchApp, syncSteps, watchFreshness } from '../../lib/sync';
 import type { Device } from '../../lib/devices';
 
@@ -58,24 +58,24 @@ export default function Home() {
 
   const load = useCallback(async () => {
     if (!me) return;
-    const fitbit = me.source === 'fitbit';
+    const cloud = me.source === 'fitbit' || me.source === 'whoop' ? me.source : null;
     const now = isoDay(new Date());
     let today: number | null = null;
     let sync = '';
     let nudge: string | null = null;
     try {
       today = await syncSteps();
-      if (fitbit) {
-        // Fitbit steps arrive on the server; read today's back.
+      if (cloud) {
+        // Fitbit / WHOOP steps arrive on the server; read today's back.
         const { data: row } = await supabase.from('daily_steps').select('steps').eq('player_id', me.id).eq('day', now).maybeSingle();
         today = row?.steps ?? 0;
-        const st = await fitbitStatus();
-        if (st?.needs_reconnect) sync = t.reconnectFitbit;
+        const st = await cloudStatus(cloud);
+        if (st?.needs_reconnect) sync = cloud === 'whoop' ? t.reconnectWhoop : t.reconnectFitbit;
       }
-      if (!sync) sync = today === null && !fitbit ? t.notConnectedHealth : t.synced(new Date().toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' }));
+      if (!sync) sync = today === null && !cloud ? t.notConnectedHealth : t.synced(new Date().toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' }));
       // A watch read through Apple Health (e.g. Garmin): say when its steps last arrived, and if
       // that was a while ago, offer to open its app, since it only hands steps over when it syncs.
-      const f = fitbit || today === null ? null : await watchFreshness().catch(() => null);
+      const f = cloud || today === null ? null : await watchFreshness().catch(() => null);
       if (f) {
         sync = f.last ? t.lastSteps(f.last.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })) : t.noStepsYet;
         const stale = !f.last || Date.now() - f.last.getTime() > 3 * 3600e3;
