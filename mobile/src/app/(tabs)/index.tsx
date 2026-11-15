@@ -9,7 +9,7 @@ import { ActivityIndicator, Alert, AppState, Linking, Share, View } from 'react-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MountainWorld, WorldBoard, WorldCourse, WorldData, WorldEvent, WorldHiker, WorldSign } from '../../components/MountainWorld';
 import { T, useColors } from '../../components/ui';
-import { course, COURSES, position, progress, size } from '../../lib/courses';
+import { course, COURSES, progress, size } from '../../lib/courses';
 import { useAuth } from '../../lib/auth';
 import { Lang, LANGS, errorIn, useT } from '../../lib/i18n';
 import { countryName, loadBoard, loadPublicMe, phoneCountry } from '../../lib/publicBoard';
@@ -156,7 +156,7 @@ export default function Home() {
     return {
       id: comp.id,
       title: comp.name,
-      sub: !mine ? t.courseNames[cs.id][0] : journey ? `#${rank + 1} · ${position(cs, mine.total, lang, locale)}` : `#${rank + 1} · ${fmt(mine.total)} ${t.stepsWord}`,
+      sub: !mine ? t.courseNames[cs.id][0] : `#${rank + 1} · ${kfmt(mine.total)}`, // short, so it can be bigger on the sign
       kicker: upcoming ? t.startsOn(short(comp.start_day)) : t.dayOf(total - left + 1, total),
       detail: `${t.courseNames[cs.id].join(' · ')}. ${upcoming ? '' : left === 1 ? t.lastDay : t.daysLeft(left)}`,
       dots: board.map((p) => [Math.round((journey ? progress(cs, p.total) : lead ? p.total / lead : 0) * 1000) / 10, p.id === me.id ? ME : OTHERS[k++ % OTHERS.length]] as [number, string]),

@@ -23,6 +23,12 @@
   .plume { opacity:0; transition: opacity .5s; }
   [data-scene="summit"] .plume { opacity:1; }
   .stop { cursor:pointer; }
+  /* Place names sit lightly on the drawing: no dark boxes */
+  .stoplabel rect[rx] { display:none; }
+  .stoplabel text { fill:#171412; stroke:rgba(251,249,245,.85); stroke-width:3px; paint-order:stroke; stroke-linejoin:round; }
+  .stoplabel text + text { fill:#5A4F48; font-size:9.5px; }
+  [data-night] .stoplabel text { fill:#FBF9F5; stroke:rgba(23,20,18,.55); }
+  [data-night] .stoplabel text + text { fill:#DCD6CC; }
   .cloud { animation: drift 38s ease-in-out infinite alternate; }
   .cloud.b { animation-duration: 52s; animation-delay:-20s; }
   [data-scene="summit"] .cloud { animation-duration: 14s; }
@@ -657,6 +663,7 @@
   const svg = document.getElementById('world');
   const menu = document.getElementById('menu');
   const hint = document.getElementById('hint');
+  try { const n = +(localStorage.getItem('pass1.hint.home') || 0); if (n >= 2) hint.classList.add('gone'); localStorage.setItem('pass1.hint.home', n + 1); } catch (e) {} // only your first couple of visits
   const skyText = document.getElementById('skyText');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reduce && svg.pauseAnimations) { svg.pauseAnimations(); document.getElementById('town').pauseAnimations(); }
@@ -721,9 +728,9 @@
       sound: 'Sound', leave: 'Leave', length: 'Length', starts: 'Starts', tomorrow: 'Tomorrow', startBtn: 'Start', comingSoon: 'Coming soon', lengths: ['1 day', '2 days', '1 week', '2 weeks', '1 month', '3 months'],
     },
     signs: [
-      { id: 'c1', title: 'Matterhorn climb', sub: "44.6K of 150K · you're 2nd", kicker: 'Day 4 of 14', detail: "You're 2nd, 3,410 steps behind Seniorwidebody.", dots: [[20.8, '#4E7A4A'], [29.7, '#C14A1F'], [32, '#3E6C8A']],
+      { id: 'c1', title: 'Matterhorn climb', sub: '#2 · 44.6K', kicker: 'Day 4 of 14', detail: "You're 2nd, 3,410 steps behind Seniorwidebody.", dots: [[20.8, '#4E7A4A'], [29.7, '#C14A1F'], [32, '#3E6C8A']],
         rows: [{ rank: 1, name: 'Seniorwidebody', val: '48,010 steps' }, { rank: 2, name: 'Heated microwave', val: '44,600 steps', me: true }, { rank: 3, name: 'Beatincheeks', val: '31,200 steps' }] },
-      { id: 'c3', title: 'Vesuvius', sub: '#1 · 12.4K steps', kicker: 'Day 1 of 7', world: true, rows: [] },
+      { id: 'c3', title: 'Vesuvius', sub: '#1 · 12.4K', kicker: 'Day 1 of 7', world: true, rows: [] },
     ],
     courses: [{ id: 'vesuvius', name: 'Vesuvius', sub: 'Naples, Italy · 4,203 ft' }, { id: 'matterhorn', name: 'Matterhorn', sub: 'Zermatt · 14,692 ft' }, { id: 'classic', name: 'Most steps', sub: 'Whoever walks the most wins' }, { id: 'half_dome', name: 'Half Dome', soon: true }, { id: 'big_sur', name: 'Big Sur', soon: true }],
     climb: { id: 'c1', name: 'Matterhorn climb', goal: 150000, hikers: [
@@ -784,8 +791,8 @@
       if (sg.id === 'new') return '<g class="sign" data-sign="new"><polygon points="' + pts + '" fill="#FBF9F5" stroke="#2A2620" stroke-width=".8" stroke-dasharray="3 2"/><circle class="pin" cx="376" cy="' + (y + 15) + '" r="3" fill="#C14A1F"/>' +
         '<text x="222" y="' + (y + 19) + '" font-size="10.5" font-weight="800" fill="#1A1714" ' + FONT + '>+ ' + esc(T.newChallenge) + '</text></g>';
       return '<g class="sign" data-sign="' + i + '"><polygon points="' + pts + '" fill="#F3C200" stroke="#2A2620" stroke-width=".8"/><circle class="pin" cx="376" cy="' + (y + 15) + '" r="3" fill="#C14A1F"/>' +
-        '<text x="222" y="' + (y + 13) + '" font-size="10.5" font-weight="800" fill="#1A1714" ' + FONT + '>' + esc(clip(sg.title, 24)) + '</text>' +
-        '<text x="222" y="' + (y + 24.5) + '" font-size="8" font-weight="600" fill="#3A3226" ' + FONT + '>' + esc(clip(sg.sub, 34)) + '</text></g>';
+        '<text x="222" y="' + (y + 12.5) + '" font-size="11" font-weight="800" fill="#1A1714" ' + FONT + ' data-fit="146">' + esc(clip(sg.title, 24)) + '</text>' +
+        '<text x="222" y="' + (y + 25.5) + '" font-size="9.5" font-weight="700" fill="#3A3226" ' + FONT + '>' + esc(clip(sg.sub, 28)) + '</text></g>';
     }).join('');
   }
   // Tap a sign: a challenge with its own world (Vesuvius) opens it; any other shows on the noticeboard.
@@ -1117,7 +1124,7 @@
     marks.innerHTML = ''; wg.innerHTML = ''; walkers = []; me = null;
     document.querySelector('[href="#ovMid"]').textContent = D.climb ? kfmt(goal()) : '';
     if (!D.climb) return;
-    [.2, .4, .8].forEach((f) => {
+    [].forEach((f) => { // (the 20/40/80% flags are gone: just the hut and the top are numbered now)
       const q = at(goal() * f), x = q.x - 5, y = q.y;
       marks.insertAdjacentHTML('beforeend',
         '<line x1="' + x + '" y1="' + y + '" x2="' + x + '" y2="' + (y - 11) + '" stroke="#fff" stroke-width=".8"/>' +
