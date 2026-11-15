@@ -8,6 +8,7 @@ import {
   queryStatisticsCollectionForQuantity,
   queryStatisticsCollectionForQuantitySeparateBySource,
   querySources,
+  queryQuantitySamples,
   requestAuthorization,
   configureBackgroundTypes,
   subscribeToChanges,
@@ -79,6 +80,16 @@ export async function readDailySteps(days: number, bundleId?: string | null): Pr
   const byDay = new Map<string, number>();
   for (const r of rows) if (r.startDate) byDay.set(isoDay(new Date(r.startDate)), Math.round(r.sumQuantity?.quantity ?? 0));
   return dayList(days).map((day) => ({ day, steps: byDay.get(day) ?? 0 }));
+}
+
+/** When the newest step sample from this app ended today, or null if it has none today. */
+export async function lastStepTime(bundleId: string): Promise<Date | null> {
+  const filter: any = { date: { startDate: startOfDay(0) } };
+  const match = (await querySources(STEPS, filter)).filter((s) => s.bundleIdentifier === bundleId);
+  if (match.length === 0) return null;
+  filter.sources = match;
+  const rows = await queryQuantitySamples(STEPS, { limit: 1, ascending: false, filter, unit: 'count' } as any);
+  return rows[0] ? new Date(rows[0].endDate) : null;
 }
 
 function dayList(days: number) {

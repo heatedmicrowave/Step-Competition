@@ -20,6 +20,8 @@ export type WorldData = {
   insetTop: number;
   today: number | null;
   sync: string;
+  /** "Tap to sync with Garmin Connect" when the watch's steps are stale; tapping sends 'openWatch'. */
+  nudge?: string | null;
   week: number;
   best: { day: string; steps: number } | null;
   name: string;

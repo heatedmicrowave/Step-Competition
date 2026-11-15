@@ -12,6 +12,9 @@ export type Device = {
   match: string[];
   /** The brand's own app, named in the one-line fix shown if we can't see its steps after Allow. */
   app?: string;
+  /** Ways to open the brand's app (tried in order), then its App Store page as a fallback. */
+  open?: string[];
+  store?: string;
   /** Can't pair with an iPhone at all (Galaxy Watch). */
   androidOnly?: boolean;
 };
@@ -19,7 +22,7 @@ export type Device = {
 export const DEVICES: Device[] = [
   { id: 'apple_health', name: 'Apple Watch', route: 'apple_health', match: ['com.apple'] },
   { id: 'garmin', name: 'Garmin', route: 'apple_health', match: ['garmin'],
-    app: 'Garmin Connect' },
+    app: 'Garmin Connect', open: ['gcm-ciq://', 'connect://'], store: 'https://apps.apple.com/app/id583446403' },
   { id: 'fitbit', name: 'Fitbit', route: 'fitbit', match: ['fitbit'] },
   { id: 'oura', name: 'Oura', route: 'apple_health', match: ['oura'],
     app: 'Oura' },

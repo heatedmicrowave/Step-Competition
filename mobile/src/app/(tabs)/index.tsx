@@ -18,13 +18,15 @@ import { COMP_FIELDS, daysLeftOf, inviteMessage, loadStandings, Standing } from 
 import { hasWorld } from '../../lib/worlds';
 import { Competition, errorText, isoDay, supabase } from '../../lib/supabase';
 import { fitbitStatus } from '../../lib/fitbit';
-import { onNewSteps, syncSteps } from '../../lib/sync';
+import { onNewSteps, openWatchApp, syncSteps, watchFreshness } from '../../lib/sync';
+import type { Device } from '../../lib/devices';
 
 const ME = '#C14A1F';
 const OTHERS = ['#3E6C8A', '#4E7A4A', '#8A5A9E', '#B5892E', '#5F6B73', '#2F7F7A'];
 const SEEN = 'world.seen'; // today's steps the last time you looked, for the "+N today" walk
 
 type Loaded = {
+  nudge: string | null;
   today: number | null;
   sync: string;
   week: number;
@@ -52,6 +54,7 @@ export default function Home() {
   const hikers = useRef<{ comp: Competition; list: Standing[] } | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
   const busy = useRef(false);
+  const watchDev = useRef<Device | null>(null);
 
   const load = useCallback(async () => {
     if (!me) return;
@@ -59,6 +62,7 @@ export default function Home() {
     const now = isoDay(new Date());
     let today: number | null = null;
     let sync = '';
+    let nudge: string | null = null;
     try {
       today = await syncSteps();
       if (fitbit) {
@@ -69,6 +73,14 @@ export default function Home() {
         if (st?.needs_reconnect) sync = t.reconnectFitbit;
       }
       if (!sync) sync = today === null && !fitbit ? t.notConnectedHealth : t.synced(new Date().toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' }));
+      // A watch read through Apple Health (e.g. Garmin): say when its steps last arrived, and if
+      // that was a while ago, offer to open its app, since it only hands steps over when it syncs.
+      const f = fitbit || today === null ? null : await watchFreshness().catch(() => null);
+      if (f) {
+        sync = f.last ? t.lastSteps(f.last.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })) : t.noStepsYet;
+        const stale = !f.last || Date.now() - f.last.getTime() > 3 * 3600e3;
+        if (stale && new Date().getHours() >= 7) { nudge = t.openWatchApp(f.device.app!); watchDev.current = f.device; }
+      }
     } catch (e) {
       sync = t.syncFailed(errorText(e));
     }
@@ -122,7 +134,7 @@ export default function Home() {
       }
     } catch {}
 
-    setD({ today, sync, week, best, alerts, gain, nickname, publicOn, boards, live });
+    setD({ nudge, today, sync, week, best, alerts, gain, nickname, publicOn, boards, live });
   }, [me?.id, me?.device_label, t, locale]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -197,6 +209,7 @@ export default function Home() {
     insetTop: insets.top,
     today: d ? d.today : null,
     sync: d?.sync ?? '',
+    nudge: d?.nudge ?? null,
     week: d?.week ?? 0,
     best: d?.best ?? null,
     name: me.name,
@@ -297,6 +310,7 @@ export default function Home() {
       case 'create': if (e.id) create(e.id, e.days ?? 7, !!e.tomorrow); break;
       case 'leave': if (e.id) leave(e.id); break;
       case 'join': joinWithCode(); break;
+      case 'openWatch': if (watchDev.current) openWatchApp(watchDev.current); break;
       case 'alerts': alertsTapped(); break;
       case 'lang': if (LANGS.includes(e.id as Lang)) setChoice(e.id as Lang); break;
       case 'account': router.navigate('/account'); break;
