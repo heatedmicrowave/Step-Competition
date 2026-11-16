@@ -130,6 +130,10 @@ const en = {
   todaySteps: (n: string) => `${n} today`,
   noData: 'no data yet',
   sendFriend: 'Send to a friend',
+  sendLink: 'Send invite link',
+  inviteWho: (comp: string) => `Who's coming on ${comp}?`,
+  inviteHint: 'Tap a friend to add them now, or send the link to anyone else.',
+  addedFriend: (name: string) => `${name} is in! They'll get a notification.`,
   shareMsg: (comp: string, code: string) => `Join "${comp}" in Pass1. Code: ${code}`,
 
   // Challenges
@@ -270,6 +274,7 @@ const en = {
   } as { tips: string[][] } & Record<string, string | string[][]>,
   server: {
     'no competition with that code': 'No competition with that code.',
+    'not someone you know': 'You can only add people who have been in a challenge with you. Send them the link instead.',
     'key not found or already linked': 'That key is wrong or already linked to an account.',
     'this account already has its own steps': 'This account already has its own steps, so it can’t take over a website player.',
     'nickname taken': 'Nickname taken. Try another.',
@@ -391,6 +396,10 @@ const it: Strings = {
   todaySteps: (n) => `${n} oggi`,
   noData: 'ancora nessun dato',
   sendFriend: 'Invita un amico',
+  sendLink: 'Manda il link d’invito',
+  inviteWho: (comp) => `Chi viene su ${comp}?`,
+  inviteHint: 'Tocca un amico per aggiungerlo subito, oppure manda il link a chiunque altro.',
+  addedFriend: (name) => `${name} è dentro! Riceverà una notifica.`,
   shareMsg: (comp, code) => `Unisciti alla sfida "${comp}" su Pass1. Codice: ${code}`,
 
   // Sfide
@@ -529,6 +538,7 @@ const it: Strings = {
   },
   server: {
     'no competition with that code': 'Nessuna sfida con questo codice.',
+    'not someone you know': 'Puoi aggiungere solo chi ha già fatto una sfida con te. Mandagli il link.',
     'key not found or already linked': 'Chiave sbagliata o già collegata a un account.',
     'this account already has its own steps': 'Questo account ha già i suoi passi, quindi non si può collegare a un giocatore del sito.',
     'nickname taken': 'Nickname già preso. Provane un altro.',
@@ -649,6 +659,10 @@ const nap: Strings = {
   todaySteps: (n) => `${n} ogge`,
   noData: 'ancora niente',
   sendFriend: "Mannalo a n'amico",
+  sendLink: "Manna 'o link",
+  inviteWho: (comp) => `Chi vene ncopp' a ${comp}?`,
+  inviteHint: "Tocca n'amico pe' l'aggiungere mo', o manna 'o link a chi vuò tu.",
+  addedFriend: (name) => `${name} sta dinto! Le arriva na notifica.`,
   shareMsg: (comp, code) => `Viene dint'â sfida "${comp}" ncopp' a Pass1. Codice: ${code}`,
 
   // Sfide
@@ -787,6 +801,7 @@ const nap: Strings = {
   },
   server: {
     'no competition with that code': "Nun ce sta nisciuna sfida cu stu codice.",
+    'not someone you know': "Può aggiungere sulo chi ha già fatto na sfida cu te. Mannale 'o link.",
     'key not found or already linked': "'A chiave è sbagliata o è già cullegata.",
     'this account already has its own steps': "Stu account tene già 'e passe suoje, nun se po' cullegà a nu jucatore d'o sito.",
     'nickname taken': "Stu nickname già ce l'ha quaccheduno. Pruvane n'ato.",
@@ -906,6 +921,10 @@ const es: Strings = {
   todaySteps: (n) => `${n} hoy`,
   noData: 'sin datos aún',
   sendFriend: 'Invitar a un amigo',
+  sendLink: 'Enviar enlace de invitación',
+  inviteWho: (comp) => `¿Quién viene a ${comp}?`,
+  inviteHint: 'Toca a un amigo para añadirlo ya, o envía el enlace a cualquier otra persona.',
+  addedFriend: (name) => `¡${name} ya está dentro! Le llegará una notificación.`,
   shareMsg: (comp, code) => `Únete a "${comp}" en Pass1. Código: ${code}`,
 
   // Retos
@@ -1044,6 +1063,7 @@ const es: Strings = {
   },
   server: {
     'no competition with that code': 'No hay ningún reto con ese código.',
+    'not someone you know': 'Solo puedes añadir a quien ya hizo un reto contigo. Envíale el enlace.',
     'key not found or already linked': 'Esa clave no es correcta o ya está vinculada a una cuenta.',
     'this account already has its own steps': 'Esta cuenta ya tiene sus propios pasos, así que no se puede vincular a un jugador de la web.',
     'nickname taken': 'Ese apodo ya está cogido. Prueba otro.',
@@ -1163,6 +1183,10 @@ const ja: Strings = {
   todaySteps: (n) => `今日 ${n}歩`,
   noData: 'データなし',
   sendFriend: '友だちを招待',
+  sendLink: '招待リンクを送る',
+  inviteWho: (comp) => `${comp}に誰を誘う？`,
+  inviteHint: '友だちをタップするとすぐ追加できます。ほかの人にはリンクを送ってください。',
+  addedFriend: (name) => `${name}さんが参加しました！通知が届きます。`,
   shareMsg: (comp, code) => `Pass1の「${comp}」に参加しよう！ 招待コード：${code}`,
 
   // チャレンジ
@@ -1301,6 +1325,7 @@ const ja: Strings = {
   },
   server: {
     'no competition with that code': 'このコードのチャレンジは見つかりません。',
+    'not someone you know': '一緒にチャレンジしたことがある人だけ追加できます。リンクを送ってください。',
     'key not found or already linked': 'キーが間違っているか、すでに別のアカウントに引き継がれています。',
     'this account already has its own steps': 'このアカウントにはすでに歩数データがあるため、ウェブ版のプレイヤーを引き継げません。',
     'nickname taken': 'そのニックネームは使われています。別のものをどうぞ。',

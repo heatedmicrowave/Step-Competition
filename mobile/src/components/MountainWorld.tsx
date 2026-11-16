@@ -11,7 +11,7 @@ import { WORLD_HTML } from '../world/worldHtml';
 type WebViewHandle = { injectJavaScript: (js: string) => void; reload: () => void };
 const WebView = RNWebView as unknown as React.ComponentType<WebViewProps & { ref?: React.Ref<WebViewHandle> }>;
 
-export type WorldHiker = { id: string; n: string; name: string; c: string; st: number; today: number; watch: string; me?: boolean };
+export type WorldHiker = { id: string; n: string; name: string; c: string; st: number; today: number; watch: string; me?: boolean; comp?: string; compName?: string };
 export type WorldSign = { id: string; title: string; sub: string; kicker: string; detail: string; dots: [number, string][]; rows: { rank: number; name: string; val: string; me?: boolean }[]; world?: boolean };
 export type WorldCourse = { id: string; name: string; sub: string; soon?: boolean };
 export type WorldBoard = { key: string; label: string; rows: { rank: number; name: string; sub: string; steps: number; me?: boolean }[] };

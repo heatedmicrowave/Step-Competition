@@ -4,7 +4,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Redirect, router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, AppState, Share, View } from 'react-native';
+import { ActivityIndicator, Alert, AppState, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MountainWorld, WorldBoard, WorldCourse, WorldData, WorldEvent, WorldHiker, WorldSign } from '../../components/MountainWorld';
 import { T, useColors } from '../../components/ui';
@@ -13,8 +13,9 @@ import { useAuth } from '../../lib/auth';
 import { Lang, LANGS, errorIn, useT } from '../../lib/i18n';
 import { countryName, loadBoard, loadPublicMe, phoneCountry } from '../../lib/publicBoard';
 import { alertsOn, toggleAlerts } from '../../lib/push';
-import { COMP_FIELDS, daysLeftOf, inviteMessage, loadStandings, Standing } from '../../lib/standings';
+import { COMP_FIELDS, daysLeftOf, loadStandings, Standing } from '../../lib/standings';
 import { hasWorld } from '../../lib/worlds';
+import { inviteFriends } from '../../lib/invite';
 import { Competition, errorText, isoDay, supabase } from '../../lib/supabase';
 import { cloudStatus } from '../../lib/cloud';
 import { onNewSteps, openWatchApp, syncSteps, watchFreshness } from '../../lib/sync';
@@ -50,7 +51,7 @@ export default function Home() {
   const { t, lang, locale, setChoice } = useT();
   const insets = useSafeAreaInsets();
   const [d, setD] = useState<Loaded | null>(null);
-  const hikers = useRef<{ comp: Competition; list: Standing[] } | null>(null);
+  const hikers = useRef<{ p: Standing; comp: Competition }[] | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
   const busy = useRef(false);
   const watchDev = useRef<Device | null>(null);
@@ -179,18 +180,25 @@ export default function Home() {
     };
   });
 
-  // Hikers on the mountain: everyone in your main climb (a climb first, then a route).
+  // Hikers on your home mountain: everyone from all your challenges, so nobody you play with is missing.
+  // Each one stands at their total in your main climb (a climb first, then a route), or else in the
+  // challenge you share with them. Taunts and "Open" go to that same challenge.
   const started = live.filter((x) => x.comp.start_day <= now && x.board.length > 0);
   const main = started.find((x) => course(x.comp.course).id === 'matterhorn')
     ?? started.find((x) => course(x.comp.course).kind === 'climb')
-    ?? started.find((x) => course(x.comp.course).kind === 'route');
-  hikers.current = main ? { comp: main.comp, list: main.board } : null;
+    ?? started.find((x) => course(x.comp.course).kind === 'route')
+    ?? started[0];
+  const everyone = new Map<string, { p: Standing; comp: Competition }>();
+  if (main) [main, ...started.filter((x) => x !== main)].forEach((x) => x.board.forEach((p) => {
+    if (!everyone.has(p.id)) everyone.set(p.id, { p, comp: x.comp });
+  }));
+  hikers.current = [...everyone.values()];
   let k = 0;
   const climb: WorldData['climb'] = main ? {
     id: main.comp.id,
     name: main.comp.name,
     goal: course(main.comp.course).goal,
-    hikers: main.board.map((p): WorldHiker => ({
+    hikers: [...everyone.values()].map(({ p, comp }): WorldHiker => ({
       id: p.id,
       n: (p.name.trim()[0] ?? '?').toUpperCase(),
       name: p.name,
@@ -199,6 +207,8 @@ export default function Home() {
       today: p.today,
       watch: p.device_label ?? p.source,
       me: p.id === me.id || undefined,
+      comp: comp.id === main.comp.id ? undefined : comp.id,
+      compName: comp.id === main.comp.id ? undefined : comp.name,
     })),
   } : null;
 
@@ -231,8 +241,7 @@ export default function Home() {
   };
 
   async function taunt(compId: string, playerId: string) {
-    const h = hikers.current;
-    const p = h && h.comp.id === compId ? h.list.find((x) => x.id === playerId) : null;
+    const p = (hikers.current ?? []).find((x) => x.comp.id === compId && x.p.id === playerId)?.p;
     if (!p || p.id === me!.id) return;
     const { data: left } = await supabase.rpc('app_taunts_left', { p_competition: compId });
     if (!Number(left)) { Alert.alert(t.server['no taunts left'] ?? '', t.tauntsHow); return; }
@@ -261,10 +270,12 @@ export default function Home() {
     const { data: made, error } = await supabase.rpc('app_create_competition', { p_name: t.courseNames[cs.id][0], p_start: isoDay(start), p_end: isoDay(end), p_course: cs.id });
     busy.current = false;
     if (error) { Alert.alert(errorIn(t, error)); return; }
-    const newId = (made as { id: string }[])[0].id;
+    const { id: newId, join_code } = (made as { id: string; join_code: string }[])[0];
     await load();
     if (hasWorld(cs.id)) router.push({ pathname: '/competition/[id]', params: { id: newId } });
     else setFocus(newId);
+    // A new challenge needs people: ask who's coming right away.
+    setTimeout(() => inviteFriends({ id: newId, name: t.courseNames[cs.id][0], join_code }, t, load), 700);
   }
 
   function joinWithCode() {
@@ -295,7 +306,7 @@ export default function Home() {
       case 'open': if (e.id) router.push({ pathname: '/competition/[id]', params: { id: e.id } }); break;
       case 'invite': {
         const x = live.find((l) => l.comp.id === e.id);
-        if (x) Share.share({ message: inviteMessage(t.shareMsg(x.comp.name, x.comp.join_code), x.comp.join_code) });
+        if (x) inviteFriends(x.comp, t, load);
         break;
       }
       case 'create': if (e.id) create(e.id, e.days ?? 7, !!e.tomorrow); break;
