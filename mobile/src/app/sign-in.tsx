@@ -7,7 +7,7 @@ import { signInRedirect, useAuth } from '../lib/auth';
 import { errorIn, useT } from '../lib/i18n';
 import { supabase } from '../lib/supabase';
 
-// Email link sign-in: no passwords. Supabase's default email works as is.
+// Email sign-in, no passwords: tap the link in the email, or type the code from it.
 export default function SignIn() {
   const c = useColors();
   const { t } = useT();
@@ -15,6 +15,7 @@ export default function SignIn() {
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
+  const [code, setCode] = useState('');
   const { session } = useAuth();
 
   async function sendLink() {
@@ -22,6 +23,16 @@ export default function SignIn() {
     const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: signInRedirect } });
     setBusy(false);
     if (error) setMsg(errorIn(t, error)); else setSent(true);
+  }
+  // The same email carries a code: typing it works even when the link doesn't (mail apps that pre-open
+  // links use them up, or the email is read on another device).
+  async function submitCode() {
+    const token = code.replace(/\D/g, '');
+    if (token.length < 6) return;
+    setBusy(true); setMsg('');
+    const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token, type: 'email' });
+    setBusy(false);
+    if (error) setMsg(t.badCode);
   }
   if (session) return <Redirect href="/" />;
 
@@ -42,7 +53,10 @@ export default function SignIn() {
           ) : (
             <>
               <T>{t.openEmail}</T>
-              <Button title={t.differentEmail} kind="plain" onPress={() => setSent(false)} />
+              <T muted>{t.orCode}</T>
+              <Input value={code} onChangeText={setCode} placeholder="123456" keyboardType="number-pad" textContentType="oneTimeCode" autoComplete="one-time-code" maxLength={8} />
+              <Button title={t.codeBtn} onPress={submitCode} busy={busy} />
+              <Button title={t.differentEmail} kind="plain" onPress={() => { setSent(false); setCode(''); }} />
             </>
           )}
           {!!msg && <T color={c.red}>{msg}</T>}

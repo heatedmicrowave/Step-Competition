@@ -76,6 +76,9 @@ const en = {
   email: 'Email',
   emailMe: 'Email me a link',
   openEmail: 'Open the email on this phone and tap the link. It brings you straight back here.',
+  orCode: 'Link not working? Type the code from the email:',
+  codeBtn: 'Sign in',
+  badCode: 'That code didn’t work. Check the newest email, or send a new one.',
   differentEmail: 'Different email',
 
   // First run
@@ -349,6 +352,9 @@ const it: Strings = {
   email: 'Email',
   emailMe: 'Mandami un link',
   openEmail: "Apri l'email su questo telefono e tocca il link. Ti riporta subito qui.",
+  orCode: "Il link non funziona? Scrivi il codice dell'email:",
+  codeBtn: 'Entra',
+  badCode: "Codice non valido. Controlla l'email più recente o fattene mandare un'altra.",
   differentEmail: "Usa un'altra email",
 
   stepOf: (n, of) => `${n} di ${of}`,
@@ -615,6 +621,9 @@ const nap: Strings = {
   email: 'Email',
   emailMe: 'Mannàmme nu link',
   openEmail: "Arape l'email ncopp' a stu telefono e tocca 'o link. Te porta dritto ccà.",
+  orCode: "'O link nun va? Scrive 'o codice ca sta int'â email:",
+  codeBtn: 'Trase',
+  badCode: "Stu codice nun va. Guarda l'email cchiù nova, o fattenne mannà n'ata.",
   differentEmail: "N'ata email",
 
   stepOf: (n, of) => `${n} 'e ${of}`,
@@ -880,6 +889,9 @@ const es: Strings = {
   email: 'Correo',
   emailMe: 'Envíame un enlace',
   openEmail: 'Abre el correo en este teléfono y toca el enlace. Te devuelve directamente aquí.',
+  orCode: '¿No funciona el enlace? Escribe el código del correo:',
+  codeBtn: 'Entrar',
+  badCode: 'Ese código no funciona. Mira el correo más reciente o pide otro.',
   differentEmail: 'Usar otro correo',
 
   stepOf: (n, of) => `${n} de ${of}`,
@@ -1145,6 +1157,9 @@ const ja: Strings = {
   email: 'メールアドレス',
   emailMe: 'ログインリンクを送る',
   openEmail: 'このiPhoneでメールを開き、リンクをタップしてください。そのままアプリに戻ります。',
+  orCode: 'リンクが開けない場合は、メールに書かれたコードを入力してください：',
+  codeBtn: 'ログイン',
+  badCode: 'コードが正しくありません。最新のメールを確認するか、もう一度送ってください。',
   differentEmail: '別のメールアドレスを使う',
 
   stepOf: (n, of) => `${n} / ${of}`,
