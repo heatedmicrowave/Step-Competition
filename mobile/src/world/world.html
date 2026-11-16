@@ -116,7 +116,8 @@
   .dayOnly { transition: opacity .6s; }
   [data-night] .nightOnly { opacity:1; }
   [data-night] #skyText g text { fill:#E8E4DA; }
-  [data-night] .nightShade { opacity:.78; }
+  [data-night] .nightShade { opacity:.6; }
+  .nightOnly use, .nightLit { pointer-events:none; }
   [data-night] .dayOnly { opacity:0; }
   [data-night] canvas#snow { opacity:.7; }
   .panel header { display:flex; align-items:center; justify-content:space-between; padding:10px max(20px, env(safe-area-inset-right)) 4px max(20px, env(safe-area-inset-left)); }
@@ -187,6 +188,7 @@
         <polygon points="-1,13.5 15,2 31,13.5" fill="#FBF9F5"/>
         <polyline points="-1,13.5 15,2 31,13.5" fill="none" stroke="#5A4038" stroke-width="1.2" stroke-linejoin="round"/>
       </symbol>
+      <symbol id="chaletLit" viewBox="0 0 30 30"><rect x="7" y="15" width="5" height="5" fill="#FFD47A"/><rect x="18" y="15" width="5" height="5" fill="#FFD47A"/></symbol>
       <symbol id="skier" viewBox="-12 -17 24 28" overflow="visible">
         <line x1="-9" y1="7" x2="10" y2="3" stroke="#C14A1F" stroke-width="1.4" stroke-linecap="round"/>
         <line x1="-9" y1="8.8" x2="10" y2="4.8" stroke="#C14A1F" stroke-width="1.4" stroke-linecap="round"/>
@@ -330,8 +332,6 @@
       <text x="171" y="481.4" text-anchor="middle" font-size="4.4" font-weight="800" letter-spacing=".4" fill="#F4F1EC" font-family="-apple-system, Helvetica, Arial, sans-serif">HÖRNLIHÜTTE</text>
     </g>
 
-    <!-- Challenge players walking the trail -->
-    <g id="walkers"></g>
 
     <!-- Summit flag -->
     <g id="summitflag">
@@ -365,6 +365,8 @@
     <g class="nightOnly"><circle cx="14" cy="-150" r="1" fill="#fff" opacity="0.9"/><circle cx="128" cy="-110" r="0.6" fill="#fff" opacity="0.9"/><circle cx="403" cy="-62" r="0.8" fill="#fff" opacity="0.5"/><circle cx="21" cy="-123" r="1" fill="#fff" opacity="0.9"/><circle cx="155" cy="-22" r="0.6" fill="#fff" opacity="0.5"/><circle cx="191" cy="37" r="1" fill="#fff" opacity="0.7"/><circle cx="31" cy="-107" r="0.6" fill="#fff" opacity="0.7"/><circle cx="190" cy="-91" r="0.8" fill="#fff" opacity="0.9"/><circle cx="273" cy="-161" r="0.8" fill="#fff" opacity="0.5"/><circle cx="212" cy="3" r="0.8" fill="#fff" opacity="0.7"/><circle cx="10" cy="-107" r="0.5" fill="#fff" opacity="0.9"/><circle cx="66" cy="-17" r="0.5" fill="#fff" opacity="0.9"/><circle cx="313" cy="35" r="1" fill="#fff" opacity="0.5"/><circle cx="-2" cy="54" r="1" fill="#fff" opacity="0.7"/><circle cx="76" cy="-138" r="0.5" fill="#fff" opacity="0.7"/><circle cx="186" cy="-129" r="1" fill="#fff" opacity="0.7"/><circle cx="234" cy="-94" r="0.8" fill="#fff" opacity="0.9"/><circle cx="322" cy="25" r="0.5" fill="#fff" opacity="0.7"/><circle cx="297" cy="-40" r="0.8" fill="#fff" opacity="0.9"/><circle cx="418" cy="-109" r="0.6" fill="#fff" opacity="0.9"/><circle cx="88" cy="-10" r="0.5" fill="#fff" opacity="0.9"/><circle cx="111" cy="-52" r="1" fill="#fff" opacity="0.7"/><circle cx="205" cy="-143" r="0.5" fill="#fff" opacity="0.5"/><circle cx="336" cy="-55" r="1" fill="#fff" opacity="0.9"/><circle cx="111" cy="-28" r="0.5" fill="#fff" opacity="0.7"/><circle cx="19" cy="-53" r="0.8" fill="#fff" opacity="0.9"/><circle cx="301" cy="30" r="0.8" fill="#fff" opacity="0.7"/><circle cx="196" cy="-49" r="0.6" fill="#fff" opacity="0.7"/><circle cx="63" cy="10" r="0.6" fill="#fff" opacity="0.7"/><circle cx="-18" cy="2" r="0.5" fill="#fff" opacity="0.9"/><circle cx="139" cy="-47" r="0.5" fill="#fff" opacity="0.7"/><circle cx="97" cy="14" r="0.5" fill="#fff" opacity="0.9"/><circle cx="201" cy="-86" r="0.6" fill="#fff" opacity="0.9"/><circle cx="394" cy="11" r="0.8" fill="#fff" opacity="0.7"/><circle cx="297" cy="-75" r="0.5" fill="#fff" opacity="0.7"/><circle cx="310" cy="13" r="0.8" fill="#fff" opacity="0.9"/></g>
     <g class="nightOnly"><circle cx="318" cy="40" r="36.4" fill="#F4EFD9" opacity=".05"/><circle cx="318" cy="40" r="14" fill="#F1ECD6"/><circle cx="313.8" cy="37.2" r="2.52" fill="#DCD6BE"/><circle cx="322.9" cy="44.2" r="1.68" fill="#DCD6BE"/></g>
     <g class="nightOnly" style="mix-blend-mode:screen"><circle cx="70" cy="700" r="8" fill="url(#warm)"/><circle cx="96" cy="704" r="6" fill="url(#warm)"/><circle cx="134" cy="698" r="8" fill="url(#warm)"/><circle cx="160" cy="702" r="6" fill="url(#warm)"/><circle cx="52" cy="718" r="6" fill="url(#warm)"/><circle cx="150" cy="724" r="8" fill="url(#warm)"/><circle cx="180" cy="720" r="6" fill="url(#warm)"/><circle cx="84" cy="730" r="8" fill="url(#warm)"/><circle cx="178" cy="466" r="6" fill="url(#warm)"/></g>
+    <!-- Challenge players walking the trail (above the night shade, so they stay readable) -->
+    <g id="walkers"></g>
     <!-- Stop labels (overview only) -->
     <g class="stoplabel stop" data-go="summit">
       <circle cx="231" cy="118" r="34" fill="transparent"/>
@@ -415,7 +417,7 @@
     <g fill="#C14A1F"><rect x="98" y="210" width="20" height="4" rx="2"/><rect x="141" y="210" width="20" height="4" rx="2"/><rect x="301" y="210" width="22" height="4" rx="2"/><rect x="346" y="210" width="22" height="4" rx="2"/></g>
     <!-- shop sign -->
     <!-- your numbers, painted on the beams like old chalet inscriptions -->
-    <g font-family="-apple-system, Helvetica, Arial, sans-serif" text-anchor="middle">
+    <g id="townSigns" font-family="-apple-system, Helvetica, Arial, sans-serif" text-anchor="middle">
       <g stroke="#2E2622" stroke-width=".8"><line x1="206" y1="207" x2="206" y2="212"/><line x1="254" y1="207" x2="254" y2="212"/><line x1="306" y1="194" x2="306" y2="199"/><line x1="364" y1="194" x2="364" y2="199"/></g>
       <rect x="198" y="212" width="64" height="23" rx="2" fill="#2E2622"/>
       <text data-fit="58" x="230" y="220.6" font-size="5.2" font-weight="700" letter-spacing=".8" fill="#F2C46B" data-tu="stepsWeek">STEPS THIS WEEK</text>
@@ -461,15 +463,15 @@
     <!-- your chalet, with your name carved over the door -->
     <g class="chalet" data-open="settings">
     <use href="#chalet" x="214" y="360" width="176" height="176"/>
-    <rect x="244" y="440" width="116" height="18" rx="2" fill="#4A3229"/>
+    <g id="namePlate"><rect x="244" y="440" width="116" height="18" rx="2" fill="#4A3229"/>
     <rect x="246" y="442" width="112" height="14" rx="1.5" fill="none" stroke="#E9D9B8" stroke-width=".5" opacity=".6"/>
-    <text x="302" y="452.6" text-anchor="middle" font-size="9" font-weight="800" letter-spacing="1.2" fill="#FBF3E2" font-family="-apple-system, Helvetica, Arial, sans-serif" id="chaletName">HEATED MICROWAVE</text>
+    <text x="302" y="452.6" text-anchor="middle" font-size="9" font-weight="800" letter-spacing="1.2" fill="#FBF3E2" font-family="-apple-system, Helvetica, Arial, sans-serif" id="chaletName">HEATED MICROWAVE</text></g>
     <g fill="#C14A1F"><rect x="252" y="490" width="30" height="5" rx="2.5"/><rect x="322" y="490" width="30" height="5" rx="2.5"/></g>
     <!-- brass plaque on the door: settings live inside -->
-    <circle cx="302" cy="510" r="7" fill="#D9B26A" stroke="#8A6A2E" stroke-width=".8"/>
+    <g id="doorPlaque"><circle cx="302" cy="510" r="7" fill="#D9B26A" stroke="#8A6A2E" stroke-width=".8"/>
     <g transform="translate(302 510)" fill="#6B4E1E"><circle r="2.2" fill="none" stroke="#6B4E1E" stroke-width="1.3"/>
       <g><rect x="-.8" y="-4.6" width="1.6" height="2"/><rect x="-.8" y="2.6" width="1.6" height="2"/><rect x="-4.6" y="-.8" width="2" height="1.6"/><rect x="2.6" y="-.8" width="2" height="1.6"/></g>
-      <g transform="rotate(45)"><rect x="-.8" y="-4.6" width="1.6" height="2"/><rect x="-.8" y="2.6" width="1.6" height="2"/><rect x="-4.6" y="-.8" width="2" height="1.6"/><rect x="2.6" y="-.8" width="2" height="1.6"/></g></g>
+      <g transform="rotate(45)"><rect x="-.8" y="-4.6" width="1.6" height="2"/><rect x="-.8" y="2.6" width="1.6" height="2"/><rect x="-4.6" y="-.8" width="2" height="1.6"/><rect x="2.6" y="-.8" width="2" height="1.6"/></g></g></g>
     <circle cx="302" cy="510" r="11" fill="#F2C46B" opacity=".25"><animate attributeName="opacity" values=".05;.35;.05" dur="2.6s" repeatCount="indefinite"/></circle>
     </g>
     <use href="#pine" x="380" y="420" width="40" height="80"/>
@@ -494,7 +496,12 @@
     <rect class="nightShade" x="-300" y="-500" width="1000" height="1700" fill="#22305A"/>
     <g class="nightOnly"><circle cx="170" cy="-33" r="0.6" fill="#fff" opacity="0.7"/><circle cx="-9" cy="109" r="0.5" fill="#fff" opacity="0.9"/><circle cx="366" cy="-155" r="0.8" fill="#fff" opacity="0.5"/><circle cx="61" cy="-107" r="1" fill="#fff" opacity="0.9"/><circle cx="273" cy="-161" r="0.5" fill="#fff" opacity="0.5"/><circle cx="313" cy="45" r="0.6" fill="#fff" opacity="0.9"/><circle cx="187" cy="106" r="0.6" fill="#fff" opacity="0.7"/><circle cx="340" cy="-87" r="0.8" fill="#fff" opacity="0.7"/><circle cx="300" cy="71" r="1" fill="#fff" opacity="0.7"/><circle cx="239" cy="5" r="0.8" fill="#fff" opacity="0.7"/><circle cx="204" cy="10" r="0.5" fill="#fff" opacity="0.7"/><circle cx="74" cy="76" r="1" fill="#fff" opacity="0.9"/><circle cx="267" cy="114" r="0.8" fill="#fff" opacity="0.7"/><circle cx="178" cy="119" r="0.5" fill="#fff" opacity="0.5"/><circle cx="241" cy="-166" r="1" fill="#fff" opacity="0.9"/><circle cx="157" cy="109" r="0.8" fill="#fff" opacity="0.5"/><circle cx="366" cy="-68" r="1" fill="#fff" opacity="0.5"/><circle cx="307" cy="44" r="0.5" fill="#fff" opacity="0.5"/><circle cx="102" cy="-165" r="0.8" fill="#fff" opacity="0.5"/><circle cx="4" cy="-117" r="1" fill="#fff" opacity="0.9"/><circle cx="328" cy="117" r="0.8" fill="#fff" opacity="0.5"/><circle cx="248" cy="-75" r="0.6" fill="#fff" opacity="0.5"/><circle cx="85" cy="-184" r="0.8" fill="#fff" opacity="0.5"/><circle cx="42" cy="-62" r="0.5" fill="#fff" opacity="0.9"/><circle cx="127" cy="112" r="0.6" fill="#fff" opacity="0.9"/><circle cx="262" cy="-121" r="1" fill="#fff" opacity="0.5"/><circle cx="90" cy="-48" r="1" fill="#fff" opacity="0.9"/><circle cx="14" cy="-8" r="0.6" fill="#fff" opacity="0.5"/><circle cx="111" cy="63" r="1" fill="#fff" opacity="0.9"/><circle cx="329" cy="-45" r="1" fill="#fff" opacity="0.7"/><circle cx="67" cy="-2" r="0.5" fill="#fff" opacity="0.7"/><circle cx="-6" cy="-58" r="0.5" fill="#fff" opacity="0.7"/><circle cx="384" cy="-122" r="0.5" fill="#fff" opacity="0.5"/><circle cx="39" cy="111" r="0.5" fill="#fff" opacity="0.5"/><circle cx="98" cy="83" r="0.5" fill="#fff" opacity="0.7"/><circle cx="347" cy="72" r="0.6" fill="#fff" opacity="0.7"/><circle cx="413" cy="-112" r="0.6" fill="#fff" opacity="0.5"/><circle cx="223" cy="117" r="0.8" fill="#fff" opacity="0.7"/><circle cx="311" cy="11" r="0.5" fill="#fff" opacity="0.9"/><circle cx="88" cy="-70" r="0.8" fill="#fff" opacity="0.7"/><circle cx="300" cy="-27" r="0.5" fill="#fff" opacity="0.5"/><circle cx="141" cy="-147" r="0.5" fill="#fff" opacity="0.9"/><circle cx="145" cy="69" r="1" fill="#fff" opacity="0.7"/><circle cx="21" cy="-110" r="0.5" fill="#fff" opacity="0.7"/><circle cx="245" cy="79" r="0.6" fill="#fff" opacity="0.5"/><circle cx="380" cy="108" r="0.6" fill="#fff" opacity="0.9"/><circle cx="137" cy="-141" r="0.5" fill="#fff" opacity="0.5"/><circle cx="412" cy="-85" r="0.8" fill="#fff" opacity="0.9"/><circle cx="164" cy="-73" r="0.8" fill="#fff" opacity="0.7"/><circle cx="419" cy="-2" r="1" fill="#fff" opacity="0.5"/><circle cx="68" cy="11" r="1" fill="#fff" opacity="0.5"/></g>
     <g class="nightOnly"><circle cx="232" cy="52" r="33.800000000000004" fill="#F4EFD9" opacity=".05"/><circle cx="232" cy="52" r="13" fill="#F1ECD6"/><circle cx="228.1" cy="49.4" r="2.34" fill="#DCD6BE"/><circle cx="236.6" cy="55.9" r="1.56" fill="#DCD6BE"/></g>
-    <g class="nightOnly" style="mix-blend-mode:screen"><circle cx="108" cy="203" r="14" fill="url(#warm)"/><circle cx="150" cy="203" r="14" fill="url(#warm)"/><circle cx="214" cy="212" r="10" fill="url(#warm)"/><circle cx="240" cy="212" r="10" fill="url(#warm)"/><circle cx="313" cy="205" r="14" fill="url(#warm)"/><circle cx="357" cy="205" r="14" fill="url(#warm)"/><circle cx="182" cy="190" r="24" fill="url(#warm)"/><circle cx="262" cy="447" r="18" fill="url(#warm)"/><circle cx="342" cy="447" r="18" fill="url(#warm)"/><circle cx="41" cy="156" r="10" fill="url(#warm)"/></g>
+    <g class="nightOnly" style="mix-blend-mode:screen"><circle cx="110" cy="211" r="13" fill="url(#warm)"/><circle cx="150" cy="211" r="13" fill="url(#warm)"/><circle cx="182" cy="190" r="24" fill="url(#warm)"/><circle cx="270" cy="474" r="16" fill="url(#warm)"/><circle cx="334" cy="474" r="16" fill="url(#warm)"/><circle cx="302" cy="510" r="22" fill="url(#warm)"/><circle cx="41" cy="156" r="10" fill="url(#warm)"/></g>
+    <!-- at night the town stays lit: windows, your signs, your chalet and the mailbox sit above the dark -->
+    <g class="nightOnly nightLit">
+      <use href="#chaletLit" x="74" y="146" width="112" height="112"/><use href="#chaletLit" x="214" y="360" width="176" height="176"/>
+      <use href="#townSigns"/><use href="#namePlate"/><use href="#doorPlaque"/><use href="#mail"/>
+    </g>
     <!-- the ski instructor, up close -->
     <use href="#skier" x="40" y="252" width="84" height="98"/>
     <path d="M132 266 h166 a10 10 0 0 1 10 10 v40 a10 10 0 0 1 -10 10 h-166 a10 10 0 0 1 -10 -10 v-14 l-16 -10 l16 -2 v-14 a10 10 0 0 1 10 -10 z" fill="#fff" stroke="#171412" stroke-width=".8"/>
