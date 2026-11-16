@@ -12,7 +12,7 @@ type WebViewHandle = { injectJavaScript: (js: string) => void; reload: () => voi
 const WebView = RNWebView as unknown as React.ComponentType<WebViewProps & { ref?: React.Ref<WebViewHandle> }>;
 
 export type WorldHiker = { id: string; n: string; name: string; c: string; st: number; today: number; watch: string; me?: boolean; comp?: string; compName?: string };
-export type WorldSign = { id: string; title: string; sub: string; kicker: string; detail: string; dots: [number, string][]; rows: { rank: number; name: string; val: string; me?: boolean }[]; world?: boolean };
+export type WorldSign = { id: string; title: string; sub: string; kicker: string; detail: string; dots: [number, string][]; rows: { rank: number; name: string; val: string; me?: boolean }[]; world?: boolean; worldName?: string };
 export type WorldCourse = { id: string; name: string; sub: string; soon?: boolean };
 export type WorldBoard = { key: string; label: string; rows: { rank: number; name: string; sub: string; steps: number; me?: boolean }[] };
 export type WorldData = {

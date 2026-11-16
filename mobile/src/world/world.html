@@ -103,7 +103,8 @@
   [data-scene]:not([data-scene="overview"]) .panel { transform: translateY(0); }
   .exit { position:absolute; top:max(14px, var(--st)); left:max(14px, env(safe-area-inset-left)); height:42px; padding:0 16px 0 12px; border-radius:21px; border:0; background:rgba(251,249,245,.95); box-shadow:0 3px 12px rgba(23,20,18,.18); font:600 14px inherit; font-family:inherit; color:var(--ink); cursor:pointer; z-index:5; transition:opacity .2s; }
   [data-scene="overview"] .exit { opacity:0; pointer-events:none; }
-  .chev { position:absolute; top:max(12px, var(--st)); left:max(8px, env(safe-area-inset-left)); width:44px; height:44px; border:0; background:transparent; color:#fff; opacity:.9; filter: drop-shadow(0 1px 1.5px rgba(23,20,18,.4)); cursor:pointer; z-index:5; transition:opacity .2s; display:flex; align-items:center; justify-content:center; }
+  .chev { position:absolute; top:max(14px, var(--st)); left:max(14px, env(safe-area-inset-left)); width:42px; height:42px; border-radius:21px; border:0; background:rgba(251,249,245,.95); box-shadow:0 3px 12px rgba(23,20,18,.18); color:#1A1714; cursor:pointer; z-index:5; display:flex; align-items:center; justify-content:center; padding-right:2px; transition:opacity .2s; }
+  .chev svg { width:11px; height:19px; }
   [data-scene="overview"] .chev { opacity:0; pointer-events:none; }
   .pull { position:absolute; top:max(10px, var(--st)); left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:6px; pointer-events:none; z-index:4; transition:opacity .3s; }
   .pull i { width:44px; height:5px; border-radius:3px; background:rgba(23,20,18,.35); }
@@ -743,7 +744,7 @@
     signs: [
       { id: 'c1', title: 'Matterhorn climb', sub: '#2 · 44.6K', kicker: 'Day 4 of 14', detail: "You're 2nd, 3,410 steps behind Seniorwidebody.", dots: [[20.8, '#4E7A4A'], [29.7, '#C14A1F'], [32, '#3E6C8A']],
         rows: [{ rank: 1, name: 'Seniorwidebody', val: '48,010 steps' }, { rank: 2, name: 'Heated microwave', val: '44,600 steps', me: true }, { rank: 3, name: 'Beatincheeks', val: '31,200 steps' }] },
-      { id: 'c3', title: 'Vesuvius', sub: '#1 · 12.4K', kicker: 'Day 1 of 7', world: true, rows: [] },
+      { id: 'c3', title: 'Vesuvius', sub: '#1 · 12.4K · Laura', kicker: 'Day 1 of 7', world: true, worldName: 'Vesuvius', rows: [{ rank: 1, name: 'Heated microwave', val: '12,400 steps', me: true }, { rank: 2, name: 'Laura', val: '9,120 steps' }] },
     ],
     courses: [{ id: 'vesuvius', name: 'Vesuvius', sub: 'Naples, Italy · 4,203 ft' }, { id: 'matterhorn', name: 'Matterhorn', sub: 'Zermatt · 14,692 ft' }, { id: 'classic', name: 'Most steps', sub: 'Whoever walks the most wins' }, { id: 'half_dome', name: 'Half Dome', soon: true }, { id: 'big_sur', name: 'Big Sur', soon: true }],
     climb: { id: 'c1', name: 'Matterhorn climb', goal: 150000, hikers: [
@@ -831,7 +832,7 @@
     if (key === 'mine') { hutView = null; renderSigns(); return hutBoard(true); }
     if (key === 'join') { post({ type: 'join' }); return; }
     const sg = (D.signs || [])[+key]; if (!sg) return;
-    if (sg.world) { post({ type: 'open', id: sg.id }); return; }
+    // Every sign shows its leaderboard first; a challenge with its own world has an "Enter" button there.
     hutView = { k: 'comp', i: +key }; hutBoard(true);
   }
   let hutView = null, focusSeen = null;
@@ -853,12 +854,13 @@
     if (hutView.k === 'comp') {
       const sg = S[hutView.i];
       h += tx(46, 491, String(sg.kicker || '').toUpperCase(), 8.5, 800, '#C14A1F', 'letter-spacing="1.2"') + tx(46, 512, clip(sg.title, 32), 17, 800, '#1A1714', 'data-fit="306"');
-      (sg.rows || []).slice(0, 5).forEach((r, i) => {
+      (sg.rows || []).slice(0, sg.world ? 4 : 5).forEach((r, i) => {
         const y = 542 + i * 25, ink = r.me ? '#C14A1F' : '#2B2420';
         h += hand(46, y, r.rank + '. ' + clip(r.name, 18), 19, ink, 'data-fit="200"') + tx(354, y - 1, r.val, 10, 700, ink, 'text-anchor="end"') +
           '<line x1="46" y1="' + (y + 7) + '" x2="354" y2="' + (y + 7) + '" stroke="#E6DAC6" stroke-width=".7"/>';
       });
-      h += pill(46, 664, 150, '✉  ' + T.invite, 'data-act="invite" data-id="' + esc(sg.id) + '"', true) +
+      if (sg.world) h += pill(46, 632, 308, String(T.enterWorld || 'Enter {name}').replace('{name}', sg.worldName || '') + ' ›', 'data-act="open" data-id="' + esc(sg.id) + '"', true);
+      h += pill(46, 664, 150, '✉  ' + T.invite, 'data-act="invite" data-id="' + esc(sg.id) + '"', !sg.world) +
         '<g data-act="leave" data-id="' + esc(sg.id) + '" style="cursor:pointer"><rect x="262" y="664" width="92" height="26" fill="transparent"/>' + tx(354, 681, T.leave || 'Leave', 10.5, 600, '#9A8F84', 'text-anchor="end"') + '</g>';
     } else if (hutView.k === 'new') {
       h += tx(46, 491, String(T.newChallenge || '').toUpperCase(), 8.5, 800, '#C14A1F', 'letter-spacing="1.2"') + tx(46, 512, T.newTitle, 17, 800, '#1A1714', 'data-fit="306"');

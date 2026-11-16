@@ -29,8 +29,8 @@
   .hero span { display:block; font-size:13px; font-weight:600; color:var(--muted); }
   [data-scene]:not([data-scene="overview"]) .hero { opacity:0; transform: translateY(-20px); }
 
-  .chev { position:absolute; top:max(12px, var(--st)); left:8px; width:44px; height:44px; border:0; background:transparent; color:#fff; opacity:.9; filter: drop-shadow(0 1px 1.5px rgba(23,20,18,.45)); cursor:pointer; z-index:5; display:flex; align-items:center; justify-content:center; }
-  [data-scene="overview"] .chev { color:var(--ink); filter:none; }
+  .chev svg { width:11px; height:19px; }
+  .chev { position:absolute; top:max(14px, var(--st)); left:max(14px, env(safe-area-inset-left)); width:42px; height:42px; border-radius:21px; border:0; background:rgba(251,249,245,.95); box-shadow:0 3px 12px rgba(23,20,18,.18); color:#1A1714; cursor:pointer; z-index:5; display:flex; align-items:center; justify-content:center; padding-right:2px; }
   .pull { position:absolute; top:max(10px, var(--st)); left:50%; transform:translateX(-50%); pointer-events:none; z-index:4; transition:opacity .3s; }
   .pull i { display:block; width:44px; height:5px; border-radius:3px; background:rgba(23,20,18,.35); }
   [data-scene="overview"] .pull { opacity:0; }

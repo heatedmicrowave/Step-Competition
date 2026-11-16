@@ -156,6 +156,10 @@ export default function Home() {
 
   // Trail signs at the hut, one per challenge.
   const live = d?.live ?? [];
+  const withWho = (board: Standing[]) => {
+    const others = board.filter((p) => p.id !== me.id).map((p) => p.name.trim().split(/\s+/)[0]);
+    return !others.length ? t.justYou : others.length === 1 ? others[0] : `${others[0]} +${others.length - 1}`;
+  };
   const signs: WorldSign[] = live.slice(0, 3).map(({ comp, board }) => {
     const cs = course(comp.course);
     const journey = cs.kind !== 'classic';
@@ -169,7 +173,8 @@ export default function Home() {
     return {
       id: comp.id,
       title: comp.name,
-      sub: !mine ? t.courseNames[cs.id][0] : `#${rank + 1} · ${kfmt(mine.total)}`, // short, so it can be bigger on the sign
+      // Short, so it can be bigger on the sign; who else is in it tells same-named challenges apart.
+      sub: [!mine ? t.courseNames[cs.id][0] : `#${rank + 1} · ${kfmt(mine.total)}`, withWho(board)].join(' · '),
       kicker: upcoming ? t.startsOn(short(comp.start_day)) : t.dayOf(total - left + 1, total),
       detail: `${t.courseNames[cs.id].join(' · ')}. ${upcoming ? '' : left === 1 ? t.lastDay : t.daysLeft(left)}`,
       dots: board.map((p) => [Math.round((journey ? progress(cs, p.total) : lead ? p.total / lead : 0) * 1000) / 10, p.id === me.id ? ME : OTHERS[k++ % OTHERS.length]] as [number, string]),
@@ -177,6 +182,7 @@ export default function Home() {
       rows: board.map((p, i) => ({ rank: i + 1, name: p.name, val: `${fmt(p.total)} ${t.stepsWord}`, me: p.id === me.id || undefined }))
         .filter((r, i) => i < 5 || r.me).slice(0, 6),
       world: hasWorld(cs.id) || undefined,
+      worldName: t.courseNames[cs.id][0],
     };
   });
 
