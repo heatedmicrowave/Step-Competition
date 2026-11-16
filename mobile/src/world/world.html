@@ -1190,12 +1190,13 @@
   }
   function hikerNote(i) {
     const w = walkers[i]; if (!w || !D.climb) return;
-    openNote('hiker', '<div class="kicker">' + esc(D.climb.name) + ' · ' + esc(w.me ? T.thatsYou : T.onTrail) + '</div>' +
+    const cid = w.comp || D.climb.id;
+    openNote('hiker', '<div class="kicker">' + esc(w.compName || D.climb.name) + ' · ' + esc(w.me ? T.thatsYou : T.onTrail) + '</div>' +
       '<h2 style="display:flex;align-items:center;gap:10px"><span style="flex:none;width:34px;height:34px;border-radius:17px;background:' + esc(w.c) + ';color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:16px">' + esc(String(w.n || '?').slice(0, 2)) + '</span>' + esc(w.name) + '</h2>' +
       '<div class="row"><div class="grow">' + esc(T.inClimb) + '<small>' + esc(tpl(T.kOf, { a: kfmt(w.st), b: kfmt(goal()) })) + '</small></div><span class="num">' + fmt(w.st) + '</span></div>' +
       '<div class="row"><div class="grow">' + esc(T.today) + (w.watch ? '<small>' + esc(w.watch) + '</small>' : '') + '</div><span class="num">' + fmt(w.today) + '</span></div>' +
-      '<div class="btns">' + (w.me ? '' : '<button class="btn" data-act="taunt" data-id="' + esc(D.climb.id) + '" data-player="' + esc(w.id) + '">🔥 ' + esc(T.taunt) + '</button>') +
-      '<button class="btn ghost" data-act="open" data-id="' + esc(D.climb.id) + '">' + esc(T.open) + '</button></div>');
+      '<div class="btns">' + (w.me ? '' : '<button class="btn" data-act="taunt" data-id="' + esc(cid) + '" data-player="' + esc(w.id) + '">🔥 ' + esc(T.taunt) + '</button>') +
+      '<button class="btn ghost" data-act="open" data-id="' + esc(cid) + '">' + esc(T.open) + '</button></div>');
   }
   // Friends close together: spread their badges side by side so they never sit on top of each other.
   function place() {

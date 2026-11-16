@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Share, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { MountainWorld, WorldEvent } from '../../components/MountainWorld';
 import { VESUVIUS_HTML } from '../../world/vesuviusHtml';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,8 +9,9 @@ import { Bar, Button, Card, fmt, Label, Numeral, Section, T, Title, useColors } 
 import { course, position, progress, size } from '../../lib/courses';
 import { useAuth } from '../../lib/auth';
 import { errorIn, Strings, useT } from '../../lib/i18n';
-import { COMP_FIELDS, daysLeftOf, inviteMessage, loadStandings, Standing } from '../../lib/standings';
+import { COMP_FIELDS, daysLeftOf, loadStandings, Standing } from '../../lib/standings';
 import { Competition, isoDay, supabase } from '../../lib/supabase';
+import { inviteFriends } from '../../lib/invite';
 
 function ago(t: Strings, ts: string) {
   const m = Math.round((Date.now() - new Date(ts).getTime()) / 60000);
@@ -117,7 +118,7 @@ export default function Leaderboard() {
     const onEvent = (e: WorldEvent) => {
       if (e.type === 'back') router.back();
       else if (e.type === 'details') router.push({ pathname: '/competition/[id]', params: { id: comp.id, list: '1' } });
-      else if (e.type === 'invite') Share.share({ message: inviteMessage(t.shareMsg(comp.name, comp.join_code), comp.join_code) });
+      else if (e.type === 'invite') inviteFriends(comp, t, load);
       else if (e.type === 'taunt') {
         const p = standings.find((x) => x.id === e.player);
         if (!p || p.id === me?.id) return;
@@ -201,7 +202,7 @@ export default function Leaderboard() {
         <Section label={t.inviteCode}>
           <Card style={{ alignItems: 'center', gap: 12 }}>
             <Numeral size={44}>{comp.join_code}</Numeral>
-            <View style={{ alignSelf: 'stretch' }}><Button title={t.sendFriend} onPress={() => Share.share({ message: inviteMessage(t.shareMsg(comp.name, comp.join_code), comp.join_code) })} /></View>
+            <View style={{ alignSelf: 'stretch' }}><Button title={t.sendFriend} onPress={() => inviteFriends(comp, t, load)} /></View>
           </Card>
         </Section>
       )}
